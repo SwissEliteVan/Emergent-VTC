@@ -131,7 +131,7 @@ export default function IndexScreen() {
     calculatePrice(vehicle);
   };
 
-  const handleBooking = () => {
+  const handleBooking = async () => {
     if (!selectedVehicle || !destination.trim()) {
       Alert.alert('Information manquante', 'Veuillez sélectionner un véhicule et une destination');
       return;
@@ -157,6 +157,9 @@ export default function IndexScreen() {
       rideStore.setSelectedVehicle(selectedVehicle);
       rideStore.setDistanceKm(rideStore.distanceKm);
       rideStore.setPrice(price);
+      
+      // Set booking intent flag
+      await AsyncStorage.setItem('pending_booking_intent', 'true');
       
       // Show login prompt
       Alert.alert(
@@ -184,6 +187,21 @@ export default function IndexScreen() {
     
     router.push('/confirmation');
   };
+
+  // Handle post-login redirect to booking
+  useEffect(() => {
+    const checkPendingBooking = async () => {
+      if (user && !isGuest) {
+        const pendingIntent = await AsyncStorage.getItem('pending_booking_intent');
+        if (pendingIntent === 'true' && selectedVehicle && price > 0) {
+          await AsyncStorage.removeItem('pending_booking_intent');
+          router.push('/confirmation');
+        }
+      }
+    };
+    
+    checkPendingBooking();
+  }, [user, isGuest, selectedVehicle, price]);
 
   return (
     <KeyboardAvoidingView 
