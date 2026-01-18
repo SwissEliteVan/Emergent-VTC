@@ -186,29 +186,41 @@ export default function MapScreen() {
       </View>
 
       {/* Map */}
-      <MapView
-        ref={mapRef}
-        provider={PROVIDER_GOOGLE}
-        style={styles.map}
-        initialRegion={{
-          latitude: 46.5197, // Lausanne, Switzerland
-          longitude: 6.6323,
-          latitudeDelta: 0.01,
-          longitudeDelta: 0.01,
-        }}
-        showsUserLocation
-        showsMyLocationButton
-      >
-        {currentLocation && (
-          <Marker
-            coordinate={{
-              latitude: currentLocation.coords.latitude,
-              longitude: currentLocation.coords.longitude,
-            }}
-            title="Votre position"
-          />
-        )}
-      </MapView>
+      {Platform.OS === 'web' ? (
+        <View style={styles.mapPlaceholder}>
+          <Ionicons name="map" size={80} color="#D4AF37" />
+          <Text style={styles.mapPlaceholderText}>
+            Carte disponible sur mobile
+          </Text>
+          <Text style={styles.mapPlaceholderSubtext}>
+            T\u00e9l\u00e9chargez l'app pour acc\u00e9der \u00e0 la carte interactive
+          </Text>
+        </View>
+      ) : (
+        <MapView
+          ref={mapRef}
+          provider={PROVIDER_GOOGLE}
+          style={styles.map}
+          initialRegion={{
+            latitude: 46.5197, // Lausanne, Switzerland
+            longitude: 6.6323,
+            latitudeDelta: 0.01,
+            longitudeDelta: 0.01,
+          }}
+          showsUserLocation
+          showsMyLocationButton
+        >
+          {currentLocation && (
+            <Marker
+              coordinate={{
+                latitude: currentLocation.coords.latitude,
+                longitude: currentLocation.coords.longitude,
+              }}
+              title="Votre position"
+            />
+          )}
+        </MapView>
+      )}
 
       {/* Search and Vehicle Selector */}
       <View style={styles.bottomSheet}>
