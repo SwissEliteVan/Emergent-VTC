@@ -343,6 +343,21 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#A0A0A0',
   },
+  headerLeft: {
+    flex: 1,
+  },
+  appName: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#D4AF37',
+    letterSpacing: 1,
+  },
+  appTagline: {
+    fontSize: 12,
+    color: '#A0A0A0',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
   userName: {
     fontSize: 20,
     fontWeight: '700',
@@ -351,6 +366,20 @@ const styles = StyleSheet.create({
   headerActions: {
     flexDirection: 'row',
     gap: 12,
+  },
+  loginHeaderButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#2C2C2C',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 24,
+    gap: 8,
+  },
+  loginHeaderText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#D4AF37',
   },
   switchButton: {
     width: 48,
