@@ -94,13 +94,16 @@ class RideCreate(BaseModel):
 class Ride(BaseModel):
     ride_id: str
     user_id: str
+    driver_id: Optional[str] = None
     pickup: Location
     destination: Location
     vehicle_type: str
     distance_km: float
     price: float
-    status: str
+    status: str  # pending, accepted, in_progress, completed, cancelled
     created_at: datetime
+    accepted_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
 
 # Auth Helper Functions
 async def get_session_token(request: Request) -> Optional[str]:
