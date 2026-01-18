@@ -34,10 +34,10 @@ interface Vehicle {
   icon: string;
 }
 
-export default function MapScreen() {
-  const { user, sessionToken, logout } = useAuth();
+export default function IndexScreen() {
+  const { user, sessionToken, isGuest, login, logout } = useAuth();
   const router = useRouter();
-  const mapRef = useRef<MapView>(null);
+  const rideStore = useRideStore();
   
   const [currentLocation, setCurrentLocation] = useState<Location.LocationObject | null>(null);
   const [destination, setDestination] = useState('');
@@ -46,17 +46,17 @@ export default function MapScreen() {
   const [price, setPrice] = useState(0);
   const [loading, setLoading] = useState(false);
   const [showVehicleSelector, setShowVehicleSelector] = useState(false);
-  
-  const rideStore = useRideStore();
 
   useEffect(() => {
-    if (!user) {
-      router.replace('/');
-      return;
-    }
-    
     requestLocationPermission();
     fetchVehicles();
+  }, []);
+
+  // Auto-navigate based on role when logged in
+  useEffect(() => {
+    if (user?.role === 'driver') {
+      router.replace('/driver-dispatch');
+    }
   }, [user]);
 
   const requestLocationPermission = async () => {
