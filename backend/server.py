@@ -64,6 +64,9 @@ class User(BaseModel):
     name: str
     picture: Optional[str] = None
     role: str = "passenger"  # passenger or driver
+    account_type: str = "personal"  # personal or business
+    company_name: Optional[str] = None
+    vat_number: Optional[str] = None  # Swiss VAT/IDE number
     created_at: datetime
 
 class SessionDataResponse(BaseModel):
