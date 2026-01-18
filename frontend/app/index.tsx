@@ -69,15 +69,6 @@ export default function IndexScreen() {
       
       const location = await Location.getCurrentPositionAsync({});
       setCurrentLocation(location);
-      
-      if (mapRef.current) {
-        mapRef.current.animateToRegion({
-          latitude: location.coords.latitude,
-          longitude: location.coords.longitude,
-          latitudeDelta: 0.01,
-          longitudeDelta: 0.01,
-        });
-      }
     } catch (error) {
       console.error('Location error:', error);
     }
