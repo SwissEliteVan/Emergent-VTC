@@ -9,7 +9,6 @@ import {
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useRideStore } from '../store/rideStore';
-import { LinearGradient } from 'expo-linear-gradient';
 
 export default function RideStatusScreen() {
   const router = useRouter();
