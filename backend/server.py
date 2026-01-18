@@ -546,6 +546,145 @@ async def get_driver_earnings(
         "rides": completed_rides
     }
 
+# Profile Management Routes
+@api_router.put("/user/profile")
+async def update_user_profile(
+    account_type: Optional[str] = None,
+    company_name: Optional[str] = None,
+    vat_number: Optional[str] = None,
+    current_user: User = Depends(get_current_user)
+):
+    """Update user profile (B2B account info)"""
+    update_fields = {}
+    
+    if account_type and account_type in ["personal", "business"]:
+        update_fields["account_type"] = account_type
+    
+    if company_name:
+        update_fields["company_name"] = company_name
+    
+    if vat_number:
+        update_fields["vat_number"] = vat_number
+    
+    if not update_fields:
+        raise HTTPException(status_code=400, detail="No fields to update")
+    
+    await db.users.update_one(
+        {"user_id": current_user.user_id},
+        {"$set": update_fields}
+    )
+    
+    # Get updated user
+    updated_user = await db.users.find_one(
+        {"user_id": current_user.user_id},
+        {"_id": 0}
+    )
+    
+    return updated_user
+
+# Admin Routes (Protected - simple password check for MVP)
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "admin123")  # Change in production!
+
+def verify_admin_access(admin_password: str):
+    """Simple admin verification - replace with proper auth in production"""
+    if admin_password != ADMIN_PASSWORD:
+        raise HTTPException(status_code=403, detail="Invalid admin credentials")
+    return True
+
+@api_router.get("/admin/users")
+async def get_all_users(admin_password: str):
+    """Get all users for admin dashboard"""
+    verify_admin_access(admin_password)
+    
+    users = await db.users.find({}, {"_id": 0}).to_list(1000)
+    return {"users": users}
+
+@api_router.get("/admin/rides")
+async def get_all_rides(admin_password: str, status: Optional[str] = None):
+    """Get all rides for admin dashboard"""
+    verify_admin_access(admin_password)
+    
+    query = {}
+    if status:
+        query["status"] = status
+    
+    rides = await db.rides.find(query, {"_id": 0}).sort("created_at", -1).to_list(1000)
+    return {"rides": rides}
+
+@api_router.post("/admin/rides/{ride_id}/assign")
+async def admin_assign_driver(
+    ride_id: str,
+    driver_id: str,
+    admin_password: str
+):
+    """Manually assign driver to a pending ride (for phone bookings)"""
+    verify_admin_access(admin_password)
+    
+    # Verify ride exists and is pending
+    ride = await db.rides.find_one({"ride_id": ride_id, "status": "pending"})
+    if not ride:
+        raise HTTPException(status_code=404, detail="Pending ride not found")
+    
+    # Verify driver exists
+    driver = await db.users.find_one({"user_id": driver_id, "role": "driver"})
+    if not driver:
+        raise HTTPException(status_code=404, detail="Driver not found")
+    
+    # Assign driver
+    await db.rides.update_one(
+        {"ride_id": ride_id},
+        {
+            "$set": {
+                "driver_id": driver_id,
+                "status": "accepted",
+                "accepted_at": datetime.now(timezone.utc)
+            }
+        }
+    )
+    
+    return {
+        "message": "Driver assigned successfully",
+        "ride_id": ride_id,
+        "driver_id": driver_id
+    }
+
+@api_router.get("/admin/stats")
+async def get_admin_stats(admin_password: str):
+    """Get platform statistics for admin dashboard"""
+    verify_admin_access(admin_password)
+    
+    total_users = await db.users.count_documents({})
+    total_drivers = await db.users.count_documents({"role": "driver"})
+    total_passengers = await db.users.count_documents({"role": "passenger"})
+    
+    total_rides = await db.rides.count_documents({})
+    pending_rides = await db.rides.count_documents({"status": "pending"})
+    completed_rides = await db.rides.count_documents({"status": "completed"})
+    
+    # Calculate total revenue
+    completed_ride_docs = await db.rides.find(
+        {"status": "completed"},
+        {"_id": 0, "price": 1}
+    ).to_list(10000)
+    total_revenue = sum(ride["price"] for ride in completed_ride_docs)
+    
+    return {
+        "users": {
+            "total": total_users,
+            "drivers": total_drivers,
+            "passengers": total_passengers
+        },
+        "rides": {
+            "total": total_rides,
+            "pending": pending_rides,
+            "completed": completed_rides
+        },
+        "revenue": {
+            "total": total_revenue,
+            "currency": "CHF"
+        }
+    }
+
 # Include the router in the main app
 app.include_router(api_router)
 
