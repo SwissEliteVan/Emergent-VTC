@@ -283,6 +283,9 @@ async def create_ride(
     """Create a new ride booking"""
     ride_id = f"ride_{uuid.uuid4().hex[:12]}"
     
+    # Determine billing type based on account type
+    billing_type = "monthly" if current_user.account_type == "business" else "immediate"
+    
     ride_doc = {
         "ride_id": ride_id,
         "user_id": current_user.user_id,
@@ -292,6 +295,7 @@ async def create_ride(
         "distance_km": ride_data.distance_km,
         "price": ride_data.price,
         "status": "pending",
+        "billing_type": billing_type,
         "created_at": datetime.now(timezone.utc)
     }
     
@@ -300,6 +304,7 @@ async def create_ride(
     return {
         "ride_id": ride_id,
         "status": "pending",
+        "billing_type": billing_type,
         "message": "Ride booked successfully"
     }
 
