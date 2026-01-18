@@ -184,33 +184,11 @@ export default function MapScreen() {
             Carte disponible sur mobile
           </Text>
           <Text style={styles.mapPlaceholderSubtext}>
-            T\u00e9l\u00e9chargez l'app pour acc\u00e9der \u00e0 la carte interactive
+            Téléchargez l'app pour accéder à la carte interactive
           </Text>
         </View>
       ) : (
-        <MapView
-          ref={mapRef}
-          provider={PROVIDER_GOOGLE}
-          style={styles.map}
-          initialRegion={{
-            latitude: 46.5197, // Lausanne, Switzerland
-            longitude: 6.6323,
-            latitudeDelta: 0.01,
-            longitudeDelta: 0.01,
-          }}
-          showsUserLocation
-          showsMyLocationButton
-        >
-          {currentLocation && (
-            <Marker
-              coordinate={{
-                latitude: currentLocation.coords.latitude,
-                longitude: currentLocation.coords.longitude,
-              }}
-              title="Votre position"
-            />
-          )}
-        </MapView>
+        NativeMap && <NativeMap currentLocation={currentLocation} />
       )}
 
       {/* Search and Vehicle Selector */}
