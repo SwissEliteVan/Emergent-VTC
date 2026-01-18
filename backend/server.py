@@ -104,6 +104,7 @@ class Ride(BaseModel):
     distance_km: float
     price: float
     status: str  # pending, accepted, in_progress, completed, cancelled
+    billing_type: str = "immediate"  # immediate or monthly
     created_at: datetime
     accepted_at: Optional[datetime] = None
     completed_at: Optional[datetime] = None
