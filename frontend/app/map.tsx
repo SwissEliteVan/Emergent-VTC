@@ -324,6 +324,26 @@ const styles = StyleSheet.create({
   map: {
     flex: 1,
   },
+  mapPlaceholder: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#1A1A1A',
+    padding: 32,
+  },
+  mapPlaceholderText: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginTop: 24,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  mapPlaceholderSubtext: {
+    fontSize: 14,
+    color: '#A0A0A0',
+    textAlign: 'center',
+  },
   bottomSheet: {
     position: 'absolute',
     bottom: 0,
