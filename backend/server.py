@@ -193,6 +193,7 @@ async def create_session(request: Request, response: Response):
             "email": session_data.email,
             "name": session_data.name,
             "picture": session_data.picture,
+            "role": "passenger",  # Default role
             "created_at": datetime.now(timezone.utc)
         }
         await db.users.insert_one(user_doc)
