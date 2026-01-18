@@ -326,6 +326,221 @@ async def get_user_rides(
     
     return {"rides": rides}
 
+# Driver Routes
+@api_router.post("/user/toggle-role")
+async def toggle_user_role(
+    current_user: User = Depends(get_current_user)
+):
+    """Toggle user role between passenger and driver"""
+    new_role = "driver" if current_user.role == "passenger" else "passenger"
+    
+    await db.users.update_one(
+        {"user_id": current_user.user_id},
+        {"$set": {"role": new_role}}
+    )
+    
+    return {"role": new_role, "message": f"Switched to {new_role} mode"}
+
+@api_router.get("/driver/pending-rides")
+async def get_pending_rides(
+    current_user: User = Depends(get_current_user)
+):
+    """Get all pending rides for drivers"""
+    if current_user.role != "driver":
+        raise HTTPException(status_code=403, detail="Driver role required")
+    
+    # Get all pending rides
+    rides = await db.rides.find(
+        {"status": "pending"},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(100)
+    
+    return {"rides": rides}
+
+@api_router.get("/driver/active-ride")
+async def get_driver_active_ride(
+    current_user: User = Depends(get_current_user)
+):
+    """Get driver's current active ride"""
+    if current_user.role != "driver":
+        raise HTTPException(status_code=403, detail="Driver role required")
+    
+    # Find accepted or in_progress ride for this driver
+    ride = await db.rides.find_one(
+        {
+            "driver_id": current_user.user_id,
+            "status": {"$in": ["accepted", "in_progress"]}
+        },
+        {"_id": 0}
+    )
+    
+    if not ride:
+        return {"ride": None}
+    
+    return {"ride": ride}
+
+@api_router.post("/rides/{ride_id}/accept")
+async def accept_ride(
+    ride_id: str,
+    current_user: User = Depends(get_current_user)
+):
+    """Driver accepts a ride"""
+    if current_user.role != "driver":
+        raise HTTPException(status_code=403, detail="Driver role required")
+    
+    # Check if ride exists and is pending
+    ride = await db.rides.find_one(
+        {"ride_id": ride_id, "status": "pending"},
+        {"_id": 0}
+    )
+    
+    if not ride:
+        raise HTTPException(status_code=404, detail="Ride not found or already accepted")
+    
+    # Check if driver already has an active ride
+    existing_ride = await db.rides.find_one(
+        {
+            "driver_id": current_user.user_id,
+            "status": {"$in": ["accepted", "in_progress"]}
+        }
+    )
+    
+    # Allow accepting even with active ride (forward dispatch)
+    # Update ride with driver info
+    await db.rides.update_one(
+        {"ride_id": ride_id},
+        {
+            "$set": {
+                "status": "accepted",
+                "driver_id": current_user.user_id,
+                "accepted_at": datetime.now(timezone.utc)
+            }
+        }
+    )
+    
+    return {
+        "message": "Ride accepted successfully",
+        "ride_id": ride_id,
+        "status": "accepted"
+    }
+
+@api_router.post("/rides/{ride_id}/start")
+async def start_ride(
+    ride_id: str,
+    current_user: User = Depends(get_current_user)
+):
+    """Driver starts the ride (navigation begins)"""
+    if current_user.role != "driver":
+        raise HTTPException(status_code=403, detail="Driver role required")
+    
+    ride = await db.rides.find_one(
+        {
+            "ride_id": ride_id,
+            "driver_id": current_user.user_id,
+            "status": "accepted"
+        },
+        {"_id": 0}
+    )
+    
+    if not ride:
+        raise HTTPException(status_code=404, detail="Ride not found or not accepted")
+    
+    await db.rides.update_one(
+        {"ride_id": ride_id},
+        {"$set": {"status": "in_progress"}}
+    )
+    
+    return {
+        "message": "Ride started",
+        "ride_id": ride_id,
+        "status": "in_progress"
+    }
+
+@api_router.post("/rides/{ride_id}/complete")
+async def complete_ride(
+    ride_id: str,
+    current_user: User = Depends(get_current_user)
+):
+    """Driver completes the ride"""
+    if current_user.role != "driver":
+        raise HTTPException(status_code=403, detail="Driver role required")
+    
+    ride = await db.rides.find_one(
+        {
+            "ride_id": ride_id,
+            "driver_id": current_user.user_id,
+            "status": {"$in": ["accepted", "in_progress"]}
+        },
+        {"_id": 0}
+    )
+    
+    if not ride:
+        raise HTTPException(status_code=404, detail="Ride not found or not started")
+    
+    await db.rides.update_one(
+        {"ride_id": ride_id},
+        {
+            "$set": {
+                "status": "completed",
+                "completed_at": datetime.now(timezone.utc)
+            }
+        }
+    )
+    
+    return {
+        "message": "Ride completed successfully",
+        "ride_id": ride_id,
+        "status": "completed",
+        "earnings": ride["price"]
+    }
+
+@api_router.post("/rides/{ride_id}/decline")
+async def decline_ride(
+    ride_id: str,
+    current_user: User = Depends(get_current_user)
+):
+    """Driver declines a ride (keeps it pending for others)"""
+    if current_user.role != "driver":
+        raise HTTPException(status_code=403, detail="Driver role required")
+    
+    ride = await db.rides.find_one(
+        {"ride_id": ride_id, "status": "pending"},
+        {"_id": 0}
+    )
+    
+    if not ride:
+        raise HTTPException(status_code=404, detail="Ride not found")
+    
+    # Just return success - ride stays pending for other drivers
+    return {
+        "message": "Ride declined",
+        "ride_id": ride_id
+    }
+
+@api_router.get("/driver/earnings")
+async def get_driver_earnings(
+    current_user: User = Depends(get_current_user)
+):
+    """Get driver's total earnings from completed rides"""
+    if current_user.role != "driver":
+        raise HTTPException(status_code=403, detail="Driver role required")
+    
+    completed_rides = await db.rides.find(
+        {
+            "driver_id": current_user.user_id,
+            "status": "completed"
+        },
+        {"_id": 0}
+    ).to_list(1000)
+    
+    total_earnings = sum(ride["price"] for ride in completed_rides)
+    
+    return {
+        "total_earnings": total_earnings,
+        "total_rides": len(completed_rides),
+        "rides": completed_rides
+    }
+
 # Include the router in the main app
 app.include_router(api_router)
 
