@@ -155,34 +155,53 @@ export default function IndexScreen() {
     >
       {/* Header */}
       <View style={styles.header}>
-        <View>
-          <Text style={styles.greeting}>Bonjour,</Text>
-          <Text style={styles.userName}>{user?.name}</Text>
-        </View>
+        {isGuest ? (
+          <View style={styles.headerLeft}>
+            <Text style={styles.appName}>Romuo.ch</Text>
+            <Text style={styles.appTagline}>VTC Premium Suisse</Text>
+          </View>
+        ) : (
+          <View style={styles.headerLeft}>
+            <Text style={styles.greeting}>Bonjour,</Text>
+            <Text style={styles.userName}>{user?.name}</Text>
+          </View>
+        )}
         <View style={styles.headerActions}>
-          <TouchableOpacity 
-            style={styles.switchButton}
-            onPress={async () => {
-              try {
-                await axios.post(
-                  `${BACKEND_URL}/api/user/toggle-role`,
-                  {},
-                  { headers: { Authorization: `Bearer ${sessionToken}` } }
-                );
-                router.replace('/driver-dispatch');
-              } catch (error) {
-                Alert.alert('Erreur', 'Impossible de changer de mode');
-              }
-            }}
-          >
-            <Ionicons name="car-sport" size={20} color="#D4AF37" />
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.logoutButton}
-            onPress={logout}
-          >
-            <Ionicons name="log-out-outline" size={24} color="#D4AF37" />
-          </TouchableOpacity>
+          {isGuest ? (
+            <TouchableOpacity 
+              style={styles.loginHeaderButton}
+              onPress={login}
+            >
+              <Ionicons name="person" size={20} color="#D4AF37" />
+              <Text style={styles.loginHeaderText}>Connexion</Text>
+            </TouchableOpacity>
+          ) : (
+            <>
+              <TouchableOpacity 
+                style={styles.switchButton}
+                onPress={async () => {
+                  try {
+                    await axios.post(
+                      `${BACKEND_URL}/api/user/toggle-role`,
+                      {},
+                      { headers: { Authorization: `Bearer ${sessionToken}` } }
+                    );
+                    router.replace('/driver-dispatch');
+                  } catch (error) {
+                    Alert.alert('Erreur', 'Impossible de changer de mode');
+                  }
+                }}
+              >
+                <Ionicons name="car-sport" size={20} color="#D4AF37" />
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.logoutButton}
+                onPress={logout}
+              >
+                <Ionicons name="log-out-outline" size={24} color="#D4AF37" />
+              </TouchableOpacity>
+            </>
+          )}
         </View>
       </View>
 
