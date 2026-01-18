@@ -63,6 +63,7 @@ class User(BaseModel):
     email: str
     name: str
     picture: Optional[str] = None
+    role: str = "passenger"  # passenger or driver
     created_at: datetime
 
 class SessionDataResponse(BaseModel):
