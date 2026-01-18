@@ -137,6 +137,43 @@ export default function IndexScreen() {
       return;
     }
     
+    // Check if user is authenticated
+    if (isGuest) {
+      // Store trip details in ride store for post-login redirect
+      if (currentLocation) {
+        rideStore.setPickup({
+          latitude: currentLocation.coords.latitude,
+          longitude: currentLocation.coords.longitude,
+          address: 'Position actuelle'
+        });
+      }
+      
+      rideStore.setDestination({
+        latitude: (currentLocation?.coords.latitude || 0) + 0.1,
+        longitude: (currentLocation?.coords.longitude || 0) + 0.1,
+        address: destination
+      });
+      
+      rideStore.setSelectedVehicle(selectedVehicle);
+      rideStore.setDistanceKm(rideStore.distanceKm);
+      rideStore.setPrice(price);
+      
+      // Show login prompt
+      Alert.alert(
+        'Connexion requise',
+        'Veuillez vous connecter pour réserver une course',
+        [
+          { text: 'Annuler', style: 'cancel' },
+          { 
+            text: 'Se connecter', 
+            onPress: () => login()
+          }
+        ]
+      );
+      return;
+    }
+    
+    // User is logged in, proceed with booking
     if (currentLocation) {
       rideStore.setPickup({
         latitude: currentLocation.coords.latitude,
