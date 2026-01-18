@@ -10,6 +10,8 @@ export default function RootLayout() {
         <Stack.Screen name="map" />
         <Stack.Screen name="confirmation" />
         <Stack.Screen name="ride-status" />
+        <Stack.Screen name="driver-dispatch" />
+        <Stack.Screen name="driver-active" />
       </Stack>
     </AuthProvider>
   );
