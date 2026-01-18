@@ -301,6 +301,18 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#FFFFFF',
   },
+  headerActions: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  switchButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#2C2C2C',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   logoutButton: {
     width: 48,
     height: 48,
