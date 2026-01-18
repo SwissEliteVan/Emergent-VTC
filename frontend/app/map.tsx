@@ -168,12 +168,31 @@ export default function MapScreen() {
           <Text style={styles.greeting}>Bonjour,</Text>
           <Text style={styles.userName}>{user?.name}</Text>
         </View>
-        <TouchableOpacity 
-          style={styles.logoutButton}
-          onPress={logout}
-        >
-          <Ionicons name="log-out-outline" size={24} color="#D4AF37" />
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          <TouchableOpacity 
+            style={styles.switchButton}
+            onPress={async () => {
+              try {
+                await axios.post(
+                  `${BACKEND_URL}/api/user/toggle-role`,
+                  {},
+                  { headers: { Authorization: `Bearer ${sessionToken}` } }
+                );
+                router.replace('/driver-dispatch');
+              } catch (error) {
+                Alert.alert('Erreur', 'Impossible de changer de mode');
+              }
+            }}
+          >
+            <Ionicons name="car-sport" size={20} color="#D4AF37" />
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.logoutButton}
+            onPress={logout}
+          >
+            <Ionicons name="log-out-outline" size={24} color="#D4AF37" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Map */}
