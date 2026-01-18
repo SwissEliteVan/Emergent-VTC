@@ -7,7 +7,7 @@ export default function RootLayout() {
     <AuthProvider>
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="index" />
-        <Stack.Screen name="map" />
+        <Stack.Screen name="login" />
         <Stack.Screen name="confirmation" />
         <Stack.Screen name="ride-status" />
         <Stack.Screen name="driver-dispatch" />
