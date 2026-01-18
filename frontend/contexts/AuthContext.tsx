@@ -13,12 +13,14 @@ interface User {
   email: string;
   name: string;
   picture?: string;
+  role?: string;
 }
 
 interface AuthContextType {
   user: User | null;
   sessionToken: string | null;
   loading: boolean;
+  isGuest: boolean;
   login: () => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -90,12 +92,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         { headers: { 'X-Session-ID': sessionId } }
       );
 
-      const { session_token, user_id, email, name, picture } = response.data;
+      const { session_token, user_id, email, name, picture, role } = response.data;
 
       // Store session token
       await AsyncStorage.setItem('session_token', session_token);
       setSessionToken(session_token);
-      setUser({ user_id, email, name, picture });
+      setUser({ user_id, email, name, picture, role });
     } catch (error) {
       console.error('Auth callback error:', error);
     } finally {
@@ -142,8 +144,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const isGuest = !user && !loading;
+
   return (
-    <AuthContext.Provider value={{ user, sessionToken, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, sessionToken, loading, isGuest, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
