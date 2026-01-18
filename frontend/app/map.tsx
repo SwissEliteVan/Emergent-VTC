@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -19,19 +19,10 @@ import { useRideStore } from '../store/rideStore';
 import axios from 'axios';
 import Constants from 'expo-constants';
 
-// Only import MapView on native platforms
-let MapView: any;
-let Marker: any;
-let PROVIDER_GOOGLE: any;
-
-if (Platform.OS !== 'web') {
-  const MapModule = require('react-native-maps');
-  MapView = MapModule.default;
-  Marker = MapModule.Marker;
-  PROVIDER_GOOGLE = MapModule.PROVIDER_GOOGLE;
-}
-
 const BACKEND_URL = Constants.expoConfig?.extra?.EXPO_PUBLIC_BACKEND_URL || process.env.EXPO_PUBLIC_BACKEND_URL;
+
+// Dynamically import map component only on native
+const NativeMap = Platform.OS !== 'web' ? require('../components/NativeMap').default : null;
 
 interface Vehicle {
   id: string;
