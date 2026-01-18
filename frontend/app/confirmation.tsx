@@ -18,10 +18,19 @@ import Constants from 'expo-constants';
 const BACKEND_URL = Constants.expoConfig?.extra?.EXPO_PUBLIC_BACKEND_URL || process.env.EXPO_PUBLIC_BACKEND_URL;
 
 export default function ConfirmationScreen() {
-  const { sessionToken } = useAuth();
+  const { sessionToken, isGuest, login } = useAuth();
   const router = useRouter();
   const { pickup, destination, selectedVehicle, distanceKm, price } = useRideStore();
   const [loading, setLoading] = useState(false);
+
+  // Redirect to login if guest tries to access confirmation
+  useEffect(() => {
+    if (isGuest && (!pickup || !destination || !selectedVehicle)) {
+      Alert.alert('Erreur', 'Veuillez d\'abord sélectionner une course', [
+        { text: 'OK', onPress: () => router.replace('/') }
+      ]);
+    }
+  }, [isGuest, pickup, destination, selectedVehicle]);
 
   const handleConfirmBooking = async () => {
     if (!pickup || !destination || !selectedVehicle) {
