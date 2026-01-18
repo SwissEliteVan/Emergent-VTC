@@ -98,6 +98,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       await AsyncStorage.setItem('session_token', session_token);
       setSessionToken(session_token);
       setUser({ user_id, email, name, picture, role });
+      
+      // Check if there's a pending booking intent
+      const pendingIntent = await AsyncStorage.getItem('pending_booking_intent');
+      if (pendingIntent === 'true') {
+        await AsyncStorage.removeItem('pending_booking_intent');
+        // Navigation will be handled by the component watching user state
+      }
     } catch (error) {
       console.error('Auth callback error:', error);
     } finally {
