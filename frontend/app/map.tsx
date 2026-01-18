@@ -13,12 +13,23 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { useAuth } from '../contexts/AuthContext';
 import { useRideStore } from '../store/rideStore';
 import axios from 'axios';
 import Constants from 'expo-constants';
+
+// Only import MapView on native platforms
+let MapView: any;
+let Marker: any;
+let PROVIDER_GOOGLE: any;
+
+if (Platform.OS !== 'web') {
+  const MapModule = require('react-native-maps');
+  MapView = MapModule.default;
+  Marker = MapModule.Marker;
+  PROVIDER_GOOGLE = MapModule.PROVIDER_GOOGLE;
+}
 
 const BACKEND_URL = Constants.expoConfig?.extra?.EXPO_PUBLIC_BACKEND_URL || process.env.EXPO_PUBLIC_BACKEND_URL;
 
