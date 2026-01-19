@@ -27,11 +27,11 @@ print('User ID: ' + visitorId);
 ## Step 2: Test Backend API
 ```bash
 # Test auth endpoint
-curl -X GET "https://swissride-mvp.preview.emergentagent.com/api/auth/me" \
+curl -X GET "https://swissride.preview.emergentagent.com/api/auth/me" \
   -H "Authorization: Bearer YOUR_SESSION_TOKEN"
 
 # Test protected endpoints
-curl -X GET "https://swissride-mvp.preview.emergentagent.com/api/rides/user/YOUR_USER_ID" \
+curl -X GET "https://swissride.preview.emergentagent.com/api/rides/user/YOUR_USER_ID" \
   -H "Authorization: Bearer YOUR_SESSION_TOKEN"
 ```
 

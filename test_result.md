@@ -175,7 +175,7 @@ backend:
     status_history:
         - working: true
           agent: "testing"
-          comment: "✅ Backend server is running and accessible at https://swissride-mvp.preview.emergentagent.com. All API endpoints respond correctly"
+          comment: "✅ Backend server is running and accessible at https://swissride.preview.emergentagent.com. All API endpoints respond correctly"
 
 frontend:
   # Frontend testing not performed as per testing agent instructions
