@@ -10,6 +10,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
+  Dimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -19,11 +20,14 @@ import { useRideStore } from '../store/rideStore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import Constants from 'expo-constants';
+import { responsive, isWeb, isDesktop } from '../utils/responsive';
 
 const BACKEND_URL = Constants.expoConfig?.extra?.EXPO_PUBLIC_BACKEND_URL || process.env.EXPO_PUBLIC_BACKEND_URL;
 
-// Dynamically import map component only on native
-const NativeMap = Platform.OS !== 'web' ? require('../components/NativeMap').default : null;
+// Dynamic map import - Leaflet for web, React Native Maps for mobile
+const MapComponent = Platform.OS === 'web' 
+  ? require('../components/WebMapLeaflet').default 
+  : require('../components/NativeMap').default;
 
 interface Vehicle {
   id: string;
