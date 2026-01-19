@@ -26,7 +26,7 @@ app = FastAPI()
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
 
-# Vehicle configuration with CHF pricing
+# Vehicle configuration with CHF pricing - UPDATED
 VEHICLE_TYPES = {
     "eco": {
         "id": "eco",
@@ -35,7 +35,9 @@ VEHICLE_TYPES = {
         "base_fare": 6.00,
         "rate_per_km": 3.00,
         "capacity": 4,
-        "icon": "🚗"
+        "icon": "🚗",
+        "min_passengers": 1,
+        "max_passengers": 4
     },
     "berline": {
         "id": "berline",
@@ -44,17 +46,34 @@ VEHICLE_TYPES = {
         "base_fare": 10.00,
         "rate_per_km": 5.00,
         "capacity": 4,
-        "icon": "🚙"
+        "icon": "🚙",
+        "min_passengers": 1,
+        "max_passengers": 4
     },
-    "van": {
-        "id": "van",
-        "name": "Van",
-        "description": "Mercedes V-Class pour groupes",
-        "base_fare": 15.00,
-        "rate_per_km": 6.00,
-        "capacity": 8,
-        "icon": "🚐"
+    "bus": {
+        "id": "bus",
+        "name": "Bus",
+        "description": "Minibus/Autocar pour groupes (5+ passagers)",
+        "base_fare": 25.00,
+        "rate_per_km": 8.00,
+        "capacity": 15,
+        "icon": "🚌",
+        "min_passengers": 5,
+        "max_passengers": 15
     }
+}
+
+# Peak hours definition (for dynamic pricing)
+PEAK_HOURS = {
+    "morning": (7, 9),    # 7h-9h
+    "evening": (17, 19),  # 17h-19h
+}
+
+# Discount rates
+DISCOUNT_RATES = {
+    "youth": 0.15,        # 15% off for youth (<26 years)
+    "ride_sharing": 0.25, # 25% off for shared rides
+    "off_peak": 0.10,     # 10% off for off-peak hours
 }
 
 # Pydantic Models
