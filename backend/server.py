@@ -53,7 +53,7 @@ VEHICLE_TYPES = {
     "bus": {
         "id": "bus",
         "name": "Bus",
-        "description": "Minibus/Autocar pour groupes (5+ passagers)",
+        "description": "Minibus/Autocar pour groupes (5-15 passagers)",
         "base_fare": 25.00,
         "rate_per_km": 8.00,
         "capacity": 15,
@@ -62,6 +62,14 @@ VEHICLE_TYPES = {
         "max_passengers": 15
     }
 }
+
+def get_suitable_vehicles(num_passengers: int):
+    """Get vehicles suitable for the number of passengers"""
+    suitable = []
+    for vehicle_id, vehicle in VEHICLE_TYPES.items():
+        if vehicle["min_passengers"] <= num_passengers <= vehicle["max_passengers"]:
+            suitable.append(vehicle)
+    return suitable
 
 # Peak hours definition (for dynamic pricing)
 PEAK_HOURS = {
