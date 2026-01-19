@@ -266,19 +266,9 @@ export default function IndexScreen() {
       </View>
 
       {/* Map */}
-      {Platform.OS === 'web' ? (
-        <View style={styles.mapPlaceholder}>
-          <Ionicons name="map" size={80} color="#D4AF37" />
-          <Text style={styles.mapPlaceholderText}>
-            Carte disponible sur mobile
-          </Text>
-          <Text style={styles.mapPlaceholderSubtext}>
-            Téléchargez l'app pour accéder à la carte interactive
-          </Text>
-        </View>
-      ) : (
-        NativeMap && <NativeMap currentLocation={currentLocation} />
-      )}
+      <View style={[styles.map, isDesktop && styles.mapDesktop]}>
+        <MapComponent currentLocation={currentLocation} />
+      </View>
 
       {/* Search and Vehicle Selector */}
       <View style={styles.bottomSheet}>
