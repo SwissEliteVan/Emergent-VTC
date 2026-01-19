@@ -281,6 +281,29 @@ async def get_vehicle_types():
     """Get all available vehicle types with pricing"""
     return {"vehicles": list(VEHICLE_TYPES.values())}
 
+@api_router.get("/vehicles/suggest")
+async def suggest_vehicles(num_passengers: int = 1):
+    """Suggest suitable vehicles based on number of passengers"""
+    if num_passengers < 1 or num_passengers > 15:
+        raise HTTPException(
+            status_code=400, 
+            detail="Number of passengers must be between 1 and 15"
+        )
+    
+    suitable = get_suitable_vehicles(num_passengers)
+    
+    if not suitable:
+        raise HTTPException(
+            status_code=400,
+            detail=f"No vehicle available for {num_passengers} passengers"
+        )
+    
+    return {
+        "num_passengers": num_passengers,
+        "suitable_vehicles": suitable,
+        "recommended": suitable[0]["id"]  # Cheapest suitable option
+    }
+
 # Ride Routes
 @api_router.post("/rides/calculate")
 async def calculate_ride_price(calculation: RideCalculation):
