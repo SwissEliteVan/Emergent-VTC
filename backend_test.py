@@ -12,7 +12,7 @@ from datetime import datetime
 from typing import Dict, Any, Optional
 
 # Backend URL from environment
-BACKEND_URL = "https://swissride-mvp.preview.emergentagent.com"
+BACKEND_URL = "https://swissride.preview.emergentagent.com"
 API_BASE = f"{BACKEND_URL}/api"
 
 class VTCBackendTester:

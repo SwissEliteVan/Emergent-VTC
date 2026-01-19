@@ -110,9 +110,9 @@ DB_NAME="test_database"
 
 ### Frontend (.env)
 ```bash
-EXPO_TUNNEL_SUBDOMAIN=swissride-mvp
-EXPO_PACKAGER_HOSTNAME=https://swissride-mvp.preview.emergentagent.com
-EXPO_PUBLIC_BACKEND_URL=https://swissride-mvp.preview.emergentagent.com
+EXPO_TUNNEL_SUBDOMAIN=swissride
+EXPO_PACKAGER_HOSTNAME=https://swissride.preview.emergentagent.com
+EXPO_PUBLIC_BACKEND_URL=https://swissride.preview.emergentagent.com
 EXPO_PUBLIC_GOOGLE_MAPS_API_KEY=YOUR_GOOGLE_MAPS_API_KEY_HERE
 ```
 
