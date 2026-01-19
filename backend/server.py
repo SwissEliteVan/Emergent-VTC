@@ -79,6 +79,128 @@ PEAK_HOURS = {
 
 # Discount rates
 DISCOUNT_RATES = {
+    "youth": 0.15,        # 15% pour -26 ans
+    "ride_sharing": 0.25, # 25% pour partage
+    "off_peak": 0.10,     # 10% hors pointe
+}
+
+def calculate_user_age(date_of_birth: str) -> int:
+    """Calculate age from date of birth (YYYY-MM-DD)"""
+    from datetime import datetime
+    try:
+        birth_date = datetime.strptime(date_of_birth, "%Y-%m-%d")
+        today = datetime.now()
+        age = today.year - birth_date.year - ((today.month, today.day) < (birth_date.month, birth_date.day))
+        return age
+    except:
+        return None
+
+def is_peak_hour(scheduled_time: datetime) -> bool:
+    """Check if the given time is during peak hours"""
+    hour = scheduled_time.hour
+    for period, (start, end) in PEAK_HOURS.items():
+        if start <= hour < end:
+            return True
+    return False
+
+def calculate_smart_price(
+    vehicle_type: str,
+    distance_km: float,
+    num_passengers: int = 1,
+    user_age: int = None,
+    is_ride_sharing: bool = False,
+    scheduled_time: datetime = None
+) -> dict:
+    """
+    Calculate intelligent price with applicable discounts
+    """
+    vehicle = VEHICLE_TYPES.get(vehicle_type)
+    if not vehicle:
+        raise ValueError("Invalid vehicle type")
+    
+    # Verify passenger count is valid
+    if num_passengers < vehicle["min_passengers"] or num_passengers > vehicle["max_passengers"]:
+        raise ValueError(f"Vehicle {vehicle_type} can only accommodate {vehicle['min_passengers']}-{vehicle['max_passengers']} passengers")
+    
+    # Base price
+    base_price = vehicle["base_fare"] + (distance_km * vehicle["rate_per_km"])
+    
+    # Apply discounts
+    discounts = []
+    total_discount = 0
+    
+    # 1. Youth discount (-15%)
+    if user_age and user_age < 26:
+        total_discount += DISCOUNT_RATES["youth"]
+        discounts.append("youth")
+    
+    # 2. Ride-sharing (-25%)
+    if is_ride_sharing:
+        total_discount += DISCOUNT_RATES["ride_sharing"]
+        discounts.append("ride_sharing")
+    
+    # 3. Off-peak hours (-10%)
+    if scheduled_time:
+        if not is_peak_hour(scheduled_time):
+            total_discount += DISCOUNT_RATES["off_peak"]
+            discounts.append("off_peak")
+    
+    # Maximum 50% discount
+    total_discount = min(total_discount, 0.50)
+    final_price = base_price * (1 - total_discount)
+    
+    return {
+        "vehicle_type": vehicle_type,
+        "vehicle_name": vehicle["name"],
+        "distance_km": distance_km,
+        "num_passengers": num_passengers,
+        "base_price": round(base_price, 2),
+        "final_price": round(final_price, 2),
+        "total_discount_percent": round(total_discount * 100, 0),
+        "discounts_applied": discounts,
+        "currency": "CHF"
+    }
+
+def suggest_off_peak_times(scheduled_time: datetime) -> list:
+    """Suggest cheaper off-peak times near the requested time"""
+    suggestions = []
+    hour = scheduled_time.hour
+    
+    # If during peak, suggest before or after
+    if is_peak_hour(scheduled_time):
+        # Suggest 1 hour before peak
+        for period_name, (start, end) in PEAK_HOURS.items():
+            if start <= hour < end:
+                # Before peak
+                before_hour = start - 1
+                if 0 <= before_hour <= 23:
+                    before_time = scheduled_time.replace(hour=before_hour)
+                    suggestions.append({
+                        "time": before_time.strftime("%H:%M"),
+                        "discount": "10%",
+                        "reason": "Heure creuse (avant pointe)"
+                    })
+                
+                # After peak
+                after_hour = end
+                if 0 <= after_hour <= 23:
+                    after_time = scheduled_time.replace(hour=after_hour)
+                    suggestions.append({
+                        "time": after_time.strftime("%H:%M"),
+                        "discount": "10%",
+                        "reason": "Heure creuse (après pointe)"
+                    })
+    
+    return suggestions
+
+# Peak hours definition (for dynamic pricing)
+PEAK_HOURS = {
+    "morning": (7, 9),    # 7h-9h
+    "evening": (17, 19),  # 17h-19h
+}
+
+# Discount rates
+DISCOUNT_RATES = {
     "youth": 0.15,        # 15% off for youth (<26 years)
     "ride_sharing": 0.25, # 25% off for shared rides
     "off_peak": 0.10,     # 10% off for off-peak hours
