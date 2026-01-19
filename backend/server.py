@@ -216,6 +216,11 @@ class User(BaseModel):
     account_type: str = "personal"  # personal or business
     company_name: Optional[str] = None
     vat_number: Optional[str] = None  # Swiss VAT/IDE number
+    
+    # NEW FIELDS for business logic
+    gender: Optional[str] = None  # "male", "female", "other", "prefer_not_to_say"
+    date_of_birth: Optional[str] = None  # Format: YYYY-MM-DD
+    
     created_at: datetime
 
 class SessionDataResponse(BaseModel):
