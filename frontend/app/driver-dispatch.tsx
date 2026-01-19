@@ -8,12 +8,14 @@ import {
   RefreshControl,
   Alert,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
 import Constants from 'expo-constants';
+import { useResponsive, responsive, safeAreaPadding } from '../utils/responsive';
 
 const BACKEND_URL = Constants.expoConfig?.extra?.EXPO_PUBLIC_BACKEND_URL || process.env.EXPO_PUBLIC_BACKEND_URL;
 
@@ -40,10 +42,12 @@ interface Ride {
 export default function DriverDispatchScreen() {
   const { user, sessionToken, logout } = useAuth();
   const router = useRouter();
+  const { isDesktop, isTablet, width } = useResponsive();
   const [pendingRides, setPendingRides] = useState<Ride[]>([]);
   const [activeRide, setActiveRide] = useState<Ride | null>(null);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [earnings, setEarnings] = useState({ total: 0, rides: 0 });
 
   useEffect(() => {
     if (!user) {
@@ -53,6 +57,7 @@ export default function DriverDispatchScreen() {
     
     fetchPendingRides();
     fetchActiveRide();
+    fetchEarnings();
     
     // Poll for new rides every 5 seconds
     const interval = setInterval(() => {
@@ -87,10 +92,25 @@ export default function DriverDispatchScreen() {
     }
   };
 
+  const fetchEarnings = async () => {
+    try {
+      const response = await axios.get(`${BACKEND_URL}/api/driver/earnings`, {
+        headers: { Authorization: `Bearer ${sessionToken}` }
+      });
+      setEarnings({
+        total: response.data.total_earnings,
+        rides: response.data.total_rides
+      });
+    } catch (error) {
+      console.error('Failed to fetch earnings:', error);
+    }
+  };
+
   const handleRefresh = async () => {
     setRefreshing(true);
     await fetchPendingRides();
     await fetchActiveRide();
+    await fetchEarnings();
     setRefreshing(false);
   };
 
@@ -103,18 +123,31 @@ export default function DriverDispatchScreen() {
         { headers: { Authorization: `Bearer ${sessionToken}` } }
       );
       
-      Alert.alert('Succès', 'Course acceptée!', [
-        { text: 'OK', onPress: () => {
-          fetchPendingRides();
-          fetchActiveRide();
-          router.push({
-            pathname: '/driver-active',
-            params: { rideId }
-          });
-        }}
-      ]);
+      const msg = 'Course acceptée!';
+      if (Platform.OS === 'web') {
+        alert(msg);
+        fetchPendingRides();
+        fetchActiveRide();
+        router.push({
+          pathname: '/driver-active',
+          params: { rideId }
+        });
+      } else {
+        Alert.alert('Succès', msg, [
+          { text: 'OK', onPress: () => {
+            fetchPendingRides();
+            fetchActiveRide();
+            router.push({
+              pathname: '/driver-active',
+              params: { rideId }
+            });
+          }}
+        ]);
+      }
     } catch (error) {
-      Alert.alert('Erreur', 'Impossible d\'accepter la course');
+      const msg = 'Impossible d\'accepter la course';
+      if (Platform.OS === 'web') alert(msg);
+      else Alert.alert('Erreur', msg);
     } finally {
       setLoading(false);
     }
@@ -131,7 +164,9 @@ export default function DriverDispatchScreen() {
       // Remove from local list
       setPendingRides(prev => prev.filter(r => r.ride_id !== rideId));
     } catch (error) {
-      Alert.alert('Erreur', 'Impossible de refuser la course');
+      const msg = 'Impossible de refuser la course';
+      if (Platform.OS === 'web') alert(msg);
+      else Alert.alert('Erreur', msg);
     }
   };
 
@@ -142,9 +177,11 @@ export default function DriverDispatchScreen() {
         {},
         { headers: { Authorization: `Bearer ${sessionToken}` } }
       );
-      router.replace('/map');
+      router.replace('/');
     } catch (error) {
-      Alert.alert('Erreur', 'Impossible de changer de mode');
+      const msg = 'Impossible de changer de mode';
+      if (Platform.OS === 'web') alert(msg);
+      else Alert.alert('Erreur', msg);
     }
   };
 
@@ -152,150 +189,210 @@ export default function DriverDispatchScreen() {
     switch(type) {
       case 'eco': return '🚗';
       case 'berline': return '🚙';
-      case 'van': return '🚐';
+      case 'bus': return '🚌';
       default: return '🚗';
     }
   };
 
+  // Render sidebar for desktop (earnings + stats)
+  const renderSidebar = () => (
+    <View style={styles.sidebar}>
+      {/* Driver Profile */}
+      <View style={styles.sidebarProfile}>
+        <View style={styles.profileAvatar}>
+          <Ionicons name="person" size={32} color="#D4AF37" />
+        </View>
+        <Text style={styles.profileName}>{user?.name}</Text>
+        <Text style={styles.profileRole}>Chauffeur</Text>
+      </View>
+
+      {/* Earnings Card */}
+      <View style={styles.earningsCard}>
+        <Ionicons name="cash" size={28} color="#D4AF37" />
+        <Text style={styles.earningsLabel}>Gains totaux</Text>
+        <Text style={styles.earningsValue}>{earnings.total.toFixed(2)} CHF</Text>
+        <Text style={styles.earningsRides}>{earnings.rides} courses complétées</Text>
+      </View>
+
+      {/* Quick Actions */}
+      <View style={styles.quickActions}>
+        <TouchableOpacity 
+          style={styles.quickActionButton}
+          onPress={handleSwitchToPassenger}
+        >
+          <Ionicons name="swap-horizontal" size={20} color="#D4AF37" />
+          <Text style={styles.quickActionText}>Mode passager</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={styles.quickActionButton}
+          onPress={logout}
+        >
+          <Ionicons name="log-out-outline" size={20} color="#D4AF37" />
+          <Text style={styles.quickActionText}>Déconnexion</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+
+  // Render ride card
+  const renderRideCard = (ride: Ride) => (
+    <View key={ride.ride_id} style={[styles.rideCard, isDesktop && styles.rideCardDesktop]}>
+      {/* Vehicle Type */}
+      <View style={styles.rideHeader}>
+        <Text style={styles.vehicleIcon}>{getVehicleIcon(ride.vehicle_type)}</Text>
+        <View style={styles.rideHeaderInfo}>
+          <Text style={styles.vehicleType}>
+            {ride.vehicle_type.toUpperCase()}
+          </Text>
+          <Text style={styles.distance}>
+            {ride.distance_km.toFixed(1)} km
+          </Text>
+        </View>
+        <View style={styles.priceBox}>
+          <Text style={styles.priceLabel}>Gain</Text>
+          <Text style={styles.priceValue}>{ride.price.toFixed(2)} CHF</Text>
+        </View>
+      </View>
+
+      {/* Locations */}
+      <View style={styles.locationContainer}>
+        <View style={styles.locationRow}>
+          <View style={styles.locationDot}>
+            <Ionicons name="location" size={16} color="#4CAF50" />
+          </View>
+          <Text style={styles.locationText} numberOfLines={1}>
+            {ride.pickup.address}
+          </Text>
+        </View>
+        
+        <View style={styles.locationConnector} />
+        
+        <View style={styles.locationRow}>
+          <View style={styles.locationDot}>
+            <Ionicons name="flag" size={16} color="#D4AF37" />
+          </View>
+          <Text style={styles.locationText} numberOfLines={1}>
+            {ride.destination.address}
+          </Text>
+        </View>
+      </View>
+
+      {/* Action Buttons */}
+      <View style={styles.actionButtons}>
+        <TouchableOpacity 
+          style={[styles.actionButton, styles.declineButton]}
+          onPress={() => handleDeclineRide(ride.ride_id)}
+        >
+          <Ionicons name="close-circle" size={20} color="#FFFFFF" />
+          <Text style={styles.actionButtonText}>REFUSER</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={[styles.actionButton, styles.acceptButton]}
+          onPress={() => handleAcceptRide(ride.ride_id)}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="#0A0A0A" />
+          ) : (
+            <>
+              <Ionicons name="checkmark-circle" size={20} color="#0A0A0A" />
+              <Text style={styles.acceptButtonText}>ACCEPTER</Text>
+            </>
+          )}
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+
   return (
     <View style={styles.container}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, isDesktop && styles.headerDesktop]}>
         <View>
           <Text style={styles.greeting}>Mode Chauffeur</Text>
           <Text style={styles.userName}>{user?.name}</Text>
         </View>
-        <View style={styles.headerActions}>
-          <TouchableOpacity 
-            style={styles.switchButton}
-            onPress={handleSwitchToPassenger}
-          >
-            <Ionicons name="swap-horizontal" size={20} color="#D4AF37" />
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.logoutButton}
-            onPress={logout}
-          >
-            <Ionicons name="log-out-outline" size={24} color="#D4AF37" />
-          </TouchableOpacity>
-        </View>
+        {!isDesktop && (
+          <View style={styles.headerActions}>
+            <TouchableOpacity 
+              style={styles.switchButton}
+              onPress={handleSwitchToPassenger}
+            >
+              <Ionicons name="swap-horizontal" size={20} color="#D4AF37" />
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.logoutButton}
+              onPress={logout}
+            >
+              <Ionicons name="log-out-outline" size={24} color="#D4AF37" />
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
 
-      {/* Active Ride Alert */}
-      {activeRide && (
-        <TouchableOpacity 
-          style={styles.activeRideAlert}
-          onPress={() => router.push({
-            pathname: '/driver-active',
-            params: { rideId: activeRide.ride_id }
-          })}
-        >
-          <Ionicons name="car-sport" size={24} color="#4CAF50" />
-          <View style={styles.activeRideText}>
-            <Text style={styles.activeRideTitle}>Course en cours</Text>
-            <Text style={styles.activeRideSubtitle}>Appuyez pour voir les détails</Text>
-          </View>
-          <Ionicons name="chevron-forward" size={24} color="#4CAF50" />
-        </TouchableOpacity>
-      )}
+      {/* Main Layout */}
+      <View style={[styles.mainLayout, isDesktop && styles.mainLayoutDesktop]}>
+        {/* Sidebar for desktop */}
+        {isDesktop && renderSidebar()}
 
-      {/* Pending Rides List */}
-      <View style={styles.content}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Nouvelles demandes</Text>
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>{pendingRides.length}</Text>
-          </View>
-        </View>
-
-        <ScrollView 
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl 
-              refreshing={refreshing} 
-              onRefresh={handleRefresh}
-              tintColor="#D4AF37"
-            />
-          }
-        >
-          {pendingRides.length === 0 ? (
-            <View style={styles.emptyState}>
-              <Ionicons name="time" size={64} color="#666666" />
-              <Text style={styles.emptyStateText}>Aucune course disponible</Text>
-              <Text style={styles.emptyStateSubtext}>Tirez pour actualiser</Text>
-            </View>
-          ) : (
-            pendingRides.map((ride) => (
-              <View key={ride.ride_id} style={styles.rideCard}>
-                {/* Vehicle Type */}
-                <View style={styles.rideHeader}>
-                  <Text style={styles.vehicleIcon}>{getVehicleIcon(ride.vehicle_type)}</Text>
-                  <View style={styles.rideHeaderInfo}>
-                    <Text style={styles.vehicleType}>
-                      {ride.vehicle_type.toUpperCase()}
-                    </Text>
-                    <Text style={styles.distance}>
-                      {ride.distance_km.toFixed(1)} km
-                    </Text>
-                  </View>
-                  <View style={styles.priceBox}>
-                    <Text style={styles.priceLabel}>Gain</Text>
-                    <Text style={styles.priceValue}>{ride.price.toFixed(2)} CHF</Text>
-                  </View>
-                </View>
-
-                {/* Locations */}
-                <View style={styles.locationContainer}>
-                  <View style={styles.locationRow}>
-                    <View style={styles.locationDot}>
-                      <Ionicons name="location" size={16} color="#4CAF50" />
-                    </View>
-                    <Text style={styles.locationText} numberOfLines={1}>
-                      {ride.pickup.address}
-                    </Text>
-                  </View>
-                  
-                  <View style={styles.locationConnector} />
-                  
-                  <View style={styles.locationRow}>
-                    <View style={styles.locationDot}>
-                      <Ionicons name="flag" size={16} color="#D4AF37" />
-                    </View>
-                    <Text style={styles.locationText} numberOfLines={1}>
-                      {ride.destination.address}
-                    </Text>
-                  </View>
-                </View>
-
-                {/* Action Buttons */}
-                <View style={styles.actionButtons}>
-                  <TouchableOpacity 
-                    style={[styles.actionButton, styles.declineButton]}
-                    onPress={() => handleDeclineRide(ride.ride_id)}
-                  >
-                    <Ionicons name="close-circle" size={24} color="#FFFFFF" />
-                    <Text style={styles.actionButtonText}>REFUSER</Text>
-                  </TouchableOpacity>
-                  
-                  <TouchableOpacity 
-                    style={[styles.actionButton, styles.acceptButton]}
-                    onPress={() => handleAcceptRide(ride.ride_id)}
-                    disabled={loading}
-                  >
-                    {loading ? (
-                      <ActivityIndicator color="#0A0A0A" />
-                    ) : (
-                      <>
-                        <Ionicons name="checkmark-circle" size={24} color="#0A0A0A" />
-                        <Text style={styles.acceptButtonText}>ACCEPTER</Text>
-                      </>
-                    )}
-                  </TouchableOpacity>
-                </View>
+        {/* Main Content */}
+        <View style={[styles.content, isDesktop && styles.contentDesktop]}>
+          {/* Active Ride Alert */}
+          {activeRide && (
+            <TouchableOpacity 
+              style={styles.activeRideAlert}
+              onPress={() => router.push({
+                pathname: '/driver-active',
+                params: { rideId: activeRide.ride_id }
+              })}
+            >
+              <Ionicons name="car-sport" size={24} color="#4CAF50" />
+              <View style={styles.activeRideText}>
+                <Text style={styles.activeRideTitle}>Course en cours</Text>
+                <Text style={styles.activeRideSubtitle}>Appuyez pour voir les détails</Text>
               </View>
-            ))
+              <Ionicons name="chevron-forward" size={24} color="#4CAF50" />
+            </TouchableOpacity>
           )}
-        </ScrollView>
+
+          {/* Section Header */}
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Nouvelles demandes</Text>
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>{pendingRides.length}</Text>
+            </View>
+          </View>
+
+          {/* Rides List */}
+          <ScrollView 
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl 
+                refreshing={refreshing} 
+                onRefresh={handleRefresh}
+                tintColor="#D4AF37"
+              />
+            }
+            contentContainerStyle={[
+              styles.scrollContent,
+              isDesktop && styles.scrollContentDesktop
+            ]}
+          >
+            {pendingRides.length === 0 ? (
+              <View style={styles.emptyState}>
+                <Ionicons name="time" size={64} color="#666666" />
+                <Text style={styles.emptyStateText}>Aucune course disponible</Text>
+                <Text style={styles.emptyStateSubtext}>Tirez pour actualiser</Text>
+              </View>
+            ) : (
+              <View style={[styles.ridesGrid, isDesktop && styles.ridesGridDesktop]}>
+                {pendingRides.map(renderRideCard)}
+              </View>
+            )}
+          </ScrollView>
+        </View>
       </View>
     </View>
   );
@@ -311,8 +408,12 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 24,
-    paddingTop: 60,
+    paddingTop: safeAreaPadding.top,
     paddingBottom: 16,
+  },
+  headerDesktop: {
+    paddingHorizontal: 32,
+    paddingTop: 24,
   },
   greeting: {
     fontSize: 14,
@@ -343,11 +444,104 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+
+  // Main Layout
+  mainLayout: {
+    flex: 1,
+  },
+  mainLayoutDesktop: {
+    flexDirection: 'row',
+  },
+
+  // Sidebar (Desktop only)
+  sidebar: {
+    width: 280,
+    backgroundColor: '#1A1A1A',
+    borderRightWidth: 1,
+    borderRightColor: '#2C2C2C',
+    padding: 24,
+  },
+  sidebarProfile: {
+    alignItems: 'center',
+    marginBottom: 24,
+    paddingBottom: 24,
+    borderBottomWidth: 1,
+    borderBottomColor: '#2C2C2C',
+  },
+  profileAvatar: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#2C2C2C',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  profileName: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  profileRole: {
+    fontSize: 14,
+    color: '#D4AF37',
+    marginTop: 4,
+  },
+  earningsCard: {
+    backgroundColor: '#2C2C2C',
+    borderRadius: 12,
+    padding: 20,
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  earningsLabel: {
+    fontSize: 14,
+    color: '#A0A0A0',
+    marginTop: 12,
+  },
+  earningsValue: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#D4AF37',
+    marginTop: 4,
+  },
+  earningsRides: {
+    fontSize: 12,
+    color: '#A0A0A0',
+    marginTop: 8,
+  },
+  quickActions: {
+    gap: 12,
+  },
+  quickActionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#2C2C2C',
+    borderRadius: 12,
+    padding: 16,
+    gap: 12,
+  },
+  quickActionText: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    fontWeight: '500',
+  },
+
+  // Content
+  content: {
+    flex: 1,
+    paddingHorizontal: 24,
+  },
+  contentDesktop: {
+    paddingHorizontal: 32,
+    paddingTop: 8,
+  },
+  
+  // Active Ride Alert
   activeRideAlert: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#1A3A1A',
-    marginHorizontal: 24,
     marginBottom: 16,
     padding: 16,
     borderRadius: 12,
@@ -368,10 +562,8 @@ const styles = StyleSheet.create({
     color: '#A0A0A0',
     marginTop: 2,
   },
-  content: {
-    flex: 1,
-    paddingHorizontal: 24,
-  },
+
+  // Section Header
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -394,6 +586,26 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#0A0A0A',
   },
+
+  // Scroll Content
+  scrollContent: {
+    paddingBottom: 40,
+  },
+  scrollContentDesktop: {
+    paddingBottom: 40,
+  },
+
+  // Rides Grid
+  ridesGrid: {
+    gap: 16,
+  },
+  ridesGridDesktop: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 20,
+  },
+
+  // Empty State
   emptyState: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -410,13 +622,19 @@ const styles = StyleSheet.create({
     color: '#666666',
     marginTop: 8,
   },
+
+  // Ride Card
   rideCard: {
     backgroundColor: '#1A1A1A',
     borderRadius: 16,
     padding: 20,
-    marginBottom: 16,
     borderWidth: 2,
     borderColor: '#2C2C2C',
+  },
+  rideCardDesktop: {
+    flex: 1,
+    minWidth: 320,
+    maxWidth: 400,
   },
   rideHeader: {
     flexDirection: 'row',
@@ -506,12 +724,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#4CAF50',
   },
   actionButtonText: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '700',
     color: '#FFFFFF',
   },
   acceptButtonText: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '700',
     color: '#0A0A0A',
   },
