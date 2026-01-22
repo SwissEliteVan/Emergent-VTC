@@ -1,66 +1,140 @@
 import { Car, Sparkles, Users } from 'lucide-react';
 
+// Véhicules avec photos Tesla
 export const VEHICLE_TYPES = [
   {
     id: 'eco',
-    name: 'Eco',
-    description: 'Confortable et économique pour vos trajets quotidiens',
-    vehicleModel: 'Volkswagen Passat ou similaire',
+    name: 'Tesla Model 3',
+    description: 'Électrique, silencieux et confortable',
+    vehicleModel: 'Tesla Model 3 Standard Range',
     icon: Car,
-    basePrice: 6,
-    pricePerKm: 3,
+    basePrice: 8,
+    pricePerKm: 3.5,
     capacity: 4,
     luggage: 2,
-    image: 'https://images.unsplash.com/photo-1542362567-b07e54358753?w=800&auto=format&fit=crop',
+    image: 'https://images.unsplash.com/photo-1560958089-b8a1929cea89?w=800&auto=format&fit=crop',
     features: [
-      'Véhicule récent et climatisé',
+      'Véhicule 100% électrique',
+      'Conduite autonome niveau 2',
+      'Écran tactile 15 pouces',
       'Chauffeur professionnel certifié',
       'Eau minérale offerte',
-      'Wi-Fi gratuit à bord',
-      'Chargeur smartphone USB'
-    ]
+      'Chargeur smartphone USB-C'
+    ],
+    badge: 'ECO'
   },
   {
     id: 'berline',
-    name: 'Berline Luxe',
-    description: 'Confort premium pour vos déplacements d\'affaires',
-    vehicleModel: 'Mercedes Classe E, BMW Série 5',
+    name: 'Tesla Model S',
+    description: 'Luxe électrique, performances exceptionnelles',
+    vehicleModel: 'Tesla Model S Long Range',
     icon: Sparkles,
-    basePrice: 10,
+    basePrice: 12,
     pricePerKm: 5,
     capacity: 4,
     luggage: 3,
-    image: 'https://images.unsplash.com/photo-1617531653332-bd46c24f2068?w=800&auto=format&fit=crop',
+    image: 'https://images.unsplash.com/photo-1617788138017-80ad40651399?w=800&auto=format&fit=crop',
     features: [
-      'Mercedes Classe E ou BMW Série 5',
-      'Sièges en cuir chauffants',
+      'Tesla Model S haut de gamme',
+      'Accélération 0-100 km/h en 3.2s',
+      'Sièges en cuir premium chauffants',
+      'Système audio 22 haut-parleurs',
       'Boissons premium offertes',
       'Chargeurs sans fil',
-      'Wi-Fi haut débit',
-      'Journal du jour'
+      'Wi-Fi Starlink haut débit'
     ],
-    popular: true
+    popular: true,
+    badge: 'PREMIUM'
   },
   {
     id: 'van',
-    name: 'Van Premium',
-    description: 'Idéal pour groupes et familles avec bagages',
-    vehicleModel: 'Mercedes Vito, V-Class',
+    name: 'Tesla Model X',
+    description: 'SUV électrique 7 places avec portes Falcon Wing',
+    vehicleModel: 'Tesla Model X Long Range',
     icon: Users,
-    basePrice: 15,
+    basePrice: 18,
     pricePerKm: 7,
     capacity: 7,
     luggage: 6,
-    image: 'https://images.unsplash.com/photo-1664574654529-b60630f33fdb?w=800&auto=format&fit=crop',
+    image: 'https://images.unsplash.com/photo-1571607388263-1044f9ea01dd?w=800&auto=format&fit=crop',
     features: [
-      'Mercedes Vito ou V-Class',
-      'Espace bagages XXL',
-      '7 sièges confortables',
-      'Parfait pour groupes et événements',
-      'Boissons et snacks offerts',
-      'Système audio premium'
-    ]
+      'Tesla Model X avec portes papillon',
+      'Espace XXL pour 7 passagers',
+      'Mode bioweapon defense (filtration air)',
+      'Parfait pour familles et groupes',
+      'Coffre avant et arrière généreux',
+      'Boissons et snacks premium',
+      'Système audio immersif'
+    ],
+    badge: 'FAMILLE'
   }
+];
+
+// Trajets populaires prédéfinis
+export const POPULAR_ROUTES = [
+  {
+    id: 'vevey-montreux',
+    from: 'Vevey',
+    to: 'Montreux',
+    distance: 7,
+    duration: '12 min',
+    image: 'https://images.unsplash.com/photo-1527004013197-933c4bb611b3?w=400&auto=format&fit=crop',
+    description: 'Riviera vaudoise'
+  },
+  {
+    id: 'vevey-lausanne',
+    from: 'Vevey',
+    to: 'Lausanne',
+    distance: 25,
+    duration: '25 min',
+    image: 'https://images.unsplash.com/photo-1516483638261-f4dbaf036963?w=400&auto=format&fit=crop',
+    description: 'Centre-ville'
+  },
+  {
+    id: 'vevey-geneve-airport',
+    from: 'Vevey',
+    to: 'Aéroport Genève',
+    distance: 95,
+    duration: '1h 10min',
+    image: 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=400&auto=format&fit=crop',
+    description: 'Transfert aéroport'
+  },
+  {
+    id: 'vevey-zurich-airport',
+    from: 'Vevey',
+    to: 'Aéroport Zurich',
+    distance: 220,
+    duration: '2h 30min',
+    image: 'https://images.unsplash.com/photo-1464037866556-6812c9d1c72e?w=400&auto=format&fit=crop',
+    description: 'Transfert longue distance'
+  },
+  {
+    id: 'custom',
+    from: '',
+    to: '',
+    distance: 0,
+    duration: '',
+    image: 'https://images.unsplash.com/photo-1524661135-423995f22d0b?w=400&auto=format&fit=crop',
+    description: 'Trajet personnalisé'
+  }
+];
+
+// Suggestions de villes pour autocomplete
+export const CITY_SUGGESTIONS = [
+  { name: 'Vevey', region: 'Vaud', distance: 0 },
+  { name: 'Montreux', region: 'Vaud', distance: 7 },
+  { name: 'La Tour-de-Peilz', region: 'Vaud', distance: 2 },
+  { name: 'Clarens', region: 'Vaud', distance: 5 },
+  { name: 'Villeneuve', region: 'Vaud', distance: 12 },
+  { name: 'Lausanne', region: 'Vaud', distance: 25 },
+  { name: 'Genève', region: 'Genève', distance: 90 },
+  { name: 'Aéroport Genève (GVA)', region: 'Genève', distance: 95 },
+  { name: 'Sion', region: 'Valais', distance: 60 },
+  { name: 'Zurich', region: 'Zurich', distance: 210 },
+  { name: 'Aéroport Zurich (ZRH)', region: 'Zurich', distance: 220 },
+  { name: 'Berne', region: 'Berne', distance: 110 },
+  { name: 'Fribourg', region: 'Fribourg', distance: 80 },
+  { name: 'Interlaken', region: 'Berne', distance: 95 }
 ];
 
 // Tarifs additionnels
@@ -88,47 +162,17 @@ export const ADDITIONAL_FEES = {
   },
   childSeat: {
     label: 'Siège enfant',
-    description: 'Sur demande',
+    description: 'Sur demande préalable',
     amount: 5,
     currency: 'CHF',
     type: 'fixed'
-  }
-};
-
-// Zones de service avec distances estimées depuis Vevey
-export const SERVICE_ZONES = {
-  local: {
-    name: 'Zone locale',
-    cities: [
-      { name: 'Vevey', distance: 0 },
-      { name: 'Montreux', distance: 7 },
-      { name: 'La Tour-de-Peilz', distance: 2 },
-      { name: 'Clarens', distance: 5 },
-      { name: 'Villeneuve', distance: 12 }
-    ],
-    description: 'Service immédiat 24/7',
-    responseTime: '5-10 min'
   },
-  regional: {
-    name: 'Zone régionale',
-    cities: [
-      { name: 'Lausanne', distance: 25 },
-      { name: 'Genève Aéroport', distance: 95 },
-      { name: 'Sion', distance: 60 },
-      { name: 'Fribourg', distance: 80 }
-    ],
-    description: 'Réservation recommandée',
-    responseTime: '15-30 min'
-  },
-  extended: {
-    name: 'Zone étendue',
-    cities: [
-      { name: 'Zurich Aéroport', distance: 220 },
-      { name: 'Berne', distance: 110 },
-      { name: 'Interlaken', distance: 95 }
-    ],
-    description: 'Sur réservation uniquement',
-    responseTime: 'Selon disponibilité'
+  meetAndGreet: {
+    label: 'Accueil personnalisé',
+    description: 'Pancarte avec nom',
+    amount: 15,
+    currency: 'CHF',
+    type: 'fixed'
   }
 };
 
@@ -140,24 +184,17 @@ export const calculatePrice = (distance, vehicleType, options = {}) => {
   let total = vehicle.basePrice + (distance * vehicle.pricePerKm);
 
   // Ajouter les frais additionnels
-  if (options.nightTime) {
-    total += ADDITIONAL_FEES.nightSurcharge.amount;
-  }
-  if (options.airport) {
-    total += ADDITIONAL_FEES.airportPickup.amount;
-  }
-  if (options.waitingTime) {
-    total += ADDITIONAL_FEES.waitingTime.amount * options.waitingTime;
-  }
-  if (options.childSeat) {
-    total += ADDITIONAL_FEES.childSeat.amount;
-  }
+  if (options.nightTime) total += ADDITIONAL_FEES.nightSurcharge.amount;
+  if (options.airport) total += ADDITIONAL_FEES.airportPickup.amount;
+  if (options.waitingTime) total += ADDITIONAL_FEES.waitingTime.amount * options.waitingTime;
+  if (options.childSeat) total += ADDITIONAL_FEES.childSeat.amount;
+  if (options.meetAndGreet) total += ADDITIONAL_FEES.meetAndGreet.amount;
 
   return {
     basePrice: vehicle.basePrice,
     distancePrice: distance * vehicle.pricePerKm,
     additionalFees: total - vehicle.basePrice - (distance * vehicle.pricePerKm),
-    total: total,
+    total: Math.round(total),
     currency: 'CHF',
     distance: distance,
     vehicle: vehicle.name
@@ -165,24 +202,29 @@ export const calculatePrice = (distance, vehicleType, options = {}) => {
 };
 
 export const estimateDistance = (from, to) => {
-  // Simuler le calcul de distance (en production, utiliser une vraie API)
-  // Pour l'instant, distances estimées depuis Vevey
-  const destinations = {
-    'montreux': 7,
-    'lausanne': 25,
-    'geneve': 95,
-    'sion': 60,
-    'zurich': 220,
-    'berne': 110
-  };
-
+  const normalizedFrom = from.toLowerCase();
   const normalizedTo = to.toLowerCase();
-  for (const [city, distance] of Object.entries(destinations)) {
-    if (normalizedTo.includes(city)) {
-      return distance;
-    }
+
+  // Chercher dans les villes suggérées
+  const toCity = CITY_SUGGESTIONS.find(city =>
+    normalizedTo.includes(city.name.toLowerCase())
+  );
+
+  if (toCity) {
+    return toCity.distance;
   }
 
   // Distance par défaut
   return 15;
+};
+
+export const getAllPricesForRoute = (distance) => {
+  const prices = {};
+  VEHICLE_TYPES.forEach(vehicle => {
+    const priceData = calculatePrice(distance, vehicle.id);
+    if (priceData) {
+      prices[vehicle.id] = priceData.total;
+    }
+  });
+  return prices;
 };
