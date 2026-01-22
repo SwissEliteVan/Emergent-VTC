@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <!-- Fond doré -->
+  <rect width="512" height="512" rx="128" fill="#D4AF37"/>
+
+  <!-- Lettre R stylisée -->
+  <text x="256" y="370"
+        font-family="Poppins, Arial, sans-serif"
+        font-size="320"
+        font-weight="700"
+        text-anchor="middle"
+        fill="#1A1A1A">R</text>
+
+  <!-- Accent de luxe -->
+  <circle cx="430" cy="100" r="30" fill="#1A1A1A" opacity="0.3"/>
+</svg>

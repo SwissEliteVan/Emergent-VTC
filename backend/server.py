@@ -870,6 +870,24 @@ async def get_admin_stats(admin_password: str):
 # Include the router in the main app
 app.include_router(api_router)
 
+# Root endpoint - Welcome page
+@app.get("/")
+async def root():
+    return {
+        "message": "Bienvenue sur l'API Emergent VTC",
+        "version": "1.0.0",
+        "status": "operational",
+        "documentation": {
+            "swagger": "/docs",
+            "redoc": "/redoc"
+        },
+        "endpoints": {
+            "api": "/api",
+            "admin": "/admin",
+            "health": "/api/vehicles"
+        }
+    }
+
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
