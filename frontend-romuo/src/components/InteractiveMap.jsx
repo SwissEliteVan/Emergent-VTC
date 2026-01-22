@@ -136,7 +136,7 @@ export default function InteractiveMap({ pickup, destination }) {
 
       {/* Badge de qualité */}
       <div className="absolute bottom-4 left-4 bg-primary text-dark-900 px-4 py-2 rounded-full shadow-luxury z-10 font-semibold text-sm">
-        ⭐ Service Premium Suisse
+        Service Premium Suisse
       </div>
     </div>
   );
