@@ -14,8 +14,7 @@ export const VEHICLE_TYPES = [
       'Chauffeur professionnel',
       'Eau minérale offerte',
       'Wi-Fi gratuit'
-    ],
-    image: '🚗'
+    ]
   },
   {
     id: 'berline',
@@ -32,7 +31,6 @@ export const VEHICLE_TYPES = [
       'Chargeurs smartphone',
       'Wi-Fi haut débit'
     ],
-    image: '🚙',
     popular: true
   },
   {
@@ -49,8 +47,7 @@ export const VEHICLE_TYPES = [
       'Sièges confortables',
       'Parfait pour groupes et familles',
       'Boissons et snacks offerts'
-    ],
-    image: '🚐'
+    ]
   }
 ];
 

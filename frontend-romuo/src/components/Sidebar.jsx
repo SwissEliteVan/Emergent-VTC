@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MapPin, Navigation, Users as UsersIcon, Calendar, Clock, LogIn } from 'lucide-react';
+import { MapPin, Navigation, Users as UsersIcon, Calendar, Clock, LogIn, MapPinned } from 'lucide-react';
 import VehicleCard from './VehicleCard';
 import { VEHICLE_TYPES } from '../utils/vehicles';
 
@@ -166,10 +166,16 @@ export default function Sidebar() {
 
         {/* Informations supplémentaires */}
         <div className="mt-6 p-4 bg-dark-800 rounded-lg border border-dark-700">
-          <p className="text-xs text-gray-400">
-            <span className="font-semibold text-primary">📍 Zone de service :</span> Vevey, Montreux, Lavaux, et communes environnantes.
-            Déplacements vers Lausanne, Genève et aéroports sur demande.
-          </p>
+          <div className="flex items-start gap-3">
+            <MapPinned className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-xs font-semibold text-primary mb-1">Zone de service</p>
+              <p className="text-xs text-gray-400">
+                Vevey, Montreux, Lavaux, et communes environnantes.
+                Déplacements vers Lausanne, Genève et aéroports sur demande.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
 
