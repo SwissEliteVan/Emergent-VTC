@@ -1,80 +1,124 @@
-import { Check } from 'lucide-react';
+import { Check, Users, Briefcase } from 'lucide-react';
+import { useState } from 'react';
 
 export default function VehicleCard({ vehicle, selected, onClick, estimatedPrice }) {
-  const IconComponent = vehicle.icon;
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   return (
     <div
       onClick={onClick}
-      className={`vehicle-card ${selected ? 'selected' : ''} group`}
+      className={`relative overflow-hidden rounded-xl transition-all duration-300 cursor-pointer
+        ${selected
+          ? 'ring-2 ring-primary shadow-luxury'
+          : 'border border-dark-700 hover:border-primary/50 hover:shadow-lg'
+        }
+      `}
     >
-      {/* Badge "Populaire" */}
+      {/* Badge Populaire */}
       {vehicle.popular && (
-        <div className="absolute -top-2 -right-2 bg-primary text-dark-900 text-xs font-bold px-2 py-1 rounded-full shadow-lg">
-          ⭐ Populaire
+        <div className="absolute top-3 right-3 z-10 bg-primary text-dark-900 text-xs font-bold px-3 py-1.5 rounded-full shadow-lg backdrop-blur-sm">
+          POPULAIRE
         </div>
       )}
 
-      <div className="flex items-start gap-4">
-        {/* Icône du véhicule */}
-        <div className="flex-shrink-0">
-          <div className="w-16 h-16 bg-dark-700 rounded-lg flex items-center justify-center text-3xl group-hover:scale-110 transition-transform">
-            {vehicle.image}
-          </div>
+      {/* Checkmark pour sélection */}
+      {selected && (
+        <div className="absolute top-3 left-3 z-10 bg-primary rounded-full p-1.5 shadow-lg">
+          <Check className="w-4 h-4 text-dark-900" strokeWidth={3} />
         </div>
+      )}
 
-        {/* Informations */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between mb-1">
-            <h3 className="font-bold text-white text-lg flex items-center gap-2">
-              {vehicle.name}
-              {selected && <Check className="w-5 h-5 text-primary" />}
-            </h3>
-            <IconComponent className="w-5 h-5 text-primary flex-shrink-0" />
-          </div>
+      {/* Image du véhicule */}
+      <div className="relative h-48 bg-gradient-to-br from-dark-800 to-dark-900 overflow-hidden">
+        <img
+          src={vehicle.image}
+          alt={vehicle.name}
+          onLoad={() => setImageLoaded(true)}
+          className={`w-full h-full object-cover transition-all duration-500
+            ${imageLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-105'}
+            ${selected ? 'brightness-110' : 'brightness-95'}
+          `}
+        />
+        {/* Overlay gradient */}
+        <div className="absolute inset-0 bg-gradient-to-t from-dark-900/80 to-transparent" />
 
-          <p className="text-gray-400 text-sm mb-2 line-clamp-2">
-            {vehicle.description}
-          </p>
-
-          {/* Capacité */}
-          <div className="flex items-center gap-4 text-xs text-gray-500 mb-2">
-            <span className="flex items-center gap-1">
-              👤 {vehicle.capacity} passagers
-            </span>
-          </div>
-
-          {/* Prix */}
-          <div className="flex items-center justify-between mt-3 pt-3 border-t border-dark-700">
-            <div>
-              <p className="text-gray-400 text-xs">À partir de</p>
-              <p className="text-primary font-bold text-xl">
-                {estimatedPrice || vehicle.basePrice} CHF
-              </p>
-            </div>
-            {!estimatedPrice && (
-              <p className="text-xs text-gray-500">
-                + {vehicle.pricePerKm} CHF/km
-              </p>
-            )}
-          </div>
+        {/* Nom du véhicule sur l'image */}
+        <div className="absolute bottom-3 left-3 right-3">
+          <h3 className="text-white text-xl font-bold">{vehicle.name}</h3>
+          <p className="text-gray-300 text-sm">{vehicle.vehicleModel}</p>
         </div>
       </div>
 
-      {/* Caractéristiques (visible au survol) */}
-      {selected && (
-        <div className="mt-4 pt-4 border-t border-dark-700 animate-slide-up">
-          <p className="text-xs text-gray-400 font-semibold mb-2">Inclus dans le service :</p>
-          <ul className="space-y-1">
-            {vehicle.features.slice(0, 3).map((feature, idx) => (
-              <li key={idx} className="text-xs text-gray-300 flex items-center gap-2">
-                <Check className="w-3 h-3 text-primary flex-shrink-0" />
-                {feature}
-              </li>
-            ))}
-          </ul>
+      {/* Contenu de la carte */}
+      <div className="p-4 bg-dark-800">
+        {/* Description */}
+        <p className="text-gray-400 text-sm mb-4">{vehicle.description}</p>
+
+        {/* Capacités */}
+        <div className="flex items-center gap-4 mb-4 text-sm text-gray-400">
+          <div className="flex items-center gap-1.5">
+            <Users className="w-4 h-4 text-primary" />
+            <span>{vehicle.capacity} passagers</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <Briefcase className="w-4 h-4 text-primary" />
+            <span>{vehicle.luggage} bagages</span>
+          </div>
         </div>
-      )}
+
+        {/* Grille tarifaire */}
+        <div className="bg-dark-700/50 rounded-lg p-3 border border-dark-600 mb-3">
+          {estimatedPrice ? (
+            /* Prix estimé calculé */
+            <div>
+              <div className="flex items-baseline justify-between mb-2">
+                <span className="text-sm text-gray-400">Prix estimé</span>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-3xl font-bold text-primary">{estimatedPrice}</span>
+                  <span className="text-sm text-gray-400">CHF</span>
+                </div>
+              </div>
+              <div className="flex justify-between text-xs text-gray-500">
+                <span>Prise en charge {vehicle.basePrice} CHF</span>
+                <span>+ {vehicle.pricePerKm} CHF/km</span>
+              </div>
+            </div>
+          ) : (
+            /* Tarification standard */
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Prise en charge</p>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-xl font-bold text-primary">{vehicle.basePrice}</span>
+                  <span className="text-xs text-gray-400">CHF</span>
+                </div>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Par kilomètre</p>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-xl font-bold text-primary">{vehicle.pricePerKm}</span>
+                  <span className="text-xs text-gray-400">CHF</span>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Services inclus - visible seulement si sélectionné */}
+        {selected && (
+          <div className="animate-slide-up">
+            <p className="text-xs text-gray-400 font-semibold mb-2 uppercase tracking-wide">Services inclus</p>
+            <div className="space-y-1.5">
+              {vehicle.features.map((feature, idx) => (
+                <div key={idx} className="flex items-start gap-2 text-sm text-gray-300">
+                  <Check className="w-3.5 h-3.5 text-primary flex-shrink-0 mt-0.5" strokeWidth={2.5} />
+                  <span className="leading-tight">{feature}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
