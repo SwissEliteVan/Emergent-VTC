@@ -36,47 +36,63 @@ export default function AutocompleteInput({
 
     setLoading(true);
     try {
-      // API Nominatim - recherche en Suisse uniquement avec focus sur adresses
+      // API Nominatim - SANS featuretype pour inclure les rues
       const response = await fetch(
         `https://nominatim.openstreetmap.org/search?` +
-        `format=json&q=${encodeURIComponent(query)}&` +
-        `countrycodes=ch&limit=10&addressdetails=1&` +
-        `featuretype=settlement`,
+        `format=json&q=${encodeURIComponent(query + ', Suisse')}&` +
+        `countrycodes=ch&limit=15&addressdetails=1`,
         {
           headers: {
             'Accept-Language': 'fr',
-            'User-Agent': 'Romuo-VTC-App'
+            'User-Agent': 'RomuoVTC/1.0'
           }
         }
       );
 
       const data = await response.json();
+      console.log('Nominatim results:', data); // Debug
 
       // Formatter les résultats avec priorité aux rues
       const formatted = data
         .map(place => {
           const hasRoad = place.address?.road;
           const hasHouseNumber = place.address?.house_number;
+          const suburb = place.address?.suburb;
+          const town = place.address?.town || place.address.city || place.address.village;
+
+          // Construire le nom complet
+          let displayName = '';
+          if (hasRoad) {
+            displayName = hasHouseNumber
+              ? `${place.address.road} ${hasHouseNumber}`
+              : place.address.road;
+            if (suburb) displayName += `, ${suburb}`;
+          } else if (town) {
+            displayName = town;
+          } else {
+            displayName = place.name || place.display_name.split(',')[0];
+          }
 
           return {
             display_name: place.display_name,
             address: place.address,
-            name: hasRoad
-              ? (hasHouseNumber ? `${place.address.road} ${hasHouseNumber}` : place.address.road)
-              : (place.address.town || place.address.city || place.name),
-            city: place.address.city || place.address.town || place.address.village,
-            postcode: place.address.postcode,
+            name: displayName,
+            city: town,
+            postcode: place.address?.postcode,
             lat: place.lat,
             lon: place.lon,
             type: place.type,
+            class: place.class,
             hasStreet: hasRoad,
-            priority: hasRoad ? 1 : 2 // Priorité aux rues
+            priority: hasRoad ? 1 : (town ? 2 : 3) // Rues en 1er, villes en 2e, autres en 3e
           };
         })
-        // Trier: rues d'abord, puis villes
+        // Filtrer les résultats trop génériques et trier
+        .filter(p => p.class !== 'boundary' && p.type !== 'administrative')
         .sort((a, b) => a.priority - b.priority)
-        .slice(0, 6);
+        .slice(0, 8);
 
+      console.log('Formatted results:', formatted); // Debug
       setSuggestions(formatted);
       setShowSuggestions(true);
     } catch (error) {
