@@ -36,30 +36,46 @@ export default function AutocompleteInput({
 
     setLoading(true);
     try {
-      // API Nominatim - recherche en Suisse uniquement
+      // API Nominatim - recherche en Suisse uniquement avec focus sur adresses
       const response = await fetch(
         `https://nominatim.openstreetmap.org/search?` +
         `format=json&q=${encodeURIComponent(query)}&` +
-        `countrycodes=ch&limit=6&addressdetails=1`,
+        `countrycodes=ch&limit=10&addressdetails=1&` +
+        `featuretype=settlement`,
         {
           headers: {
             'Accept-Language': 'fr',
+            'User-Agent': 'Romuo-VTC-App'
           }
         }
       );
 
       const data = await response.json();
 
-      // Formatter les résultats
-      const formatted = data.map(place => ({
-        display_name: place.display_name,
-        address: place.address,
-        name: place.address.road || place.address.town || place.address.city || place.name,
-        city: place.address.city || place.address.town || place.address.village,
-        postcode: place.address.postcode,
-        lat: place.lat,
-        lon: place.lon
-      }));
+      // Formatter les résultats avec priorité aux rues
+      const formatted = data
+        .map(place => {
+          const hasRoad = place.address?.road;
+          const hasHouseNumber = place.address?.house_number;
+
+          return {
+            display_name: place.display_name,
+            address: place.address,
+            name: hasRoad
+              ? (hasHouseNumber ? `${place.address.road} ${hasHouseNumber}` : place.address.road)
+              : (place.address.town || place.address.city || place.name),
+            city: place.address.city || place.address.town || place.address.village,
+            postcode: place.address.postcode,
+            lat: place.lat,
+            lon: place.lon,
+            type: place.type,
+            hasStreet: hasRoad,
+            priority: hasRoad ? 1 : 2 // Priorité aux rues
+          };
+        })
+        // Trier: rues d'abord, puis villes
+        .sort((a, b) => a.priority - b.priority)
+        .slice(0, 6);
 
       setSuggestions(formatted);
       setShowSuggestions(true);
@@ -175,13 +191,21 @@ export default function AutocompleteInput({
                 }
               `}
             >
-              <div>
-                <p className="text-white font-medium text-sm">
-                  {place.name || place.city}
-                </p>
-                <p className="text-xs text-gray-400 line-clamp-1">
-                  {place.display_name}
-                </p>
+              <div className="flex items-start gap-2">
+                <MapPin className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-white font-medium text-sm">
+                    {place.name}
+                  </p>
+                  <p className="text-xs text-gray-400 truncate">
+                    {place.city && place.postcode ? `${place.postcode} ${place.city}` : place.city}
+                  </p>
+                  {place.hasStreet && (
+                    <span className="inline-block mt-1 px-2 py-0.5 text-xs bg-primary/20 text-primary rounded">
+                      Adresse
+                    </span>
+                  )}
+                </div>
               </div>
             </button>
           ))}
