@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { MapPin, X } from 'lucide-react';
-import { CITY_SUGGESTIONS } from '../utils/vehicles';
+import { MapPin, X, Loader2 } from 'lucide-react';
 
 export default function AutocompleteInput({
   value,
@@ -12,8 +11,10 @@ export default function AutocompleteInput({
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
+  const [loading, setLoading] = useState(false);
   const inputRef = useRef(null);
   const containerRef = useRef(null);
+  const searchTimeout = useRef(null);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -26,18 +27,96 @@ export default function AutocompleteInput({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Recherche d'adresses via Nominatim OpenStreetMap
+  const searchAddresses = async (query) => {
+    if (query.length < 3) {
+      setSuggestions([]);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // API Nominatim - SANS featuretype pour inclure les rues
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?` +
+        `format=json&q=${encodeURIComponent(query + ', Suisse')}&` +
+        `countrycodes=ch&limit=15&addressdetails=1`,
+        {
+          headers: {
+            'Accept-Language': 'fr',
+            'User-Agent': 'RomuoVTC/1.0'
+          }
+        }
+      );
+
+      const data = await response.json();
+      console.log('Nominatim results:', data); // Debug
+
+      // Formatter les résultats avec priorité aux rues
+      const formatted = data
+        .map(place => {
+          const hasRoad = place.address?.road;
+          const hasHouseNumber = place.address?.house_number;
+          const suburb = place.address?.suburb;
+          const town = place.address?.town || place.address.city || place.address.village;
+
+          // Construire le nom complet
+          let displayName = '';
+          if (hasRoad) {
+            displayName = hasHouseNumber
+              ? `${place.address.road} ${hasHouseNumber}`
+              : place.address.road;
+            if (suburb) displayName += `, ${suburb}`;
+          } else if (town) {
+            displayName = town;
+          } else {
+            displayName = place.name || place.display_name.split(',')[0];
+          }
+
+          return {
+            display_name: place.display_name,
+            address: place.address,
+            name: displayName,
+            city: town,
+            postcode: place.address?.postcode,
+            lat: place.lat,
+            lon: place.lon,
+            type: place.type,
+            class: place.class,
+            hasStreet: hasRoad,
+            priority: hasRoad ? 1 : (town ? 2 : 3) // Rues en 1er, villes en 2e, autres en 3e
+          };
+        })
+        // Filtrer les résultats trop génériques et trier
+        .filter(p => p.class !== 'boundary' && p.type !== 'administrative')
+        .sort((a, b) => a.priority - b.priority)
+        .slice(0, 8);
+
+      console.log('Formatted results:', formatted); // Debug
+      setSuggestions(formatted);
+      setShowSuggestions(true);
+    } catch (error) {
+      console.error('Erreur de recherche d\'adresse:', error);
+      setSuggestions([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleInputChange = (e) => {
     const inputValue = e.target.value;
     onChange(inputValue);
 
-    if (inputValue.length > 0) {
-      const filtered = CITY_SUGGESTIONS.filter(city =>
-        city.name.toLowerCase().includes(inputValue.toLowerCase()) ||
-        city.region.toLowerCase().includes(inputValue.toLowerCase())
-      ).slice(0, 6);
+    // Annuler la recherche précédente
+    if (searchTimeout.current) {
+      clearTimeout(searchTimeout.current);
+    }
 
-      setSuggestions(filtered);
-      setShowSuggestions(true);
+    if (inputValue.length >= 3) {
+      // Attendre 500ms avant de lancer la recherche (debounce)
+      searchTimeout.current = setTimeout(() => {
+        searchAddresses(inputValue);
+      }, 500);
       setSelectedIndex(-1);
     } else {
       setSuggestions([]);
@@ -45,8 +124,10 @@ export default function AutocompleteInput({
     }
   };
 
-  const handleSelectSuggestion = (city) => {
-    onChange(city.name);
+  const handleSelectSuggestion = (place) => {
+    // Utiliser l'adresse complète formatée
+    const formattedAddress = place.display_name.split(',').slice(0, 2).join(',');
+    onChange(formattedAddress);
     setShowSuggestions(false);
     setSuggestions([]);
     inputRef.current?.blur();
@@ -99,7 +180,10 @@ export default function AutocompleteInput({
           className="input-dark pl-12 pr-10"
           autoComplete="off"
         />
-        {value && (
+        {loading && (
+          <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-primary animate-spin" />
+        )}
+        {value && !loading && (
           <button
             onClick={handleClear}
             className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
@@ -111,27 +195,45 @@ export default function AutocompleteInput({
 
       {/* Suggestions dropdown */}
       {showSuggestions && suggestions.length > 0 && (
-        <div className="absolute z-50 w-full mt-2 bg-dark-800 border border-dark-700 rounded-lg shadow-luxury overflow-hidden animate-slide-up">
-          {suggestions.map((city, index) => (
+        <div className="absolute z-50 w-full mt-2 bg-dark-800 border border-dark-700 rounded-lg shadow-luxury overflow-hidden animate-slide-up max-h-80 overflow-y-auto">
+          {suggestions.map((place, index) => (
             <button
-              key={`${city.name}-${city.region}`}
-              onClick={() => handleSelectSuggestion(city)}
-              className={`w-full px-4 py-3 text-left transition-colors flex items-center justify-between
+              key={`${place.lat}-${place.lon}`}
+              onClick={() => handleSelectSuggestion(place)}
+              className={`w-full px-4 py-3 text-left transition-colors
                 ${index === selectedIndex
                   ? 'bg-primary/20 border-l-2 border-primary'
                   : 'hover:bg-dark-700'
                 }
               `}
             >
-              <div>
-                <p className="text-white font-medium">{city.name}</p>
-                <p className="text-xs text-gray-400">{city.region}</p>
+              <div className="flex items-start gap-2">
+                <MapPin className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-white font-medium text-sm">
+                    {place.name}
+                  </p>
+                  <p className="text-xs text-gray-400 truncate">
+                    {place.city && place.postcode ? `${place.postcode} ${place.city}` : place.city}
+                  </p>
+                  {place.hasStreet && (
+                    <span className="inline-block mt-1 px-2 py-0.5 text-xs bg-primary/20 text-primary rounded">
+                      Adresse
+                    </span>
+                  )}
+                </div>
               </div>
-              {city.distance > 0 && (
-                <span className="text-xs text-gray-500">{city.distance} km</span>
-              )}
             </button>
           ))}
+        </div>
+      )}
+
+      {/* Message si pas de résultats */}
+      {showSuggestions && !loading && suggestions.length === 0 && value.length >= 3 && (
+        <div className="absolute z-50 w-full mt-2 bg-dark-800 border border-dark-700 rounded-lg shadow-luxury p-4">
+          <p className="text-gray-400 text-sm text-center">
+            Aucune adresse trouvée en Suisse
+          </p>
         </div>
       )}
     </div>
