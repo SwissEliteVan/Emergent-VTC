@@ -5,14 +5,14 @@ import AutocompleteInput from './AutocompleteInput';
 import { VEHICLE_TYPES, calculatePrice, estimateDistance, getAllPricesForRoute } from '../utils/vehicles';
 
 export default function Sidebar() {
-  const [pickup, setPickup] = useState('');
+  const [pickup, setPickup] = useState('Vevey');
   const [destination, setDestination] = useState('');
   const [passengers, setPassengers] = useState(1);
   const [selectedVehicle, setSelectedVehicle] = useState(null);
   const [estimatedDistance, setEstimatedDistance] = useState(null);
   const [priceEstimates, setPriceEstimates] = useState({});
 
-  // Calculer les prix en temps réel
+  // Calculer les prix par défaut et en temps réel
   useEffect(() => {
     if (pickup && destination) {
       const distance = estimateDistance(pickup, destination);
@@ -20,8 +20,10 @@ export default function Sidebar() {
       const prices = getAllPricesForRoute(distance);
       setPriceEstimates(prices);
     } else {
+      // Afficher des prix de référence pour un trajet moyen (25km depuis Vevey vers Lausanne)
       setEstimatedDistance(null);
-      setPriceEstimates({});
+      const defaultPrices = getAllPricesForRoute(25);
+      setPriceEstimates(defaultPrices);
     }
   }, [pickup, destination]);
 
@@ -120,9 +122,13 @@ export default function Sidebar() {
         <div>
           <h3 className="text-lg font-bold text-white mb-4">
             Choisissez votre Tesla
-            {Object.keys(priceEstimates).length > 0 && (
+            {pickup && destination ? (
               <span className="text-sm font-normal text-primary ml-2">
-                Prix calculés automatiquement
+                Prix calculés pour votre trajet
+              </span>
+            ) : (
+              <span className="text-sm font-normal text-gray-400 ml-2">
+                Prix de référence (~25km)
               </span>
             )}
           </h3>
@@ -141,7 +147,7 @@ export default function Sidebar() {
         </div>
 
         {/* Suggestions de trajets */}
-        {!pickup && !destination && (
+        {!destination && (
           <div className="mt-6">
             <h3 className="text-sm font-semibold text-gray-400 mb-3 uppercase tracking-wide">Trajets populaires</h3>
             <div className="space-y-2">
