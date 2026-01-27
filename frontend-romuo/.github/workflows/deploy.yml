@@ -1,42 +1,39 @@
-name: Deploy to Hostinger
+# NOTE: Ce workflow est un doublon. Le workflow principal est dans
+# .github/workflows/deploy-frontend.yml a la racine du repo.
+# GitHub Actions ne lit que les workflows dans le dossier racine .github/workflows/
+# Ce fichier est conserve comme reference.
+
+name: Deploy to Hostinger (reference)
 
 on:
-  push:
-    branches:
-      - main
-      - claude/certificate-renewal-options-3sgBq
   workflow_dispatch:
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
-      # 1. Checkout du code
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2. Configuration de Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-path: 'frontend-romuo/package-lock.json'
+          cache-dependency-path: frontend-romuo/package-lock.json
 
-      # 3. Installation des dépendances
       - name: Install dependencies
         working-directory: ./frontend-romuo
-        run: npm ci
+        run: npm ci --prefer-offline
 
-      # 4. Build du projet React
       - name: Build project
         working-directory: ./frontend-romuo
         run: npm run build
         env:
           NODE_ENV: production
 
-      # 5. Déploiement via FTP vers Hostinger
       - name: Deploy to Hostinger via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
@@ -52,9 +49,3 @@ jobs:
             **/node_modules/**
             **/.vscode/**
             **/.idea/**
-
-      # 6. Notification de succès
-      - name: Deployment successful
-        run: |
-          echo "✅ Deployment to Hostinger completed successfully!"
-          echo "🌐 Your site should be live at your domain"
