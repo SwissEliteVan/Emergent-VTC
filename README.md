@@ -39,6 +39,7 @@ curl -fsSL https://raw.githubusercontent.com/SwissEliteVan/Emergent-VTC/main/ins
 - **[PROJECT_README.md](./PROJECT_README.md)** - Architecture et fonctionnalités
 - **[PHASE2_DRIVER_DOCS.md](./PHASE2_DRIVER_DOCS.md)** - Interface conducteur
 - **[GUEST_MODE_DOCS.md](./GUEST_MODE_DOCS.md)** - Mode invité (sans login)
+- **[HOSTINGER_HORIZON_PROMPT.md](./HOSTINGER_HORIZON_PROMPT.md)** - Prompt optimisé pour Hostinger Horizon
 
 ---
 
