@@ -592,7 +592,78 @@ tail -f /var/log/nginx/error.log
 
 ---
 
-## 📱 Prochaines Étapes (Optionnel)
+## PWA Web Application (Alternative au Mobile)
+
+Si vous souhaitez déployer uniquement la version web (PWA) sans l'app mobile:
+
+### Déploiement PWA React (Romuo.ch)
+
+```bash
+# Configurer Nginx pour la PWA
+cat > /etc/nginx/sites-available/pwa << 'EOF'
+server {
+    listen 80;
+    server_name app.romuo.ch;
+
+    root /var/www/romuo-ch/pwa-react;
+    index index.html;
+
+    gzip on;
+    gzip_types text/plain text/css application/json application/javascript;
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # Cache assets 1 an
+    location ~* \.(js|css|png|svg|ico|woff2)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+
+    # Service Worker - pas de cache
+    location = /service-worker.js {
+        expires off;
+        add_header Cache-Control "no-store";
+    }
+}
+EOF
+
+# Activer
+ln -sf /etc/nginx/sites-available/pwa /etc/nginx/sites-enabled/
+nginx -t && systemctl reload nginx
+
+# SSL (après configuration DNS pour app.romuo.ch)
+certbot --nginx -d app.romuo.ch
+```
+
+### DNS pour PWA
+
+Ajoutez sur Hostinger:
+| Type | Nom | Pointe vers | TTL |
+|------|-----|-------------|-----|
+| A | app | 76.13.6.218 | 3600 |
+
+### Service Worker Résilient
+
+Le Service Worker est configuré pour être **résilient**:
+- Assets critiques (HTML, CSS, JS) : `cache.addAll()`
+- Assets optionnels (icônes) : `Promise.allSettled()`
+
+L'app s'installe même si certaines ressources PNG sont manquantes.
+
+### PWA Features
+
+| Feature | PWA React | PWA Vanilla |
+|---------|-----------|-------------|
+| Dossier | `pwa-react/` | `pwa/` |
+| Framework | React + Tailwind | Vanilla JS |
+| Pricing | CHF | EUR |
+| Design | Swiss Style | Corporate |
+
+---
+
+## Prochaines Étapes (Optionnel)
 
 ### Installer Docker pour le Frontend
 
