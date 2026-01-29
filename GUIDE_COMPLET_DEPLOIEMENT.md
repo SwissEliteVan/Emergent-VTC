@@ -876,7 +876,91 @@ Votre plateforme Romuo.ch est maintenant en production sur votre VPS Hostinger !
 
 ---
 
-## 📱 ÉTAPE BONUS : AJOUTER LA CLÉ GOOGLE MAPS
+## ÉTAPE BONUS 1 : DÉPLOYER LA PWA WEB
+
+Si vous souhaitez également déployer l'application web (PWA), suivez ces étapes:
+
+### Option A: PWA React (Romuo.ch) - Recommandé
+
+```bash
+# Configurer Nginx pour servir la PWA
+cat > /etc/nginx/sites-available/pwa << 'EOF'
+server {
+    listen 80;
+    server_name app.romuo.ch;
+
+    root /var/www/romuo-ch/pwa-react;
+    index index.html;
+
+    # Gzip compression
+    gzip on;
+    gzip_types text/plain text/css application/json application/javascript;
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # Cache pour assets statiques (1 an)
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+
+    # Service Worker - jamais de cache
+    location = /service-worker.js {
+        expires off;
+        add_header Cache-Control "no-store, no-cache, must-revalidate";
+    }
+
+    # Manifest PWA
+    location = /manifest.json {
+        add_header Cache-Control "no-cache";
+    }
+}
+EOF
+
+# Activer le site
+ln -sf /etc/nginx/sites-available/pwa /etc/nginx/sites-enabled/
+
+# Tester et recharger Nginx
+nginx -t && systemctl reload nginx
+```
+
+### Option B: PWA Vanilla JS (Emergent VTC)
+
+```bash
+# Utiliser le dossier pwa/ au lieu de pwa-react/
+# Même configuration Nginx, juste changer le root:
+# root /var/www/romuo-ch/pwa;
+```
+
+### Ajouter le sous-domaine DNS
+
+Sur Hostinger, ajoutez:
+
+| Type | Nom | Pointe vers | TTL |
+|------|-----|-------------|-----|
+| A | app | 76.13.6.218 | 3600 |
+
+### SSL pour la PWA
+
+```bash
+# Ajouter le certificat pour app.romuo.ch
+certbot --nginx -d app.romuo.ch
+```
+
+### Caractéristiques PWA
+
+| Feature | Description |
+|---------|-------------|
+| Offline | Service Worker résilient (fonctionne même si icônes manquantes) |
+| Installable | manifest.json pour installation sur mobile/desktop |
+| Pricing | CHF (Francs Suisses) - hardcodé |
+| Design | Swiss International Style |
+
+---
+
+## ÉTAPE BONUS 2 : AJOUTER LA CLÉ GOOGLE MAPS
 
 ```bash
 # Éditer le .env

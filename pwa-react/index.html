@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#000000">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Romuo.ch">
+    <meta name="description" content="Votre Chauffeur Suisse - Service VTC Premium">
+
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+
+    <title>Romuo.ch - Votre Chauffeur Suisse</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'swiss': ['Inter', 'Helvetica Neue', 'Helvetica', 'Arial', 'sans-serif'],
+                    },
+                    colors: {
+                        'swiss-black': '#000000',
+                        'swiss-white': '#FFFFFF',
+                        'swiss-gray': {
+                            50: '#FAFAFA',
+                            100: '#F5F5F5',
+                            200: '#E5E5E5',
+                            300: '#D4D4D4',
+                            400: '#A3A3A3',
+                            500: '#737373',
+                            600: '#525252',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Google Fonts - Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- React -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        html, body, #root {
+            height: 100%;
+            font-family: 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        @keyframes pulse-ring {
+            0% { transform: scale(0.8); opacity: 1; }
+            100% { transform: scale(2); opacity: 0; }
+        }
+        @keyframes car-move {
+            0% { transform: translateX(0); }
+            50% { transform: translateX(10px); }
+            100% { transform: translateX(0); }
+        }
+        .animate-pulse-ring {
+            animation: pulse-ring 1.5s ease-out infinite;
+        }
+        .animate-car {
+            animation: car-move 2s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body class="bg-swiss-white">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // ==================== SWISS DATA ====================
+        const SWISS_CITIES = [
+            { name: "Zürich", canton: "ZH", streets: ["Bahnhofstrasse", "Limmatquai", "Niederdorfstrasse", "Langstrasse", "Seefeldstrasse", "Rämistrasse"] },
+            { name: "Genève", canton: "GE", streets: ["Rue du Rhône", "Rue de la Croix-d'Or", "Quai du Mont-Blanc", "Rue de Lausanne", "Boulevard des Bastions"] },
+            { name: "Basel", canton: "BS", streets: ["Freie Strasse", "Marktplatz", "Steinenberg", "Barfüsserplatz", "Clarastrasse"] },
+            { name: "Lausanne", canton: "VD", streets: ["Place de la Palud", "Rue de Bourg", "Avenue de la Gare", "Rue Centrale", "Place Saint-François"] },
+            { name: "Bern", canton: "BE", streets: ["Kramgasse", "Marktgasse", "Spitalgasse", "Bundesplatz", "Münsterplatz"] },
+            { name: "Winterthur", canton: "ZH", streets: ["Marktgasse", "Steinberggasse", "Technikumstrasse", "Bahnhofplatz"] },
+            { name: "Luzern", canton: "LU", streets: ["Kapellbrücke", "Schwanenplatz", "Hertensteinstrasse", "Pilatusstrasse"] },
+            { name: "St. Gallen", canton: "SG", streets: ["Multergasse", "Marktgasse", "Spisergasse", "Vadianstrasse"] },
+            { name: "Lugano", canton: "TI", streets: ["Via Nassa", "Piazza della Riforma", "Via Pessina", "Riva Caccia"] },
+            { name: "Fribourg", canton: "FR", streets: ["Rue de Lausanne", "Rue de Romont", "Place Georges-Python", "Boulevard de Pérolles"] },
+        ];
+
+        const EUROPEAN_CITIES = [
+            "Paris, France", "Lyon, France", "Marseille, France",
+            "Milano, Italia", "Roma, Italia", "Torino, Italia",
+            "München, Deutschland", "Frankfurt, Deutschland", "Stuttgart, Deutschland",
+            "Wien, Österreich", "Salzburg, Österreich",
+            "Amsterdam, Netherlands", "Brussels, Belgium",
+            "Monaco", "Nice, France", "Chamonix, France"
+        ];
+
+        // ==================== ICONS (Lucide-style SVG) ====================
+        const Icons = {
+            Car: () => (
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.5 2.8C1.4 11.3 1 12.1 1 13v3c0 .6.4 1 1 1h2"/>
+                    <circle cx="7" cy="17" r="2"/>
+                    <circle cx="17" cy="17" r="2"/>
+                </svg>
+            ),
+            MapPin: () => (
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
+                    <circle cx="12" cy="10" r="3"/>
+                </svg>
+            ),
+            Navigation: () => (
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polygon points="3 11 22 2 13 21 11 13 3 11"/>
+                </svg>
+            ),
+            User: () => (
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="8" r="5"/>
+                    <path d="M20 21a8 8 0 1 0-16 0"/>
+                </svg>
+            ),
+            Phone: () => (
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                </svg>
+            ),
+            MessageCircle: () => (
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="m3 21 1.9-5.7a8.5 8.5 0 1 1 3.8 3.8z"/>
+                </svg>
+            ),
+            X: () => (
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+                </svg>
+            ),
+            ChevronRight: () => (
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="m9 18 6-6-6-6"/>
+                </svg>
+            ),
+            ChevronDown: () => (
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="m6 9 6 6 6-6"/>
+                </svg>
+            ),
+            Clock: () => (
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                </svg>
+            ),
+            Star: () => (
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                </svg>
+            ),
+            CreditCard: () => (
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect width="22" height="16" x="1" y="4" rx="2"/><line x1="1" x2="23" y1="10" y2="10"/>
+                </svg>
+            ),
+            Check: () => (
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12"/>
+                </svg>
+            ),
+            Loader: () => (
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="animate-spin">
+                    <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+                </svg>
+            ),
+            ArrowLeft: () => (
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>
+                </svg>
+            ),
+            Circle: ({ filled }) => (
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
+                    <circle cx="12" cy="12" r="10"/>
+                </svg>
+            ),
+            Square: () => (
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2">
+                    <rect x="3" y="3" width="18" height="18" rx="2"/>
+                </svg>
+            ),
+        };
+
+        // ==================== VEHICLE DATA ====================
+        const VEHICLES = [
+            {
+                id: 'eco',
+                name: 'Eco',
+                model: 'Toyota Camry',
+                basePrice: 6.00,
+                pricePerKm: 2.50,
+                capacity: '1-3',
+                image: null
+            },
+            {
+                id: 'berline',
+                name: 'Berline',
+                model: 'Mercedes E-Class',
+                basePrice: 10.00,
+                pricePerKm: 3.50,
+                capacity: '1-4',
+                image: null
+            },
+            {
+                id: 'van',
+                name: 'Van',
+                model: 'Mercedes V-Class',
+                basePrice: 15.00,
+                pricePerKm: 4.50,
+                capacity: '1-7',
+                image: null
+            }
+        ];
+
+        // ==================== UTILITY FUNCTIONS ====================
+        const calculatePrice = (vehicle, distanceKm) => {
+            const price = vehicle.basePrice + (vehicle.pricePerKm * distanceKm);
+            return Math.round(price * 100) / 100;
+        };
+
+        const formatPrice = (price) => {
+            return `${price.toFixed(2)} CHF`;
+        };
+
+        const getRandomDistance = () => {
+            return Math.floor(Math.random() * 30) + 10; // 10-40 km
+        };
+
+        // ==================== COMPONENTS ====================
+
+        // Map Background Component
+        const MapBackground = () => (
+            <div className="absolute inset-0 bg-swiss-gray-100 overflow-hidden">
+                {/* Grid pattern */}
+                <div className="absolute inset-0" style={{
+                    backgroundImage: `
+                        linear-gradient(to right, #E5E5E5 1px, transparent 1px),
+                        linear-gradient(to bottom, #E5E5E5 1px, transparent 1px)
+                    `,
+                    backgroundSize: '40px 40px'
+                }}/>
+                {/* Roads */}
+                <div className="absolute top-1/4 left-0 right-0 h-3 bg-white shadow-sm"/>
+                <div className="absolute top-1/2 left-0 right-0 h-4 bg-white shadow-sm"/>
+                <div className="absolute top-3/4 left-0 right-0 h-3 bg-white shadow-sm"/>
+                <div className="absolute left-1/4 top-0 bottom-0 w-3 bg-white shadow-sm"/>
+                <div className="absolute left-1/2 top-0 bottom-0 w-4 bg-white shadow-sm"/>
+                <div className="absolute left-3/4 top-0 bottom-0 w-3 bg-white shadow-sm"/>
+                {/* Blocks */}
+                <div className="absolute top-[10%] left-[5%] w-[15%] h-[12%] bg-white rounded shadow-sm"/>
+                <div className="absolute top-[8%] left-[30%] w-[18%] h-[14%] bg-white rounded shadow-sm"/>
+                <div className="absolute top-[12%] left-[55%] w-[12%] h-[10%] bg-white rounded shadow-sm"/>
+                <div className="absolute top-[28%] left-[8%] w-[14%] h-[18%] bg-white rounded shadow-sm"/>
+                <div className="absolute top-[30%] left-[55%] w-[16%] h-[15%] bg-white rounded shadow-sm"/>
+                <div className="absolute top-[55%] left-[10%] w-[12%] h-[16%] bg-white rounded shadow-sm"/>
+                <div className="absolute top-[58%] left-[30%] w-[18%] h-[14%] bg-white rounded shadow-sm"/>
+                <div className="absolute top-[55%] left-[58%] w-[14%] h-[18%] bg-white rounded shadow-sm"/>
+                <div className="absolute top-[78%] left-[5%] w-[16%] h-[18%] bg-white rounded shadow-sm"/>
+                <div className="absolute top-[80%] left-[55%] w-[20%] h-[15%] bg-white rounded shadow-sm"/>
+                {/* Parks */}
+                <div className="absolute top-[40%] left-[78%] w-[8%] h-[8%] bg-green-100 rounded-full"/>
+                <div className="absolute top-[65%] left-[78%] w-[6%] h-[6%] bg-green-100 rounded-full"/>
+            </div>
+        );
+
+        // User Location Marker
+        const UserMarker = () => (
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
+                <div className="relative">
+                    <div className="absolute inset-0 bg-black/20 rounded-full animate-pulse-ring"/>
+                    <div className="w-4 h-4 bg-black rounded-full border-2 border-white shadow-lg"/>
+                </div>
+            </div>
+        );
+
+        // Address Input with Autocomplete
+        const AddressInput = ({
+            label,
+            placeholder,
+            value,
+            onChange,
+            suggestions,
+            onSelect,
+            icon,
+            isPickup = false
+        }) => {
+            const [showSuggestions, setShowSuggestions] = useState(false);
+            const inputRef = useRef(null);
+
+            return (
+                <div className="relative">
+                    <div className="flex items-center gap-3 px-4 py-3 bg-white">
+                        <div className={`w-3 h-3 rounded-full ${isPickup ? 'bg-black' : 'bg-swiss-gray-400'}`}/>
+                        <input
+                            ref={inputRef}
+                            type="text"
+                            value={value}
+                            onChange={(e) => {
+                                onChange(e.target.value);
+                                setShowSuggestions(true);
+                            }}
+                            onFocus={() => setShowSuggestions(true)}
+                            onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                            placeholder={placeholder}
+                            className="flex-1 text-base font-medium text-black placeholder:text-swiss-gray-400 outline-none bg-transparent"
+                        />
+                    </div>
+
+                    {showSuggestions && suggestions.length > 0 && (
+                        <div className="absolute left-0 right-0 top-full bg-white border-t border-swiss-gray-200 shadow-lg z-50 max-h-64 overflow-y-auto hide-scrollbar">
+                            {suggestions.map((suggestion, index) => (
+                                <button
+                                    key={index}
+                                    onClick={() => {
+                                        onSelect(suggestion);
+                                        setShowSuggestions(false);
+                                    }}
+                                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-swiss-gray-50 text-left transition-colors"
+                                >
+                                    <div className="w-8 h-8 rounded-full bg-swiss-gray-100 flex items-center justify-center text-swiss-gray-500">
+                                        <Icons.MapPin />
+                                    </div>
+                                    <span className="text-sm font-medium text-black">{suggestion}</span>
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        // Vehicle Option Card
+        const VehicleCard = ({ vehicle, distance, isSelected, onSelect }) => {
+            const price = calculatePrice(vehicle, distance);
+
+            return (
+                <button
+                    onClick={onSelect}
+                    className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 transition-all ${
+                        isSelected
+                            ? 'border-black bg-swiss-gray-50'
+                            : 'border-swiss-gray-200 hover:border-swiss-gray-300'
+                    }`}
+                >
+                    <div className="w-16 h-12 bg-swiss-gray-100 rounded-lg flex items-center justify-center">
+                        <Icons.Car />
+                    </div>
+                    <div className="flex-1 text-left">
+                        <div className="flex items-center gap-2">
+                            <span className="font-semibold text-black">{vehicle.name}</span>
+                            <span className="text-xs text-swiss-gray-500">{vehicle.capacity} pers.</span>
+                        </div>
+                        <span className="text-sm text-swiss-gray-500">{vehicle.model}</span>
+                    </div>
+                    <div className="text-right">
+                        <span className="text-lg font-bold text-black">{formatPrice(price)}</span>
+                    </div>
+                    {isSelected && (
+                        <div className="w-6 h-6 bg-black rounded-full flex items-center justify-center text-white">
+                            <Icons.Check />
+                        </div>
+                    )}
+                </button>
+            );
+        };
+
+        // Driver Card
+        const DriverCard = ({ driver }) => (
+            <div className="bg-white rounded-2xl p-4 shadow-lg">
+                <div className="flex items-center gap-4 mb-4">
+                    <div className="w-16 h-16 bg-swiss-gray-200 rounded-full flex items-center justify-center">
+                        <Icons.User />
+                    </div>
+                    <div className="flex-1">
+                        <h4 className="font-bold text-lg text-black">{driver.name}</h4>
+                        <div className="flex items-center gap-1 text-sm text-swiss-gray-600">
+                            <span className="text-yellow-500"><Icons.Star /></span>
+                            <span>{driver.rating}</span>
+                            <span className="mx-1">•</span>
+                            <span>{driver.trips} courses</span>
+                        </div>
+                    </div>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-swiss-gray-50 rounded-xl mb-4">
+                    <div>
+                        <p className="text-sm text-swiss-gray-500">Véhicule</p>
+                        <p className="font-semibold text-black">{driver.vehicle}</p>
+                    </div>
+                    <div className="text-right">
+                        <p className="text-sm text-swiss-gray-500">Plaque CH</p>
+                        <p className="font-mono font-bold text-black">{driver.plate}</p>
+                    </div>
+                </div>
+                <div className="flex gap-3">
+                    <button className="flex-1 flex items-center justify-center gap-2 py-3 bg-black text-white rounded-xl font-semibold">
+                        <Icons.Phone />
+                        Appeler
+                    </button>
+                    <button className="flex-1 flex items-center justify-center gap-2 py-3 border-2 border-swiss-gray-200 text-black rounded-xl font-semibold">
+                        <Icons.MessageCircle />
+                        Message
+                    </button>
+                </div>
+            </div>
+        );
+
+        // ==================== VIEWS ====================
+
+        // VIEW A: Landing Page
+        const LandingView = ({ onBook }) => (
+            <div className="min-h-screen bg-white flex flex-col">
+                {/* Header */}
+                <header className="px-6 py-4 flex items-center justify-between">
+                    <h1 className="text-2xl font-extrabold text-black tracking-tight">Romuo.ch</h1>
+                    <button className="w-10 h-10 rounded-full bg-swiss-gray-100 flex items-center justify-center">
+                        <Icons.User />
+                    </button>
+                </header>
+
+                {/* Hero Section */}
+                <main className="flex-1 flex flex-col items-center justify-center px-6 text-center">
+                    <div className="w-24 h-24 bg-black rounded-2xl flex items-center justify-center mb-8">
+                        <div className="text-white scale-150">
+                            <Icons.Car />
+                        </div>
+                    </div>
+
+                    <h2 className="text-4xl font-extrabold text-black mb-4 leading-tight">
+                        Votre Chauffeur<br />Suisse
+                    </h2>
+
+                    <p className="text-lg text-swiss-gray-500 mb-12 max-w-sm">
+                        Service VTC premium en Suisse. Voyagez avec élégance vers toute l'Europe.
+                    </p>
+
+                    <button
+                        onClick={onBook}
+                        className="w-full max-w-sm bg-black text-white py-4 px-8 rounded-xl font-semibold text-lg hover:bg-swiss-gray-800 transition-colors"
+                    >
+                        Réserver une course
+                    </button>
+
+                    <p className="mt-6 text-sm text-swiss-gray-400">
+                        Départ exclusivement depuis la Suisse
+                    </p>
+                </main>
+
+                {/* Footer */}
+                <footer className="px-6 py-8 text-center">
+                    <div className="flex items-center justify-center gap-8 text-sm text-swiss-gray-500">
+                        <span>Paiement sécurisé</span>
+                        <span className="w-1 h-1 bg-swiss-gray-300 rounded-full"/>
+                        <span>Chauffeurs certifiés</span>
+                    </div>
+                </footer>
+            </div>
+        );
+
+        // VIEW B: Address Input
+        const InputView = ({ onBack, onConfirm, pickup, setPickup, dropoff, setDropoff }) => {
+            const [pickupSuggestions, setPickupSuggestions] = useState([]);
+            const [dropoffSuggestions, setDropoffSuggestions] = useState([]);
+
+            // Generate Swiss suggestions for pickup
+            useEffect(() => {
+                if (pickup.length > 1) {
+                    const suggestions = [];
+                    SWISS_CITIES.forEach(city => {
+                        city.streets.forEach(street => {
+                            const fullAddress = `${street}, ${city.name} (${city.canton})`;
+                            if (fullAddress.toLowerCase().includes(pickup.toLowerCase())) {
+                                suggestions.push(fullAddress);
+                            }
+                        });
+                        if (city.name.toLowerCase().includes(pickup.toLowerCase())) {
+                            suggestions.push(`${city.name}, Suisse`);
+                        }
+                    });
+                    setPickupSuggestions(suggestions.slice(0, 6));
+                } else {
+                    setPickupSuggestions([]);
+                }
+            }, [pickup]);
+
+            // Generate European suggestions for dropoff
+            useEffect(() => {
+                if (dropoff.length > 1) {
+                    const swissSuggestions = [];
+                    SWISS_CITIES.forEach(city => {
+                        if (city.name.toLowerCase().includes(dropoff.toLowerCase())) {
+                            swissSuggestions.push(`${city.name}, Suisse`);
+                        }
+                    });
+
+                    const euroSuggestions = EUROPEAN_CITIES.filter(city =>
+                        city.toLowerCase().includes(dropoff.toLowerCase())
+                    );
+
+                    setDropoffSuggestions([...swissSuggestions, ...euroSuggestions].slice(0, 8));
+                } else {
+                    setDropoffSuggestions([]);
+                }
+            }, [dropoff]);
+
+            const canConfirm = pickup.length > 3 && dropoff.length > 3;
+
+            return (
+                <div className="min-h-screen bg-swiss-gray-100 flex flex-col">
+                    {/* Map Background */}
+                    <div className="relative flex-1">
+                        <MapBackground />
+                        <UserMarker />
+                    </div>
+
+                    {/* Floating Input Panel */}
+                    <div className="absolute top-0 left-0 right-0 p-4 z-20">
+                        <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+                            {/* Header */}
+                            <div className="flex items-center gap-3 px-4 py-3 border-b border-swiss-gray-100">
+                                <button
+                                    onClick={onBack}
+                                    className="w-10 h-10 rounded-full hover:bg-swiss-gray-100 flex items-center justify-center transition-colors"
+                                >
+                                    <Icons.ArrowLeft />
+                                </button>
+                                <h2 className="font-semibold text-black">Planifier votre course</h2>
+                            </div>
+
+                            {/* Inputs */}
+                            <div className="relative">
+                                {/* Vertical connector line */}
+                                <div className="absolute left-[26px] top-[24px] bottom-[24px] w-0.5 bg-swiss-gray-200"/>
+
+                                <AddressInput
+                                    placeholder="Lieu de prise en charge (Suisse)"
+                                    value={pickup}
+                                    onChange={setPickup}
+                                    suggestions={pickupSuggestions}
+                                    onSelect={setPickup}
+                                    isPickup={true}
+                                />
+
+                                <div className="h-px bg-swiss-gray-100 mx-4"/>
+
+                                <AddressInput
+                                    placeholder="Où allez-vous ?"
+                                    value={dropoff}
+                                    onChange={setDropoff}
+                                    suggestions={dropoffSuggestions}
+                                    onSelect={setDropoff}
+                                    isPickup={false}
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Bottom Button */}
+                    <div className="absolute bottom-0 left-0 right-0 p-4 pb-8 z-20">
+                        <button
+                            onClick={onConfirm}
+                            disabled={!canConfirm}
+                            className={`w-full py-4 rounded-xl font-semibold text-lg transition-all ${
+                                canConfirm
+                                    ? 'bg-black text-white hover:bg-swiss-gray-800'
+                                    : 'bg-swiss-gray-200 text-swiss-gray-400 cursor-not-allowed'
+                            }`}
+                        >
+                            Confirmer les adresses
+                        </button>
+                    </div>
+                </div>
+            );
+        };
+
+        // VIEW C: Vehicle Selection
+        const VehicleView = ({ onBack, onConfirm, pickup, dropoff, selectedVehicle, setSelectedVehicle }) => {
+            const distance = getRandomDistance();
+            const duration = Math.round(distance * 1.5);
+
+            return (
+                <div className="min-h-screen bg-swiss-gray-100 flex flex-col">
+                    {/* Map with route */}
+                    <div className="relative flex-1">
+                        <MapBackground />
+
+                        {/* Route visualization */}
+                        <div className="absolute inset-0 flex items-center justify-center">
+                            <svg className="w-3/4 h-1/2" viewBox="0 0 200 100">
+                                <path
+                                    d="M 20 80 Q 50 20 100 50 T 180 20"
+                                    fill="none"
+                                    stroke="#000000"
+                                    strokeWidth="3"
+                                    strokeDasharray="8 4"
+                                />
+                                <circle cx="20" cy="80" r="8" fill="#000000"/>
+                                <rect x="172" y="12" width="16" height="16" fill="#000000"/>
+                            </svg>
+                        </div>
+
+                        {/* Back button */}
+                        <button
+                            onClick={onBack}
+                            className="absolute top-4 left-4 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center z-10"
+                        >
+                            <Icons.ArrowLeft />
+                        </button>
+                    </div>
+
+                    {/* Bottom Sheet */}
+                    <div className="bg-white rounded-t-3xl shadow-2xl p-6 pb-8">
+                        <div className="w-12 h-1 bg-swiss-gray-200 rounded-full mx-auto mb-6"/>
+
+                        {/* Route Info */}
+                        <div className="flex items-center justify-between mb-6">
+                            <div>
+                                <h3 className="font-bold text-xl text-black">Choisir un véhicule</h3>
+                                <p className="text-sm text-swiss-gray-500 mt-1">
+                                    {distance} km • ~{duration} min
+                                </p>
+                            </div>
+                            <div className="flex items-center gap-2 text-swiss-gray-500">
+                                <Icons.Clock />
+                                <span className="text-sm">Maintenant</span>
+                            </div>
+                        </div>
+
+                        {/* Vehicle Options */}
+                        <div className="space-y-3 mb-6">
+                            {VEHICLES.map(vehicle => (
+                                <VehicleCard
+                                    key={vehicle.id}
+                                    vehicle={vehicle}
+                                    distance={distance}
+                                    isSelected={selectedVehicle?.id === vehicle.id}
+                                    onSelect={() => setSelectedVehicle(vehicle)}
+                                />
+                            ))}
+                        </div>
+
+                        {/* Payment Method */}
+                        <div className="flex items-center gap-3 p-3 bg-swiss-gray-50 rounded-xl mb-6">
+                            <Icons.CreditCard />
+                            <span className="flex-1 text-sm font-medium">Visa •••• 4242</span>
+                            <Icons.ChevronRight />
+                        </div>
+
+                        {/* Confirm Button */}
+                        <button
+                            onClick={onConfirm}
+                            disabled={!selectedVehicle}
+                            className={`w-full py-4 rounded-xl font-semibold text-lg transition-all ${
+                                selectedVehicle
+                                    ? 'bg-black text-white hover:bg-swiss-gray-800'
+                                    : 'bg-swiss-gray-200 text-swiss-gray-400 cursor-not-allowed'
+                            }`}
+                        >
+                            {selectedVehicle
+                                ? `Confirmer • ${formatPrice(calculatePrice(selectedVehicle, distance))}`
+                                : 'Sélectionnez un véhicule'
+                            }
+                        </button>
+                    </div>
+                </div>
+            );
+        };
+
+        // VIEW D: Live Tracking
+        const TrackingView = ({ onBack, pickup, dropoff, vehicle }) => {
+            const [status, setStatus] = useState('searching'); // searching, found
+            const [eta, setEta] = useState(3);
+
+            const driver = {
+                name: 'Marc Schneider',
+                rating: 4.9,
+                trips: 2847,
+                vehicle: vehicle?.model || 'Mercedes E-Class',
+                plate: 'ZH 234 567'
+            };
+
+            useEffect(() => {
+                // Simulate driver search
+                const timer = setTimeout(() => {
+                    setStatus('found');
+                }, 2000);
+                return () => clearTimeout(timer);
+            }, []);
+
+            useEffect(() => {
+                if (status === 'found') {
+                    const interval = setInterval(() => {
+                        setEta(prev => Math.max(1, prev - 1));
+                    }, 10000);
+                    return () => clearInterval(interval);
+                }
+            }, [status]);
+
+            return (
+                <div className="min-h-screen bg-swiss-gray-100 flex flex-col">
+                    {/* Map */}
+                    <div className="relative flex-1">
+                        <MapBackground />
+
+                        {/* Route */}
+                        <div className="absolute inset-0 flex items-center justify-center">
+                            <svg className="w-3/4 h-1/2" viewBox="0 0 200 100">
+                                <path
+                                    d="M 20 80 Q 50 20 100 50 T 180 20"
+                                    fill="none"
+                                    stroke="#3B82F6"
+                                    strokeWidth="4"
+                                />
+                                <circle cx="20" cy="80" r="8" fill="#000000"/>
+                                <rect x="172" y="12" width="16" height="16" fill="#000000"/>
+
+                                {/* Car marker (animated) */}
+                                {status === 'found' && (
+                                    <g className="animate-car">
+                                        <circle cx="60" cy="55" r="12" fill="#000000"/>
+                                        <text x="60" y="60" textAnchor="middle" fill="white" fontSize="12">C</text>
+                                    </g>
+                                )}
+                            </svg>
+                        </div>
+
+                        {/* Back button */}
+                        <button
+                            onClick={onBack}
+                            className="absolute top-4 left-4 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center z-10"
+                        >
+                            <Icons.X />
+                        </button>
+                    </div>
+
+                    {/* Bottom Panel */}
+                    <div className="bg-white rounded-t-3xl shadow-2xl p-6 pb-8">
+                        <div className="w-12 h-1 bg-swiss-gray-200 rounded-full mx-auto mb-6"/>
+
+                        {status === 'searching' ? (
+                            <div className="text-center py-8">
+                                <div className="relative w-20 h-20 mx-auto mb-6">
+                                    <div className="absolute inset-0 bg-black/10 rounded-full animate-pulse-ring"/>
+                                    <div className="absolute inset-0 bg-black/10 rounded-full animate-pulse-ring" style={{ animationDelay: '0.5s' }}/>
+                                    <div className="absolute inset-0 flex items-center justify-center">
+                                        <div className="w-12 h-12 bg-black rounded-full flex items-center justify-center text-white">
+                                            <Icons.Car />
+                                        </div>
+                                    </div>
+                                </div>
+                                <h3 className="font-bold text-xl text-black mb-2">Recherche d'un chauffeur</h3>
+                                <p className="text-swiss-gray-500">Veuillez patienter...</p>
+                            </div>
+                        ) : (
+                            <>
+                                {/* ETA Banner */}
+                                <div className="bg-black text-white rounded-xl p-4 mb-6 flex items-center justify-between">
+                                    <div>
+                                        <p className="text-sm text-swiss-gray-300">Arrivée du chauffeur</p>
+                                        <p className="text-2xl font-bold">{eta} min</p>
+                                    </div>
+                                    <div className="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center">
+                                        <Icons.Car />
+                                    </div>
+                                </div>
+
+                                {/* Driver Card */}
+                                <DriverCard driver={driver} />
+
+                                {/* Route Summary */}
+                                <div className="mt-6 p-4 bg-swiss-gray-50 rounded-xl">
+                                    <div className="flex items-start gap-3">
+                                        <div className="flex flex-col items-center">
+                                            <div className="w-3 h-3 rounded-full bg-black"/>
+                                            <div className="w-0.5 h-8 bg-swiss-gray-300"/>
+                                            <div className="w-3 h-3 bg-black"/>
+                                        </div>
+                                        <div className="flex-1 space-y-6">
+                                            <div>
+                                                <p className="text-xs text-swiss-gray-400">DÉPART</p>
+                                                <p className="font-medium text-black text-sm">{pickup}</p>
+                                            </div>
+                                            <div>
+                                                <p className="text-xs text-swiss-gray-400">DESTINATION</p>
+                                                <p className="font-medium text-black text-sm">{dropoff}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        // ==================== MAIN APP ====================
+        const App = () => {
+            const [view, setView] = useState('landing'); // landing, input, vehicle, tracking
+            const [pickup, setPickup] = useState('');
+            const [dropoff, setDropoff] = useState('');
+            const [selectedVehicle, setSelectedVehicle] = useState(null);
+
+            const handleBook = () => setView('input');
+            const handleInputConfirm = () => setView('vehicle');
+            const handleVehicleConfirm = () => setView('tracking');
+
+            const handleBack = () => {
+                if (view === 'input') setView('landing');
+                else if (view === 'vehicle') setView('input');
+                else if (view === 'tracking') {
+                    setView('landing');
+                    setPickup('');
+                    setDropoff('');
+                    setSelectedVehicle(null);
+                }
+            };
+
+            return (
+                <div className="font-swiss">
+                    {view === 'landing' && (
+                        <LandingView onBook={handleBook} />
+                    )}
+                    {view === 'input' && (
+                        <InputView
+                            onBack={handleBack}
+                            onConfirm={handleInputConfirm}
+                            pickup={pickup}
+                            setPickup={setPickup}
+                            dropoff={dropoff}
+                            setDropoff={setDropoff}
+                        />
+                    )}
+                    {view === 'vehicle' && (
+                        <VehicleView
+                            onBack={handleBack}
+                            onConfirm={handleVehicleConfirm}
+                            pickup={pickup}
+                            dropoff={dropoff}
+                            selectedVehicle={selectedVehicle}
+                            setSelectedVehicle={setSelectedVehicle}
+                        />
+                    )}
+                    {view === 'tracking' && (
+                        <TrackingView
+                            onBack={handleBack}
+                            pickup={pickup}
+                            dropoff={dropoff}
+                            vehicle={selectedVehicle}
+                        />
+                    )}
+                </div>
+            );
+        };
+
+        // Render
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
