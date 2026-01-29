@@ -39,7 +39,25 @@ jobs:
         env:
           NODE_ENV: production
 
-      # 5. Afficher la taille du build
+      # 5. Garantir que le .htaccess est present dans dist/
+      - name: Ensure .htaccess is in dist
+        working-directory: ./frontend-romuo
+        run: |
+          echo "=== Verifying .htaccess deployment ==="
+          # Vite devrait copier public/ vers dist/, mais verifier au cas ou
+          if [ ! -f dist/.htaccess ]; then
+            echo "WARNING: .htaccess not found in dist/, copying manually..."
+            cp public/.htaccess dist/.htaccess
+          fi
+          # Utiliser aussi le fichier htaccess (sans point) comme backup
+          if [ -f public/htaccess ]; then
+            cp public/htaccess dist/htaccess
+          fi
+          echo "=== .htaccess verification complete ==="
+          ls -la dist/.htaccess
+          head -30 dist/.htaccess
+
+      # 6. Afficher la taille du build
       - name: Display build size
         working-directory: ./frontend-romuo
         run: |
@@ -49,8 +67,10 @@ jobs:
           find dist -type f -name "*.js" -o -name "*.css" | head -20 | xargs ls -lh 2>/dev/null || true
           echo "=== Gzipped assets ==="
           find dist -type f -name "*.gz" | head -20 | xargs ls -lh 2>/dev/null || true
+          echo "=== All files in dist ==="
+          ls -la dist/
 
-      # 6. Deploiement via FTP vers Hostinger
+      # 7. Deploiement via FTP vers Hostinger
       - name: Deploy to Hostinger via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
@@ -61,14 +81,25 @@ jobs:
           server-dir: ${{ secrets.FTP_SERVER_DIR }}
           dangerous-clean-slate: false
           exclude: |
-            **/.git*
             **/.git*/**
             **/node_modules/**
             **/.vscode/**
             **/.idea/**
 
-      # 7. Notification de succes
+      # 8. Notification de succes
       - name: Deployment successful
         run: |
-          echo "Deployment to Hostinger completed successfully!"
-          echo "Site live at https://romuo.ch"
+          echo "=========================================="
+          echo "Deployment to Hostinger completed!"
+          echo "Site: https://romuo.ch"
+          echo "=========================================="
+          echo ""
+          echo "Fichiers deployes:"
+          echo "- index.html (point d'entree)"
+          echo "- .htaccess (configuration Apache/SPA)"
+          echo "- assets/ (JS, CSS, images)"
+          echo ""
+          echo "Si erreur 'Not Found', verifier:"
+          echo "1. FTP_SERVER_DIR = /public_html/"
+          echo "2. .htaccess present sur le serveur"
+          echo "3. mod_rewrite active sur Hostinger"
