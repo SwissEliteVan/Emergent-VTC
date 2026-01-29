@@ -1,0 +1,11 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="512" height="512" rx="96" fill="#000000"/>
+
+  <!-- Stylized "R" with car wheel motif -->
+  <path d="M160 120 L160 392 L200 392 L200 280 L280 280 L340 392 L390 392 L320 270 C360 255 380 215 380 175 C380 125 340 120 300 120 Z M200 160 L280 160 C320 160 340 165 340 195 C340 225 320 240 280 240 L200 240 Z" fill="white"/>
+
+  <!-- Swiss cross accent -->
+  <rect x="400" y="100" width="8" height="32" fill="#FF0000"/>
+  <rect x="388" y="112" width="32" height="8" fill="#FF0000"/>
+</svg>

@@ -1,0 +1,89 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Reset et styles de base */
+@layer base {
+  * {
+    @apply box-border;
+  }
+
+  body {
+    @apply m-0 p-0 font-sans antialiased;
+    @apply text-gray-100 bg-dark-900;
+  }
+
+  html, body, #root {
+    @apply h-full w-full overflow-hidden;
+  }
+}
+
+/* Composants personnalisés */
+@layer components {
+  /* Bouton primaire doré */
+  .btn-primary {
+    @apply bg-primary hover:bg-primary-600 text-dark-900 font-semibold;
+    @apply px-6 py-3 rounded-lg transition-all duration-300;
+    @apply shadow-lg hover:shadow-luxury;
+    @apply focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-dark-900;
+  }
+
+  /* Input style dark mode */
+  .input-dark {
+    @apply bg-dark-800 border border-dark-700 text-gray-100;
+    @apply px-4 py-3 rounded-lg w-full;
+    @apply focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary;
+    @apply transition-colors duration-200;
+    @apply placeholder:text-gray-500;
+  }
+
+  /* Card véhicule */
+  .vehicle-card {
+    @apply bg-dark-800 border border-dark-700 rounded-xl p-4;
+    @apply transition-all duration-300 cursor-pointer;
+    @apply hover:border-primary hover:shadow-luxury;
+  }
+
+  .vehicle-card.selected {
+    @apply border-primary bg-dark-700;
+  }
+
+  /* Scrollbar personnalisée */
+  .custom-scrollbar::-webkit-scrollbar {
+    @apply w-2;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    @apply bg-dark-800;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-dark-600 rounded-full;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    @apply bg-primary;
+  }
+}
+
+/* Fix pour Leaflet dans Tailwind */
+.leaflet-container {
+  @apply h-full w-full;
+  font-family: inherit;
+}
+
+.leaflet-popup-content-wrapper {
+  @apply bg-dark-800 text-gray-100 rounded-lg shadow-dark;
+}
+
+.leaflet-popup-tip {
+  @apply bg-dark-800;
+}
+
+.leaflet-control-zoom a {
+  @apply bg-dark-800 text-gray-100 border-dark-700;
+}
+
+.leaflet-control-zoom a:hover {
+  @apply bg-dark-700 border-primary;
+}

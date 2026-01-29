@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/romuo-icon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+    <meta name="description" content="Romuo.ch - Service VTC premium avec Tesla dans la region de Vevey et Montreux. Reservez votre chauffeur prive en toute simplicite." />
+    <meta name="keywords" content="VTC, Chauffeur prive, Vevey, Montreux, Riviera suisse, Transport de luxe, Tesla, Transport premium Suisse" />
+
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#D4AF37" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Romuo VTC" />
+    <link rel="manifest" href="/manifest.json" />
+
+    <!-- Apple Touch Icons -->
+    <link rel="apple-touch-icon" sizes="152x152" href="/icon-152x152.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/icon-192x192.png" />
+    <link rel="apple-touch-icon" href="/icon-192x192.png" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://romuo.ch/" />
+    <meta property="og:title" content="Romuo.ch - VTC Premium Tesla | Vevey & Montreux" />
+    <meta property="og:description" content="Service VTC haut de gamme avec Tesla en Suisse romande. Chauffeur prive 24/7." />
+    <meta property="og:image" content="https://romuo.ch/icon-512x512.png" />
+    <meta property="og:locale" content="fr_CH" />
+    <meta property="og:site_name" content="Romuo.ch" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Romuo.ch - VTC Premium Tesla | Vevey & Montreux" />
+    <meta name="twitter:description" content="Service VTC haut de gamme avec Tesla en Suisse romande." />
+    <meta name="twitter:image" content="https://romuo.ch/icon-512x512.png" />
+
+    <!-- DNS Prefetch & Preconnect pour ressources externes -->
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
+    <link rel="dns-prefetch" href="https://unpkg.com" />
+    <link rel="dns-prefetch" href="https://images.unsplash.com" />
+    <link rel="dns-prefetch" href="https://tile.openstreetmap.org" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://images.unsplash.com" />
+
+    <!-- Fonts - avec display=swap pour eviter le blocage du rendu -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet" />
+
+    <!-- Leaflet CSS - preload pour charger plus tot -->
+    <link rel="preload" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" /></noscript>
+
+    <!-- Schema.org Structured Data pour SEO -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "LocalBusiness",
+      "name": "Romuo VTC",
+      "description": "Service de transport VTC premium avec Tesla en Suisse romande",
+      "url": "https://romuo.ch",
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Vevey",
+        "addressRegion": "Vaud",
+        "addressCountry": "CH"
+      },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": 46.4607,
+        "longitude": 6.8427
+      },
+      "areaServed": [
+        "Vevey", "Montreux", "Lausanne", "Geneve", "Riviera vaudoise"
+      ],
+      "priceRange": "CHF",
+      "openingHoursSpecification": {
+        "@type": "OpeningHoursSpecification",
+        "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],
+        "opens": "00:00",
+        "closes": "23:59"
+      }
+    }
+    </script>
+
+    <title>Romuo.ch - VTC Premium Tesla | Vevey & Montreux | Chauffeur Prive Suisse</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

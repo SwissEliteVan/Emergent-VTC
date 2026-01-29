@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#0F172A">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Emergent VTC">
+    <meta name="description" content="Votre ville, votre chauffeur - Service de VTC premium">
+
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32x32.png">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <title>Emergent VTC</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Splash Screen -->
+    <div id="splash-screen" class="splash-screen">
+        <div class="splash-content">
+            <div class="splash-logo">
+                <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="40" cy="40" r="38" stroke="#0F172A" stroke-width="3" fill="none"/>
+                    <path d="M25 50 L40 25 L55 50 L40 45 Z" fill="#0F172A"/>
+                    <circle cx="40" cy="35" r="5" fill="#0F172A"/>
+                </svg>
+            </div>
+            <h1 class="splash-title">Emergent</h1>
+            <p class="splash-tagline">Votre ville, votre chauffeur</p>
+            <button id="splash-login-btn" class="splash-btn">Connexion</button>
+            <button id="splash-guest-btn" class="splash-btn-secondary">Continuer en tant qu'invité</button>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div id="login-modal" class="modal hidden">
+        <div class="modal-overlay"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Connexion</h2>
+                <button id="close-login" class="modal-close">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <form id="login-form" class="modal-form">
+                <div class="form-group">
+                    <label for="login-phone">Numéro de téléphone</label>
+                    <input type="tel" id="login-phone" placeholder="+33 6 12 34 56 78" required>
+                </div>
+                <div class="form-group">
+                    <label for="login-password">Mot de passe</label>
+                    <input type="password" id="login-password" placeholder="Votre mot de passe" required>
+                </div>
+                <button type="submit" class="btn-primary">Se connecter</button>
+                <p class="form-footer">Pas encore de compte ? <a href="#" id="show-register">S'inscrire</a></p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Register Modal -->
+    <div id="register-modal" class="modal hidden">
+        <div class="modal-overlay"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Inscription</h2>
+                <button id="close-register" class="modal-close">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <form id="register-form" class="modal-form">
+                <div class="form-group">
+                    <label for="register-name">Nom complet</label>
+                    <input type="text" id="register-name" placeholder="Jean Dupont" required>
+                </div>
+                <div class="form-group">
+                    <label for="register-email">Email</label>
+                    <input type="email" id="register-email" placeholder="jean@exemple.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="register-phone">Numéro de téléphone</label>
+                    <input type="tel" id="register-phone" placeholder="+33 6 12 34 56 78" required>
+                </div>
+                <div class="form-group">
+                    <label for="register-password">Mot de passe</label>
+                    <input type="password" id="register-password" placeholder="Minimum 8 caractères" required>
+                </div>
+                <button type="submit" class="btn-primary">Créer mon compte</button>
+                <p class="form-footer">Déjà inscrit ? <a href="#" id="show-login">Se connecter</a></p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main App Container -->
+    <div id="app" class="app hidden">
+        <!-- ===== HOME SCREEN ===== -->
+        <div id="screen-home" class="screen active">
+            <!-- CSS Map Background -->
+            <div class="map-container">
+                <div class="map-background">
+                    <!-- Grid pattern simulating map -->
+                    <div class="map-grid"></div>
+                    <!-- Roads -->
+                    <div class="map-road horizontal" style="top: 20%;"></div>
+                    <div class="map-road horizontal" style="top: 45%;"></div>
+                    <div class="map-road horizontal" style="top: 70%;"></div>
+                    <div class="map-road vertical" style="left: 15%;"></div>
+                    <div class="map-road vertical" style="left: 40%;"></div>
+                    <div class="map-road vertical" style="left: 65%;"></div>
+                    <div class="map-road vertical" style="left: 85%;"></div>
+                    <div class="map-road diagonal" style="top: 30%; left: 20%; transform: rotate(45deg);"></div>
+                    <div class="map-road diagonal" style="top: 55%; left: 50%; transform: rotate(-30deg);"></div>
+                    <!-- Buildings blocks -->
+                    <div class="map-block" style="top: 5%; left: 5%; width: 8%; height: 12%;"></div>
+                    <div class="map-block" style="top: 5%; left: 20%; width: 15%; height: 10%;"></div>
+                    <div class="map-block" style="top: 5%; left: 45%; width: 12%; height: 8%;"></div>
+                    <div class="map-block" style="top: 5%; left: 70%; width: 10%; height: 12%;"></div>
+                    <div class="map-block" style="top: 25%; left: 5%; width: 7%; height: 15%;"></div>
+                    <div class="map-block" style="top: 22%; left: 20%; width: 18%; height: 20%;"></div>
+                    <div class="map-block" style="top: 25%; left: 45%; width: 10%; height: 15%;"></div>
+                    <div class="map-block" style="top: 28%; left: 70%; width: 12%; height: 12%;"></div>
+                    <div class="map-block" style="top: 50%; left: 5%; width: 8%; height: 18%;"></div>
+                    <div class="map-block" style="top: 48%; left: 20%; width: 15%; height: 15%;"></div>
+                    <div class="map-block" style="top: 52%; left: 45%; width: 18%; height: 12%;"></div>
+                    <div class="map-block" style="top: 48%; left: 70%; width: 10%; height: 18%;"></div>
+                    <div class="map-block" style="top: 75%; left: 5%; width: 10%; height: 20%;"></div>
+                    <div class="map-block" style="top: 72%; left: 20%; width: 18%; height: 22%;"></div>
+                    <div class="map-block" style="top: 75%; left: 45%; width: 12%; height: 18%;"></div>
+                    <div class="map-block" style="top: 72%; left: 70%; width: 15%; height: 20%;"></div>
+                    <!-- Park areas -->
+                    <div class="map-park" style="top: 35%; left: 58%; width: 8%; height: 8%;"></div>
+                    <div class="map-park" style="top: 65%; left: 8%; width: 5%; height: 5%;"></div>
+                    <!-- User location marker -->
+                    <div class="user-marker">
+                        <div class="user-marker-pulse"></div>
+                        <div class="user-marker-dot"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search Bar (State B) -->
+            <div class="search-bar-container">
+                <div id="search-bar" class="search-bar">
+                    <svg class="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <input type="text" id="destination-input" placeholder="Où allez-vous ?" readonly>
+                </div>
+            </div>
+
+            <!-- Destination Search Panel -->
+            <div id="destination-panel" class="destination-panel hidden">
+                <div class="destination-panel-header">
+                    <button id="close-destination" class="back-btn">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="19" y1="12" x2="5" y2="12"></line>
+                            <polyline points="12 19 5 12 12 5"></polyline>
+                        </svg>
+                    </button>
+                    <h3>Choisir une destination</h3>
+                </div>
+                <div class="destination-inputs">
+                    <div class="input-row">
+                        <div class="input-icon pickup">
+                            <svg width="12" height="12" viewBox="0 0 12 12" fill="#0F172A">
+                                <circle cx="6" cy="6" r="6"/>
+                            </svg>
+                        </div>
+                        <input type="text" id="pickup-input" placeholder="Position actuelle" value="Ma position">
+                    </div>
+                    <div class="input-divider"></div>
+                    <div class="input-row">
+                        <div class="input-icon destination">
+                            <svg width="12" height="12" viewBox="0 0 12 12" fill="#0F172A">
+                                <rect width="12" height="12"/>
+                            </svg>
+                        </div>
+                        <input type="text" id="destination-search" placeholder="Destination" autofocus>
+                    </div>
+                </div>
+                <div class="saved-places">
+                    <h4>Adresses enregistrées</h4>
+                    <div class="place-item" data-address="12 Rue de Rivoli, Paris">
+                        <div class="place-icon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                                <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                            </svg>
+                        </div>
+                        <div class="place-info">
+                            <span class="place-name">Domicile</span>
+                            <span class="place-address">12 Rue de Rivoli, Paris</span>
+                        </div>
+                    </div>
+                    <div class="place-item" data-address="45 Avenue des Champs-Élysées, Paris">
+                        <div class="place-icon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                            </svg>
+                        </div>
+                        <div class="place-info">
+                            <span class="place-name">Bureau</span>
+                            <span class="place-address">45 Avenue des Champs-Élysées, Paris</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="recent-places">
+                    <h4>Récentes</h4>
+                    <div class="place-item" data-address="Gare de Lyon, Paris">
+                        <div class="place-icon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polyline points="12 6 12 12 16 14"></polyline>
+                            </svg>
+                        </div>
+                        <div class="place-info">
+                            <span class="place-name">Gare de Lyon</span>
+                            <span class="place-address">Place Louis-Armand, 75012 Paris</span>
+                        </div>
+                    </div>
+                    <div class="place-item" data-address="Aéroport CDG, Terminal 2E">
+                        <div class="place-icon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polyline points="12 6 12 12 16 14"></polyline>
+                            </svg>
+                        </div>
+                        <div class="place-info">
+                            <span class="place-name">Aéroport CDG</span>
+                            <span class="place-address">Terminal 2E, Roissy-en-France</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vehicle Selection Bottom Sheet (State C) -->
+            <div id="vehicle-sheet" class="bottom-sheet hidden">
+                <div class="sheet-handle"></div>
+                <div class="sheet-header">
+                    <h3>Choisissez votre véhicule</h3>
+                    <p class="route-info">
+                        <span id="route-distance">8.5 km</span>
+                        <span class="separator">•</span>
+                        <span id="route-duration">15 min</span>
+                    </p>
+                </div>
+                <div class="vehicle-options">
+                    <div class="vehicle-option" data-type="eco" data-price="12">
+                        <div class="vehicle-icon">
+                            <svg width="48" height="28" viewBox="0 0 48 28" fill="none">
+                                <path d="M8 20h32c2 0 4-2 4-4v-4c0-2-1-4-3-5l-8-4H15l-8 4c-2 1-3 3-3 5v4c0 2 2 4 4 4z" fill="#0F172A"/>
+                                <circle cx="12" cy="22" r="4" fill="#0F172A" stroke="#fff" stroke-width="2"/>
+                                <circle cx="36" cy="22" r="4" fill="#0F172A" stroke="#fff" stroke-width="2"/>
+                                <path d="M14 8h20v8H14z" fill="#64748B"/>
+                            </svg>
+                        </div>
+                        <div class="vehicle-info">
+                            <span class="vehicle-name">Éco</span>
+                            <span class="vehicle-desc">Économique • 1-3 places</span>
+                        </div>
+                        <div class="vehicle-price">12 EUR</div>
+                    </div>
+                    <div class="vehicle-option" data-type="berline" data-price="18">
+                        <div class="vehicle-icon">
+                            <svg width="52" height="30" viewBox="0 0 52 30" fill="none">
+                                <path d="M6 22h40c2.5 0 4-2 4-4.5v-5c0-2.5-1.5-4.5-4-6l-10-4H16l-10 4c-2.5 1.5-4 3.5-4 6v5c0 2.5 1.5 4.5 4 4.5z" fill="#0F172A"/>
+                                <circle cx="13" cy="24" r="4.5" fill="#0F172A" stroke="#fff" stroke-width="2"/>
+                                <circle cx="39" cy="24" r="4.5" fill="#0F172A" stroke="#fff" stroke-width="2"/>
+                                <path d="M13 8h26v10H13z" fill="#64748B"/>
+                            </svg>
+                        </div>
+                        <div class="vehicle-info">
+                            <span class="vehicle-name">Berline</span>
+                            <span class="vehicle-desc">Confort • 1-4 places</span>
+                        </div>
+                        <div class="vehicle-price">18 EUR</div>
+                    </div>
+                    <div class="vehicle-option" data-type="van" data-price="28">
+                        <div class="vehicle-icon">
+                            <svg width="56" height="36" viewBox="0 0 56 36" fill="none">
+                                <path d="M4 28h48c2 0 4-2 4-4V10c0-3-2-6-5-7l-6-2H11L5 3c-3 1-5 4-5 7v14c0 2 2 4 4 4z" fill="#0F172A"/>
+                                <circle cx="14" cy="30" r="5" fill="#0F172A" stroke="#fff" stroke-width="2"/>
+                                <circle cx="42" cy="30" r="5" fill="#0F172A" stroke="#fff" stroke-width="2"/>
+                                <rect x="8" y="6" width="10" height="10" rx="1" fill="#64748B"/>
+                                <rect x="22" y="6" width="10" height="10" rx="1" fill="#64748B"/>
+                                <rect x="36" y="6" width="10" height="10" rx="1" fill="#64748B"/>
+                            </svg>
+                        </div>
+                        <div class="vehicle-info">
+                            <span class="vehicle-name">Van</span>
+                            <span class="vehicle-desc">Groupe • 1-7 places</span>
+                        </div>
+                        <div class="vehicle-price">28 EUR</div>
+                    </div>
+                </div>
+                <div class="payment-method">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                        <line x1="1" y1="10" x2="23" y2="10"></line>
+                    </svg>
+                    <span>Visa •••• 4242</span>
+                    <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </div>
+                <button id="confirm-ride" class="btn-confirm" disabled>Confirmer la course</button>
+            </div>
+
+            <!-- Driver Search Overlay (State D) -->
+            <div id="searching-overlay" class="searching-overlay hidden">
+                <div class="searching-content">
+                    <div class="searching-animation">
+                        <div class="pulse-ring"></div>
+                        <div class="pulse-ring delay-1"></div>
+                        <div class="pulse-ring delay-2"></div>
+                        <svg class="car-icon" width="60" height="36" viewBox="0 0 60 36" fill="none">
+                            <path d="M8 24h44c3 0 5-2 5-5v-6c0-3-2-5-4-6l-10-5H17l-10 5c-2 1-4 3-4 6v6c0 3 2 5 5 5z" fill="#0F172A"/>
+                            <circle cx="15" cy="28" r="5" fill="#0F172A" stroke="#fff" stroke-width="2"/>
+                            <circle cx="45" cy="28" r="5" fill="#0F172A" stroke="#fff" stroke-width="2"/>
+                            <path d="M17 10h26v10H17z" fill="#64748B"/>
+                        </svg>
+                    </div>
+                    <h3>Recherche d'un chauffeur</h3>
+                    <p>Veuillez patienter...</p>
+                    <button id="cancel-search" class="btn-cancel">Annuler</button>
+                </div>
+            </div>
+
+            <!-- Ride Confirmed Panel -->
+            <div id="ride-confirmed" class="ride-confirmed hidden">
+                <div class="sheet-handle"></div>
+                <div class="driver-info">
+                    <div class="driver-avatar">
+                        <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                            <circle cx="24" cy="24" r="24" fill="#E5E7EB"/>
+                            <circle cx="24" cy="18" r="8" fill="#9CA3AF"/>
+                            <path d="M8 44c0-10 7-16 16-16s16 6 16 16" fill="#9CA3AF"/>
+                        </svg>
+                    </div>
+                    <div class="driver-details">
+                        <h4>Marc D.</h4>
+                        <div class="driver-rating">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="#0F172A">
+                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                            </svg>
+                            <span>4.9</span>
+                        </div>
+                    </div>
+                    <div class="driver-car">
+                        <span class="car-model">Tesla Model 3</span>
+                        <span class="car-plate">AB-123-CD</span>
+                    </div>
+                </div>
+                <div class="ride-eta">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                    <span>Arrivée dans <strong>3 min</strong></span>
+                </div>
+                <div class="ride-actions">
+                    <button class="action-btn">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                        </svg>
+                        <span>Appeler</span>
+                    </button>
+                    <button class="action-btn">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                        </svg>
+                        <span>Message</span>
+                    </button>
+                    <button class="action-btn" id="cancel-ride">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="15" y1="9" x2="9" y2="15"></line>
+                            <line x1="9" y1="9" x2="15" y2="15"></line>
+                        </svg>
+                        <span>Annuler</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== ACTIVITIES SCREEN ===== -->
+        <div id="screen-activities" class="screen">
+            <div class="screen-header">
+                <h1>Activités</h1>
+            </div>
+            <div class="activities-content">
+                <div class="activities-tabs">
+                    <button class="tab-btn active" data-tab="past">Historique</button>
+                    <button class="tab-btn" data-tab="scheduled">Programmées</button>
+                </div>
+                <div id="tab-past" class="tab-content active">
+                    <div class="ride-history">
+                        <div class="ride-card">
+                            <div class="ride-date">
+                                <span class="day">28</span>
+                                <span class="month">Jan</span>
+                            </div>
+                            <div class="ride-details">
+                                <div class="ride-route">
+                                    <div class="route-point">
+                                        <svg width="10" height="10" viewBox="0 0 10 10" fill="#0F172A">
+                                            <circle cx="5" cy="5" r="5"/>
+                                        </svg>
+                                        <span>12 Rue de Rivoli</span>
+                                    </div>
+                                    <div class="route-line"></div>
+                                    <div class="route-point">
+                                        <svg width="10" height="10" viewBox="0 0 10 10" fill="#0F172A">
+                                            <rect width="10" height="10"/>
+                                        </svg>
+                                        <span>Gare de Lyon</span>
+                                    </div>
+                                </div>
+                                <div class="ride-meta">
+                                    <span class="ride-type">Berline</span>
+                                    <span class="ride-price">18.50 EUR</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="ride-card">
+                            <div class="ride-date">
+                                <span class="day">25</span>
+                                <span class="month">Jan</span>
+                            </div>
+                            <div class="ride-details">
+                                <div class="ride-route">
+                                    <div class="route-point">
+                                        <svg width="10" height="10" viewBox="0 0 10 10" fill="#0F172A">
+                                            <circle cx="5" cy="5" r="5"/>
+                                        </svg>
+                                        <span>Aéroport CDG T2E</span>
+                                    </div>
+                                    <div class="route-line"></div>
+                                    <div class="route-point">
+                                        <svg width="10" height="10" viewBox="0 0 10 10" fill="#0F172A">
+                                            <rect width="10" height="10"/>
+                                        </svg>
+                                        <span>45 Av. Champs-Élysées</span>
+                                    </div>
+                                </div>
+                                <div class="ride-meta">
+                                    <span class="ride-type">Van</span>
+                                    <span class="ride-price">65.00 EUR</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="ride-card">
+                            <div class="ride-date">
+                                <span class="day">20</span>
+                                <span class="month">Jan</span>
+                            </div>
+                            <div class="ride-details">
+                                <div class="ride-route">
+                                    <div class="route-point">
+                                        <svg width="10" height="10" viewBox="0 0 10 10" fill="#0F172A">
+                                            <circle cx="5" cy="5" r="5"/>
+                                        </svg>
+                                        <span>Place de la Bastille</span>
+                                    </div>
+                                    <div class="route-line"></div>
+                                    <div class="route-point">
+                                        <svg width="10" height="10" viewBox="0 0 10 10" fill="#0F172A">
+                                            <rect width="10" height="10"/>
+                                        </svg>
+                                        <span>Tour Eiffel</span>
+                                    </div>
+                                </div>
+                                <div class="ride-meta">
+                                    <span class="ride-type">Éco</span>
+                                    <span class="ride-price">14.00 EUR</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="tab-scheduled" class="tab-content">
+                    <div class="empty-state">
+                        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#D1D5DB" stroke-width="1.5">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="16" y1="2" x2="16" y2="6"></line>
+                            <line x1="8" y1="2" x2="8" y2="6"></line>
+                            <line x1="3" y1="10" x2="21" y2="10"></line>
+                        </svg>
+                        <h3>Aucune course programmée</h3>
+                        <p>Planifiez vos trajets à l'avance pour plus de tranquillité</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== ACCOUNT SCREEN ===== -->
+        <div id="screen-account" class="screen">
+            <div class="screen-header">
+                <h1>Compte</h1>
+            </div>
+            <div class="account-content">
+                <div class="profile-section">
+                    <div class="profile-avatar">
+                        <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                            <circle cx="32" cy="32" r="32" fill="#E5E7EB"/>
+                            <circle cx="32" cy="24" r="10" fill="#9CA3AF"/>
+                            <path d="M10 58c0-12 10-20 22-20s22 8 22 20" fill="#9CA3AF"/>
+                        </svg>
+                    </div>
+                    <div class="profile-info">
+                        <h2 id="user-name">Jean Dupont</h2>
+                        <p id="user-phone">+33 6 12 34 56 78</p>
+                    </div>
+                    <button class="edit-profile-btn">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="menu-section">
+                    <div class="menu-item" id="menu-payment">
+                        <div class="menu-icon">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                                <line x1="1" y1="10" x2="23" y2="10"></line>
+                            </svg>
+                        </div>
+                        <span>Moyens de paiement</span>
+                        <svg class="menu-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
+                    </div>
+                    <div class="menu-item" id="menu-addresses">
+                        <div class="menu-icon">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                                <circle cx="12" cy="10" r="3"></circle>
+                            </svg>
+                        </div>
+                        <span>Adresses enregistrées</span>
+                        <svg class="menu-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
+                    </div>
+                    <div class="menu-item" id="menu-notifications">
+                        <div class="menu-icon">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                            </svg>
+                        </div>
+                        <span>Notifications</span>
+                        <svg class="menu-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- Referral Section (Growth Hacking) -->
+                <div class="referral-section">
+                    <div class="referral-banner">
+                        <div class="referral-icon">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#0F172A" stroke-width="2">
+                                <path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-6"></path>
+                                <path d="M12 3v12"></path>
+                                <path d="M12 3l4 4"></path>
+                                <path d="M12 3L8 7"></path>
+                            </svg>
+                        </div>
+                        <div class="referral-info">
+                            <h3>Parrainez vos amis</h3>
+                            <p>Gagnez 10 EUR pour chaque ami parrainé</p>
+                        </div>
+                    </div>
+                    <div class="referral-code">
+                        <span class="code-label">Votre code</span>
+                        <div class="code-box">
+                            <span id="referral-code">JEAN2026</span>
+                            <button id="copy-code" class="copy-btn">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <button class="share-btn">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="18" cy="5" r="3"></circle>
+                            <circle cx="6" cy="12" r="3"></circle>
+                            <circle cx="18" cy="19" r="3"></circle>
+                            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                        </svg>
+                        Partager mon code
+                    </button>
+                </div>
+
+                <div class="menu-section">
+                    <div class="menu-item" id="menu-help">
+                        <div class="menu-icon">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                            </svg>
+                        </div>
+                        <span>Aide et support</span>
+                        <svg class="menu-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
+                    </div>
+                    <div class="menu-item" id="menu-legal">
+                        <div class="menu-icon">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                                <line x1="16" y1="13" x2="8" y2="13"></line>
+                                <line x1="16" y1="17" x2="8" y2="17"></line>
+                                <polyline points="10 9 9 9 8 9"></polyline>
+                            </svg>
+                        </div>
+                        <span>Mentions légales</span>
+                        <svg class="menu-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
+                    </div>
+                </div>
+
+                <button id="logout-btn" class="logout-btn">Se déconnecter</button>
+                <p class="version">Version 1.0.0</p>
+            </div>
+        </div>
+
+        <!-- Bottom Tab Bar Navigation -->
+        <nav class="tab-bar">
+            <button class="tab-item active" data-screen="home">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                </svg>
+                <span>Accueil</span>
+            </button>
+            <button class="tab-item" data-screen="activities">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+                <span>Activités</span>
+            </button>
+            <button class="tab-item" data-screen="account">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+                <span>Compte</span>
+            </button>
+        </nav>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
