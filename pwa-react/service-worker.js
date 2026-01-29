@@ -1,17 +1,15 @@
 /**
- * EMERGENT VTC - Service Worker
+ * Romuo.ch - Service Worker
  * Enables offline functionality and caching
  * Version: Resilient (handles missing assets gracefully)
  */
 
-const CACHE_NAME = 'emergent-vtc-v2';
+const CACHE_NAME = 'romuo-vtc-v2';
 
 // Critical assets - App won't work without these
 const CRITICAL_ASSETS = [
     '/',
     '/index.html',
-    '/styles.css',
-    '/app.js',
     '/manifest.json'
 ];
 
@@ -24,12 +22,13 @@ const OPTIONAL_ASSETS = [
     '/icons/icon-152x152.png',
     '/icons/icon-192x192.png',
     '/icons/icon-384x384.png',
-    '/icons/icon-512x512.png'
+    '/icons/icon-512x512.png',
+    '/icons/icon.svg'
 ];
 
 /**
  * Cache a single asset with error handling
- * Returns a resolved promise even on failure (for Promise.allSettled behavior)
+ * Returns a resolved promise even on failure
  */
 async function cacheAsset(cache, url) {
     try {
@@ -39,7 +38,7 @@ async function cacheAsset(cache, url) {
             console.log('[SW] Cached:', url);
             return { status: 'fulfilled', url };
         } else {
-            console.warn('[SW] Failed to fetch (non-ok):', url, response.status);
+            console.warn('[SW] Failed to fetch:', url, response.status);
             return { status: 'rejected', url, reason: `HTTP ${response.status}` };
         }
     } catch (error) {
@@ -62,14 +61,14 @@ self.addEventListener('install', (event) => {
                     console.log('[SW] Critical assets cached successfully');
                 } catch (error) {
                     console.error('[SW] Critical asset caching failed:', error);
-                    // Still continue - we'll try individual caching as fallback
+                    // Fallback: try caching individually
                     for (const url of CRITICAL_ASSETS) {
                         await cacheAsset(cache, url);
                     }
                 }
 
                 // 2. Cache optional assets (icons) - failures are OK
-                console.log('[SW] Caching optional assets (icons)...');
+                console.log('[SW] Caching optional assets...');
                 const optionalResults = await Promise.allSettled(
                     OPTIONAL_ASSETS.map(url => cacheAsset(cache, url))
                 );
@@ -112,57 +111,45 @@ self.addEventListener('activate', (event) => {
     );
 });
 
-// Fetch event - serve from cache, fallback to network
+// Fetch event - Network first, fallback to cache
 self.addEventListener('fetch', (event) => {
-    // Skip non-GET requests
-    if (event.request.method !== 'GET') {
-        return;
-    }
+    if (event.request.method !== 'GET') return;
 
-    // Skip cross-origin requests (except for fonts/CDN)
+    // Allow external CDN resources
     const url = new URL(event.request.url);
     const isLocal = url.origin === self.location.origin;
-    const isAllowedExternal = url.hostname.includes('fonts.googleapis.com') ||
-                              url.hostname.includes('fonts.gstatic.com');
+    const isAllowedCDN =
+        url.hostname.includes('cdn.tailwindcss.com') ||
+        url.hostname.includes('fonts.googleapis.com') ||
+        url.hostname.includes('fonts.gstatic.com') ||
+        url.hostname.includes('unpkg.com');
 
-    if (!isLocal && !isAllowedExternal) {
+    if (!isLocal && !isAllowedCDN) {
         return;
     }
 
     event.respondWith(
-        caches.match(event.request)
-            .then((cachedResponse) => {
-                if (cachedResponse) {
-                    // Return cached response
-                    return cachedResponse;
-                }
-
-                // Fetch from network
-                return fetch(event.request)
-                    .then((response) => {
-                        // Don't cache non-successful responses
-                        if (!response || response.status !== 200) {
-                            return response;
-                        }
-
-                        // Don't cache opaque responses (cross-origin without CORS)
-                        if (response.type === 'opaque') {
-                            return response;
-                        }
-
-                        // Clone the response
-                        const responseToCache = response.clone();
-
-                        // Cache the fetched response
+        fetch(event.request)
+            .then((response) => {
+                // Clone and cache successful responses
+                if (response && response.status === 200) {
+                    // Only cache same-origin and basic responses
+                    if (response.type === 'basic' || isLocal) {
+                        const responseClone = response.clone();
                         caches.open(CACHE_NAME)
-                            .then((cache) => {
-                                cache.put(event.request, responseToCache);
-                            });
-
-                        return response;
-                    })
-                    .catch(() => {
-                        // Network failed, try to return offline page for navigation requests
+                            .then((cache) => cache.put(event.request, responseClone));
+                    }
+                }
+                return response;
+            })
+            .catch(() => {
+                // Network failed, try cache
+                return caches.match(event.request)
+                    .then((cachedResponse) => {
+                        if (cachedResponse) {
+                            return cachedResponse;
+                        }
+                        // Return main page for navigation
                         if (event.request.mode === 'navigate') {
                             return caches.match('/index.html');
                         }
@@ -182,8 +169,7 @@ self.addEventListener('push', (event) => {
         badge: '/icons/icon-72x72.png',
         vibrate: [100, 50, 100],
         data: {
-            dateOfArrival: Date.now(),
-            primaryKey: '1'
+            dateOfArrival: Date.now()
         },
         actions: [
             { action: 'open', title: 'Ouvrir' },
@@ -192,7 +178,7 @@ self.addEventListener('push', (event) => {
     };
 
     event.waitUntil(
-        self.registration.showNotification('Emergent VTC', options)
+        self.registration.showNotification('Romuo.ch', options)
     );
 });
 
@@ -205,33 +191,3 @@ self.addEventListener('notificationclick', (event) => {
         event.waitUntil(clients.openWindow('/'));
     }
 });
-
-// Background sync
-self.addEventListener('sync', (event) => {
-    console.log('[SW] Sync event:', event.tag);
-
-    if (event.tag === 'sync-rides') {
-        event.waitUntil(syncRides());
-    }
-});
-
-// Sync rides when back online
-async function syncRides() {
-    try {
-        const pendingRides = await getPendingRides();
-        for (const ride of pendingRides) {
-            await syncRide(ride);
-        }
-    } catch (error) {
-        console.error('[SW] Sync failed:', error);
-    }
-}
-
-// Placeholder functions for future implementation
-async function getPendingRides() {
-    return [];
-}
-
-async function syncRide(ride) {
-    console.log('[SW] Syncing ride:', ride);
-}

@@ -110,3 +110,75 @@ npm run preview  # Teste le build en local sur http://localhost:4173
 - **Production:** https://romuo.ch
 - **Local Dev:** http://localhost:3000
 - **Backend API:** https://romuo.ch/api (ou port 8001)
+
+---
+
+## Déploiement PWA (Progressive Web App)
+
+### Option 1: PWA React (Romuo.ch) - Recommandé
+
+```bash
+# Les fichiers sont dans pwa-react/
+cd pwa-react
+
+# Déploiement local pour test
+npx serve .
+
+# Pour Hostinger: uploader le contenu de pwa-react/ vers public_html/
+```
+
+**Fichiers à déployer:**
+- `index.html` - Application complète
+- `manifest.json` - Configuration PWA
+- `service-worker.js` - Support offline
+- `icons/` - Icônes de l'application
+
+### Option 2: PWA Vanilla JS (Emergent VTC)
+
+```bash
+# Les fichiers sont dans pwa/
+cd pwa
+
+# Déploiement local pour test
+python -m http.server 8000
+
+# Pour Hostinger: uploader le contenu de pwa/ vers public_html/
+```
+
+**Fichiers à déployer:**
+- `index.html`
+- `styles.css`
+- `app.js`
+- `manifest.json`
+- `service-worker.js`
+- `icons/`
+
+### Configuration Nginx pour PWA
+
+```nginx
+location / {
+    root /var/www/pwa;
+    try_files $uri $uri/ /index.html;
+
+    # Cache pour assets statiques
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+
+    # Service Worker - pas de cache
+    location = /service-worker.js {
+        expires off;
+        add_header Cache-Control "no-store, no-cache, must-revalidate";
+    }
+}
+```
+
+### Note importante sur le Service Worker
+
+Le Service Worker est **résilient**: il s'installe même si certaines icônes PNG sont manquantes. La stratégie utilise:
+
+1. `cache.addAll()` pour les assets critiques (HTML, CSS, JS)
+2. `Promise.allSettled()` pour les assets optionnels (icônes)
+
+Cela garantit que l'app fonctionne en mode offline même sans toutes les ressources.

@@ -38,13 +38,36 @@ pwa/
 - **Icônes** : SVG vectorielles uniquement (zéro emoji)
 - **Finitions** : Ombres portées douces, coins arrondis
 
+## Service Worker Résilient
+
+Le Service Worker est configuré pour être **résilient** et s'installer même si certaines ressources sont manquantes.
+
+### Stratégie de caching
+
+```javascript
+// Assets critiques - DOIVENT être cachés
+const CRITICAL_ASSETS = ['/', '/index.html', '/styles.css', '/app.js'];
+
+// Assets optionnels - Nice to have (icônes PNG)
+const OPTIONAL_ASSETS = ['/icons/icon-192x192.png', ...];
+```
+
+### Comportement
+
+1. **Assets critiques** : Utilise `cache.addAll()` - échec = erreur d'installation
+2. **Assets optionnels** : Utilise `Promise.allSettled()` - échecs ignorés
+
+Cela garantit que l'application fonctionne en mode offline même si les icônes PNG n'ont pas été générées.
+
 ## Installation
 
-### 1. Générer les icônes PNG
+### 1. Générer les icônes PNG (Optionnel)
 
 Ouvrir `generate-icons.html` dans un navigateur et sauvegarder chaque canvas en PNG dans le dossier `icons/`.
 
-Tailles requises :
+**Note**: Grâce au Service Worker résilient, l'app fonctionne même sans ces fichiers.
+
+Tailles recommandées :
 - icon-72x72.png
 - icon-96x96.png
 - icon-128x128.png
