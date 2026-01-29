@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react'
 import { compression } from 'vite-plugin-compression2'
 
 // https://vitejs.dev/config/
+// Configuration optimisee pour deploiement Hostinger (hebergement mutualise Apache)
 export default defineConfig({
   plugins: [
     react(),
@@ -13,12 +14,20 @@ export default defineConfig({
       deleteOriginalAssets: false,
     }),
   ],
+  // Base URL - racine du domaine (Hostinger public_html)
+  base: '/',
+  // Dossier public/ sera copie vers dist/ (inclut .htaccess)
+  publicDir: 'public',
   server: {
     port: 3000,
     host: true
   },
   build: {
     outDir: 'dist',
+    // Vider le dossier dist avant chaque build
+    emptyOutDir: true,
+    // Copier les fichiers publics (inclut .htaccess)
+    copyPublicDir: true,
     sourcemap: false,
     minify: 'esbuild',
     target: 'es2020',
