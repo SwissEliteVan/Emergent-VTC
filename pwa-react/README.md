@@ -45,7 +45,34 @@ Application PWA React de réservation de VTC pour la Suisse avec destinations eu
 - **React 18** (via CDN)
 - **TailwindCSS** (via CDN)
 - **Babel** (transpilation JSX)
-- **Service Worker** (offline support)
+- **Service Worker** (offline support - résilient)
+
+## Service Worker Résilient
+
+Le Service Worker est configuré pour être **résilient** et s'installer même si certaines ressources sont manquantes.
+
+### Stratégie de caching
+
+```javascript
+// Assets critiques - DOIVENT être cachés
+const CRITICAL_ASSETS = ['/', '/index.html', '/manifest.json'];
+
+// Assets optionnels - Nice to have (icônes PNG)
+const OPTIONAL_ASSETS = ['/icons/icon-192x192.png', ...];
+```
+
+### Comportement
+
+| Type d'asset | Méthode | Comportement si échec |
+|--------------|---------|----------------------|
+| Critique | `cache.addAll()` | Bloque l'installation |
+| Optionnel | `Promise.allSettled()` | Continue quand même |
+
+### Avantages
+
+- L'app s'installe même si les icônes PNG n'existent pas
+- Le mode offline fonctionne pour les fichiers critiques
+- Logging détaillé pour le debugging
 
 ## Déploiement
 

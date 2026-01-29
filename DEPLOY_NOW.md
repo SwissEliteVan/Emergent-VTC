@@ -212,7 +212,7 @@ Pour plus de détails, consultez:
 
 ---
 
-## 🎯 PROCHAINES ÉTAPES (Optionnel)
+## PROCHAINES ÉTAPES (Optionnel)
 
 1. **Installer le Frontend Mobile** (optionnel)
 2. **Configurer Google Maps API**
@@ -221,6 +221,81 @@ Pour plus de détails, consultez:
 
 ---
 
-**Bon déploiement! 🚀**
+## DÉPLOIEMENT PWA WEB (Alternative au Mobile)
+
+Si vous souhaitez déployer uniquement la version web (PWA):
+
+### Option rapide: PWA React (pwa-react/)
+
+```bash
+# Sur votre VPS
+cd /var/www
+git clone https://github.com/SwissEliteVan/Emergent-VTC.git romuo-pwa
+cd romuo-pwa/pwa-react
+
+# Configurer Nginx
+cat > /etc/nginx/sites-available/pwa << 'EOF'
+server {
+    listen 80;
+    server_name romuo.ch www.romuo.ch;
+
+    root /var/www/romuo-pwa/pwa-react;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # Cache assets
+    location ~* \.(js|css|png|svg|ico)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+
+    # Service Worker - no cache
+    location = /service-worker.js {
+        expires off;
+        add_header Cache-Control "no-store";
+    }
+}
+EOF
+
+ln -sf /etc/nginx/sites-available/pwa /etc/nginx/sites-enabled/
+nginx -t && systemctl reload nginx
+```
+
+### PWA Features
+
+| Feature | PWA React | PWA Vanilla |
+|---------|-----------|-------------|
+| Framework | React 18 + Tailwind | Vanilla JS + CSS |
+| Dossier | `pwa-react/` | `pwa/` |
+| Taille | ~50KB | ~80KB |
+| Offline | Oui (SW résilient) | Oui (SW résilient) |
+| Design | Swiss Style | Corporate |
+| Pricing | CHF (Suisse) | EUR |
+
+### Test PWA Local
+
+```bash
+# PWA React
+cd pwa-react && npx serve .
+# Ouvrir http://localhost:3000
+
+# PWA Vanilla
+cd pwa && python -m http.server 8000
+# Ouvrir http://localhost:8000
+```
+
+### Service Worker Résilient
+
+Les Service Workers sont configurés pour être **résilients**:
+- Les assets critiques (HTML, CSS, JS) doivent être cachés
+- Les assets optionnels (icônes PNG) utilisent `Promise.allSettled()`
+- L'app s'installe même si certaines ressources manquent
+
+---
+
+**Bon déploiement!**
 
 **Support**: Consultez `DEPLOIEMENT_RAPIDE_VPS.md` pour le guide détaillé

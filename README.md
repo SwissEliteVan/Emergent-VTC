@@ -1,9 +1,9 @@
-# 🚗 Romuo.ch - Plateforme VTC Suisse
+# Romuo.ch - Plateforme VTC Suisse
 
-**Plateforme de transport VTC pour le marché suisse** avec application mobile (iOS/Android) et dashboard administrateur.
+**Plateforme de transport VTC pour le marché suisse** avec application mobile (iOS/Android), PWA web et dashboard administrateur.
 
-**Version**: 3.0.0 Production Ready
-**Tech Stack**: React Native (Expo) + FastAPI + MongoDB 8.0
+**Version**: 4.0.0 Production Ready
+**Tech Stack**: React Native (Expo) + React PWA + FastAPI + MongoDB 8.0
 **Marché**: Suisse (CHF pricing, French language)
 
 ---
@@ -24,7 +24,7 @@ curl -fsSL https://raw.githubusercontent.com/SwissEliteVan/Emergent-VTC/main/ins
 
 ---
 
-## 📚 Documentation
+## Documentation
 
 ### Guides de Déploiement
 
@@ -33,6 +33,11 @@ curl -fsSL https://raw.githubusercontent.com/SwissEliteVan/Emergent-VTC/main/ins
 - **[MONGODB_8_OPTIMIZATIONS.md](./MONGODB_8_OPTIMIZATIONS.md)** - Spécifique MongoDB 8.0
 - **[GUIDE_COMPLET_DEPLOIEMENT.md](./GUIDE_COMPLET_DEPLOIEMENT.md)** - Guide complet original
 - **[PRODUCTION_GUIDE.md](./PRODUCTION_GUIDE.md)** - Guide de production complet
+
+### Documentation PWA
+
+- **[pwa/README.md](./pwa/README.md)** - PWA Emergent VTC (Vanilla JS)
+- **[pwa-react/README.md](./pwa-react/README.md)** - PWA Romuo.ch (React + TailwindCSS)
 
 ### Documentation Technique
 
@@ -43,7 +48,7 @@ curl -fsSL https://raw.githubusercontent.com/SwissEliteVan/Emergent-VTC/main/ins
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 ```
 romuo-ch/
@@ -58,8 +63,66 @@ romuo-ch/
 │   ├── contexts/          # AuthContext
 │   └── store/             # Zustand state management
 │
+├── pwa/                    # PWA Vanilla JS (Emergent VTC)
+│   ├── index.html         # App complète
+│   ├── styles.css         # Design System
+│   ├── app.js             # Logique JavaScript
+│   └── service-worker.js  # Support offline (résilient)
+│
+├── pwa-react/              # PWA React + TailwindCSS (Romuo.ch)
+│   ├── index.html         # App React standalone
+│   ├── manifest.json      # Configuration PWA
+│   └── service-worker.js  # Support offline (résilient)
+│
 └── docs/                  # Documentation complète
 ```
+
+---
+
+## PWA Web Applications
+
+Deux Progressive Web Apps sont disponibles pour un déploiement web instantané:
+
+### PWA Romuo.ch (React + TailwindCSS)
+
+**Dossier**: `pwa-react/`
+
+```bash
+# Déploiement local
+cd pwa-react
+npx serve .
+# Ouvrir http://localhost:3000
+```
+
+**Caractéristiques**:
+- Design Swiss International Style
+- Pickup restreint à la Suisse (autocomplete 10 villes)
+- Destination ouverte à toute l'Europe
+- Pricing en CHF:
+  - Eco (Toyota): 6.00 CHF + 2.50 CHF/km
+  - Berline (Mercedes): 10.00 CHF + 3.50 CHF/km
+  - Van (V-Class): 15.00 CHF + 4.50 CHF/km
+- Icônes SVG (Lucide-style), zéro emoji
+- Service Worker résilient (fonctionne même si icônes manquantes)
+
+### PWA Emergent VTC (Vanilla JS)
+
+**Dossier**: `pwa/`
+
+```bash
+# Déploiement local
+cd pwa
+python -m http.server 8000
+# Ouvrir http://localhost:8000
+```
+
+**Caractéristiques**:
+- 3 onglets: Accueil, Activités, Compte
+- Carte CSS vectorielle (pas d'image statique)
+- Bottom sheet sélection véhicule
+- Animation recherche chauffeur
+- Section parrainage (Growth Hacking)
+- Design corporate, zéro emoji
 
 ---
 
