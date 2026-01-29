@@ -9,453 +9,477 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
-  Alert,
+  Image,
+  Animated,
   Dimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import * as Location from 'expo-location';
+import { Ionicons, Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuth } from '../contexts/AuthContext';
 import { useRideStore } from '../store/rideStore';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import Constants from 'expo-constants';
-import { responsive, useResponsive, isWeb, safeAreaPadding, BREAKPOINTS } from '../utils/responsive';
 
 const BACKEND_URL = Constants.expoConfig?.extra?.EXPO_PUBLIC_BACKEND_URL || process.env.EXPO_PUBLIC_BACKEND_URL;
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
-// Dynamic map import - Leaflet for web, React Native Maps for mobile
-const MapComponent = Platform.OS === 'web' 
-  ? require('../components/WebMapLeaflet').default 
-  : require('../components/NativeMap').default;
+// Design System Colors
+const COLORS = {
+  white: '#FFFFFF',
+  black: '#000000',
+  darkBlue: '#111827',
+  gray50: '#F9FAFB',
+  gray100: '#F3F4F6',
+  gray200: '#E5E7EB',
+  gray300: '#D1D5DB',
+  gray400: '#9CA3AF',
+  gray500: '#6B7280',
+  gray600: '#4B5563',
+  gray700: '#374151',
+  gray800: '#1F2937',
+  gray900: '#111827',
+  success: '#10B981',
+  blue: '#3B82F6',
+};
 
-interface Vehicle {
-  id: string;
-  name: string;
-  description: string;
-  base_fare: number;
-  rate_per_km: number;
-  capacity: number;
-  icon: string;
-  min_passengers?: number;
-  max_passengers?: number;
-}
+// Vehicle data with SVG-style icons
+const VEHICLES = [
+  {
+    id: 'eco',
+    name: 'Éco',
+    description: 'Économique et confortable',
+    price: 14.50,
+    waitTime: 4,
+    icon: 'car-outline',
+    capacity: '1-3',
+  },
+  {
+    id: 'berline',
+    name: 'Berline',
+    description: 'Premium business class',
+    price: 24.90,
+    waitTime: 6,
+    icon: 'car-sport-outline',
+    capacity: '1-4',
+  },
+  {
+    id: 'van',
+    name: 'Van',
+    description: 'Groupes et bagages',
+    price: 39.00,
+    waitTime: 8,
+    icon: 'bus-outline',
+    capacity: '5-7',
+  },
+];
+
+// Simulated Driver Data
+const DRIVER = {
+  name: 'Jean-Pierre M.',
+  rating: 4.9,
+  trips: 1247,
+  photo: null,
+  car: 'Mercedes Classe E',
+  plate: 'VD 458 291',
+  arrivalTime: 4,
+};
+
+// App State Types
+type AppState = 'map' | 'selection' | 'tracking';
 
 export default function IndexScreen() {
-  const { user, sessionToken, isGuest, login, logout } = useAuth();
+  const { user, isGuest, login, logout } = useAuth();
   const router = useRouter();
   const rideStore = useRideStore();
-  const { isDesktop, isTablet, width } = useResponsive();
-  
-  const [currentLocation, setCurrentLocation] = useState<Location.LocationObject | null>(null);
+
+  const [appState, setAppState] = useState<AppState>('map');
   const [destination, setDestination] = useState('');
-  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
-  const [selectedVehicle, setSelectedVehicleState] = useState<Vehicle | null>(null);
-  const [price, setPrice] = useState(0);
-  const [loading, setLoading] = useState(false);
-  const [showVehicleSelector, setShowVehicleSelector] = useState(true);
-  const [numPassengers, setNumPassengers] = useState(1);
+  const [selectedVehicle, setSelectedVehicle] = useState<typeof VEHICLES[0] | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
+  const [driverFound, setDriverFound] = useState(false);
+  
+  // Animation for bottom panel
+  const panelAnim = useState(new Animated.Value(0))[0];
 
+  // Animate panel when state changes
   useEffect(() => {
-    requestLocationPermission();
-    fetchVehicles();
-  }, []);
-
-  // Auto-navigate based on role when logged in
-  useEffect(() => {
-    if (user?.role === 'driver') {
-      router.replace('/driver-dispatch');
+    if (appState === 'selection' || appState === 'tracking') {
+      Animated.spring(panelAnim, {
+        toValue: 1,
+        useNativeDriver: true,
+        tension: 65,
+        friction: 11,
+      }).start();
+    } else {
+      Animated.spring(panelAnim, {
+        toValue: 0,
+        useNativeDriver: true,
+      }).start();
     }
-  }, [user]);
+  }, [appState]);
 
-  const requestLocationPermission = async () => {
-    try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        if (Platform.OS !== 'web') {
-          Alert.alert('Permission refusée', 'L\'accès à la localisation est requis');
-        }
-        return;
-      }
-      
-      const location = await Location.getCurrentPositionAsync({});
-      setCurrentLocation(location);
-    } catch (error) {
-      console.error('Location error:', error);
-    }
-  };
-
-  const fetchVehicles = async () => {
-    try {
-      const response = await axios.get(`${BACKEND_URL}/api/vehicles`);
-      setVehicles(response.data.vehicles);
-    } catch (error) {
-      console.error('Failed to fetch vehicles:', error);
-    }
-  };
-
-  const calculatePrice = async (vehicle: Vehicle) => {
-    if (!destination.trim()) {
-      if (Platform.OS === 'web') {
-        alert('Veuillez entrer une destination');
-      } else {
-        Alert.alert('Destination requise', 'Veuillez entrer une destination');
-      }
-      return;
-    }
-
-    setLoading(true);
-    try {
-      // Mock distance calculation (in real app, use Google Directions API)
-      const distanceKm = Math.random() * 20 + 5; // 5-25 km
-      
-      const response = await axios.post(`${BACKEND_URL}/api/rides/calculate`, {
-        pickup: {
-          latitude: currentLocation?.coords.latitude || 46.5197,
-          longitude: currentLocation?.coords.longitude || 6.6323,
-          address: 'Position actuelle'
-        },
-        destination: {
-          latitude: (currentLocation?.coords.latitude || 46.5197) + 0.1,
-          longitude: (currentLocation?.coords.longitude || 6.6323) + 0.1,
-          address: destination
-        },
-        vehicle_type: vehicle.id,
-        distance_km: distanceKm
-      });
-      
-      setPrice(response.data.price);
-      rideStore.setDistanceKm(distanceKm);
-      rideStore.setPrice(response.data.price);
-      rideStore.setSelectedVehicle(vehicle);
-      rideStore.setDestination({
-        latitude: (currentLocation?.coords.latitude || 46.5197) + 0.1,
-        longitude: (currentLocation?.coords.longitude || 6.6323) + 0.1,
-        address: destination
-      });
-    } catch (error) {
-      console.error('Price calculation failed:', error);
-      if (Platform.OS === 'web') {
-        alert('Impossible de calculer le prix');
-      } else {
-        Alert.alert('Erreur', 'Impossible de calculer le prix');
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleVehicleSelect = (vehicle: Vehicle) => {
-    setSelectedVehicleState(vehicle);
+  // Handle destination search
+  const handleSearch = () => {
     if (destination.trim()) {
-      calculatePrice(vehicle);
+      setAppState('selection');
     }
   };
 
-  const handleBooking = async () => {
-    if (!selectedVehicle || !destination.trim()) {
-      const msg = 'Veuillez sélectionner un véhicule et une destination';
-      if (Platform.OS === 'web') {
-        alert(msg);
-      } else {
-        Alert.alert('Information manquante', msg);
-      }
-      return;
-    }
-    
-    // Check if user is authenticated
+  // Handle vehicle selection
+  const handleSelectVehicle = (vehicle: typeof VEHICLES[0]) => {
+    setSelectedVehicle(vehicle);
+  };
+
+  // Handle booking
+  const handleBook = () => {
+    if (!selectedVehicle) return;
+
     if (isGuest) {
-      // Store trip details in ride store for post-login redirect
-      if (currentLocation) {
-        rideStore.setPickup({
-          latitude: currentLocation.coords.latitude,
-          longitude: currentLocation.coords.longitude,
-          address: 'Position actuelle'
-        });
-      }
-      
-      rideStore.setDestination({
-        latitude: (currentLocation?.coords.latitude || 46.5197) + 0.1,
-        longitude: (currentLocation?.coords.longitude || 6.6323) + 0.1,
-        address: destination
-      });
-      
-      rideStore.setSelectedVehicle(selectedVehicle);
-      rideStore.setDistanceKm(rideStore.distanceKm);
-      rideStore.setPrice(price);
-      
-      // Set booking intent flag
-      await AsyncStorage.setItem('pending_booking_intent', 'true');
-      
-      // Show login prompt
-      if (Platform.OS === 'web') {
-        if (confirm('Connexion requise pour réserver. Se connecter maintenant?')) {
-          login();
-        }
-      } else {
-        Alert.alert(
-          'Connexion requise',
-          'Veuillez vous connecter pour réserver une course',
-          [
-            { text: 'Annuler', style: 'cancel' },
-            { text: 'Se connecter', onPress: () => login() }
-          ]
-        );
-      }
+      login();
       return;
     }
-    
-    // User is logged in, proceed with booking
-    if (currentLocation) {
-      rideStore.setPickup({
-        latitude: currentLocation.coords.latitude,
-        longitude: currentLocation.coords.longitude,
-        address: 'Position actuelle'
-      });
-    }
-    
-    router.push('/confirmation');
+
+    setAppState('tracking');
+    setIsSearching(true);
+
+    // Simulate driver search
+    setTimeout(() => {
+      setIsSearching(false);
+      setDriverFound(true);
+    }, 3000);
   };
 
-  // Handle post-login redirect to booking
-  useEffect(() => {
-    const checkPendingBooking = async () => {
-      if (user && !isGuest) {
-        const pendingIntent = await AsyncStorage.getItem('pending_booking_intent');
-        if (pendingIntent === 'true' && selectedVehicle && price > 0) {
-          await AsyncStorage.removeItem('pending_booking_intent');
-          router.push('/confirmation');
-        }
-      }
-    };
-    
-    checkPendingBooking();
-  }, [user, isGuest, selectedVehicle, price]);
+  // Handle cancel
+  const handleCancel = () => {
+    setAppState('map');
+    setSelectedVehicle(null);
+    setIsSearching(false);
+    setDriverFound(false);
+  };
 
-  // Get filtered vehicles based on passenger count
-  const filteredVehicles = vehicles.filter(v => {
-    const min = v.min_passengers || 1;
-    const max = v.max_passengers || v.capacity;
-    return numPassengers >= min && numPassengers <= max;
-  });
-
-  // Render the booking panel content
-  const renderBookingPanel = () => (
-    <View style={[styles.bookingPanel, isDesktop && styles.bookingPanelDesktop]}>
-      {/* Logo for desktop sidebar */}
-      {isDesktop && (
-        <View style={styles.sidebarHeader}>
-          <View style={styles.logoRow}>
-            <Ionicons name="car-sport" size={32} color="#D4AF37" />
-            <View style={styles.logoText}>
-              <Text style={styles.logoTitle}>Romuo.ch</Text>
-              <Text style={styles.logoSubtitle}>VTC Premium Suisse</Text>
-            </View>
-          </View>
-          
-          {/* User info or login button */}
-          {isGuest ? (
-            <TouchableOpacity style={styles.desktopLoginButton} onPress={login}>
-              <Ionicons name="person" size={18} color="#D4AF37" />
-              <Text style={styles.desktopLoginText}>Connexion</Text>
-            </TouchableOpacity>
-          ) : (
-            <View style={styles.userInfoDesktop}>
-              <Text style={styles.userNameDesktop}>{user?.name}</Text>
-              <View style={styles.userActions}>
-                <TouchableOpacity 
-                  style={styles.iconButton}
-                  onPress={async () => {
-                    try {
-                      await axios.post(
-                        `${BACKEND_URL}/api/user/toggle-role`,
-                        {},
-                        { headers: { Authorization: `Bearer ${sessionToken}` } }
-                      );
-                      router.replace('/driver-dispatch');
-                    } catch (error) {
-                      console.error('Switch mode error:', error);
-                    }
-                  }}
-                >
-                  <Ionicons name="car-sport" size={18} color="#D4AF37" />
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.iconButton} onPress={logout}>
-                  <Ionicons name="log-out-outline" size={18} color="#D4AF37" />
-                </TouchableOpacity>
-              </View>
-            </View>
-          )}
-        </View>
-      )}
-
-      <ScrollView 
-        showsVerticalScrollIndicator={false}
-        style={styles.scrollContent}
-        contentContainerStyle={styles.scrollContentContainer}
-      >
-        {/* Section Title */}
-        <Text style={styles.sectionTitle}>Réserver une course</Text>
+  // Render simulated map
+  const renderMap = () => (
+    <View style={styles.mapContainer}>
+      {/* Simulated vector map */}
+      <View style={styles.mapBackground}>
+        {/* Grid lines for streets */}
+        {[...Array(20)].map((_, i) => (
+          <View key={`h-${i}`} style={[styles.mapStreetH, { top: i * 50 }]} />
+        ))}
+        {[...Array(15)].map((_, i) => (
+          <View key={`v-${i}`} style={[styles.mapStreetV, { left: i * 50 }]} />
+        ))}
         
-        {/* Destination Input */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.inputLabel}>Destination</Text>
-          <View style={styles.searchContainer}>
-            <Ionicons name="search" size={20} color="#A0A0A0" style={styles.searchIcon} />
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Où allez-vous?"
-              placeholderTextColor="#666666"
-              value={destination}
-              onChangeText={setDestination}
-            />
-          </View>
+        {/* Parks */}
+        <View style={[styles.mapPark, { top: 100, left: 50, width: 120, height: 80 }]} />
+        <View style={[styles.mapPark, { top: 300, left: 200, width: 100, height: 100 }]} />
+        
+        {/* Main roads */}
+        <View style={[styles.mapMainRoad, { top: 200, left: 0, width: SCREEN_WIDTH }]} />
+        <View style={[styles.mapMainRoadV, { top: 0, left: SCREEN_WIDTH / 2 - 15, height: SCREEN_HEIGHT }]} />
+        
+        {/* User location marker */}
+        <View style={styles.userMarker}>
+          <View style={styles.userMarkerDot} />
+          <View style={styles.userMarkerPulse} />
         </View>
 
-        {/* Passenger Count */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.inputLabel}>Nombre de passagers</Text>
-          <View style={styles.passengerSelector}>
-            <TouchableOpacity 
-              style={styles.passengerButton}
-              onPress={() => setNumPassengers(Math.max(1, numPassengers - 1))}
-            >
-              <Ionicons name="remove" size={24} color="#FFFFFF" />
-            </TouchableOpacity>
-            <View style={styles.passengerCount}>
-              <Ionicons name="people" size={20} color="#D4AF37" />
-              <Text style={styles.passengerCountText}>{numPassengers}</Text>
-            </View>
-            <TouchableOpacity 
-              style={styles.passengerButton}
-              onPress={() => setNumPassengers(Math.min(15, numPassengers + 1))}
-            >
-              <Ionicons name="add" size={24} color="#FFFFFF" />
-            </TouchableOpacity>
-          </View>
-        </View>
+        {/* Route line when tracking */}
+        {appState === 'tracking' && (
+          <View style={styles.routeLine} />
+        )}
 
-        {/* Vehicle Selector */}
-        <View style={styles.inputGroup}>
-          <Text style={styles.inputLabel}>Choisir un véhicule</Text>
-          <View style={[styles.vehicleGrid, isDesktop && styles.vehicleGridDesktop]}>
-            {(filteredVehicles.length > 0 ? filteredVehicles : vehicles).map((vehicle) => (
-              <TouchableOpacity
-                key={vehicle.id}
-                style={[
-                  styles.vehicleCard,
-                  isDesktop && styles.vehicleCardDesktop,
-                  selectedVehicle?.id === vehicle.id && styles.vehicleCardSelected
-                ]}
-                onPress={() => handleVehicleSelect(vehicle)}
-              >
-                <Text style={styles.vehicleIcon}>{vehicle.icon}</Text>
-                <Text style={styles.vehicleName}>{vehicle.name}</Text>
-                <Text style={styles.vehicleCapacity}>
-                  {vehicle.min_passengers || 1}-{vehicle.max_passengers || vehicle.capacity} pers.
-                </Text>
-                <Text style={styles.vehiclePrice}>
-                  dès {vehicle.base_fare} CHF
-                </Text>
-                {selectedVehicle?.id === vehicle.id && price > 0 && (
-                  <View style={styles.priceTag}>
-                    <Text style={styles.priceText}>{price.toFixed(2)} CHF</Text>
-                  </View>
-                )}
-              </TouchableOpacity>
-            ))}
-          </View>
-          
-          {filteredVehicles.length === 0 && numPassengers > 4 && (
-            <View style={styles.vehicleHint}>
-              <Ionicons name="information-circle" size={20} color="#D4AF37" />
-              <Text style={styles.vehicleHintText}>
-                Pour {numPassengers} passagers, le Bus est recommandé
-              </Text>
-            </View>
-          )}
-        </View>
-
-        {/* Price Summary */}
-        {selectedVehicle && price > 0 && (
-          <View style={styles.priceSummary}>
-            <View style={styles.priceRow}>
-              <Text style={styles.priceLabel}>Estimation</Text>
-              <Text style={styles.priceValue}>{price.toFixed(2)} CHF</Text>
-            </View>
-            <Text style={styles.priceNote}>
-              * Prix estimé basé sur la distance
-            </Text>
+        {/* Destination marker */}
+        {(appState === 'selection' || appState === 'tracking') && (
+          <View style={styles.destinationMarker}>
+            <Feather name="map-pin" size={28} color={COLORS.darkBlue} />
           </View>
         )}
-      </ScrollView>
+      </View>
+    </View>
+  );
 
-      {/* Book Button */}
-      {selectedVehicle && (
-        <View style={styles.bookButtonContainer}>
+  // Render search bar
+  const renderSearchBar = () => (
+    <View style={styles.searchContainer}>
+      <View style={styles.searchBar}>
+        <Feather name="search" size={20} color={COLORS.gray400} />
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Où allez-vous ?"
+          placeholderTextColor={COLORS.gray400}
+          value={destination}
+          onChangeText={setDestination}
+          onSubmitEditing={handleSearch}
+          returnKeyType="search"
+        />
+        {destination.length > 0 && (
+          <TouchableOpacity onPress={() => setDestination('')}>
+            <Feather name="x" size={20} color={COLORS.gray400} />
+          </TouchableOpacity>
+        )}
+      </View>
+      
+      {/* Quick destinations */}
+      {appState === 'map' && (
+        <View style={styles.quickDestinations}>
           <TouchableOpacity 
-            style={[styles.bookButton, !destination.trim() && styles.bookButtonDisabled]}
-            onPress={handleBooking}
-            disabled={loading || !destination.trim()}
+            style={styles.quickDestItem}
+            onPress={() => {
+              setDestination('Aéroport de Genève');
+              setAppState('selection');
+            }}
           >
-            {loading ? (
-              <ActivityIndicator color="#0A0A0A" />
-            ) : (
-              <Text style={styles.bookButtonText}>
-                {price > 0 ? `Commander - ${price.toFixed(2)} CHF` : 'Calculer le prix'}
-              </Text>
-            )}
+            <View style={styles.quickDestIcon}>
+              <Feather name="navigation" size={16} color={COLORS.gray600} />
+            </View>
+            <Text style={styles.quickDestText}>Aéroport de Genève</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.quickDestItem}
+            onPress={() => {
+              setDestination('Gare de Lausanne');
+              setAppState('selection');
+            }}
+          >
+            <View style={styles.quickDestIcon}>
+              <Feather name="navigation" size={16} color={COLORS.gray600} />
+            </View>
+            <Text style={styles.quickDestText}>Gare de Lausanne</Text>
           </TouchableOpacity>
         </View>
       )}
     </View>
   );
 
-  // Mobile header (only shown on mobile)
-  const renderMobileHeader = () => (
-    <View style={styles.mobileHeader}>
-      {isGuest ? (
-        <View style={styles.headerLeft}>
-          <Text style={styles.appName}>Romuo.ch</Text>
-          <Text style={styles.appTagline}>VTC Premium Suisse</Text>
+  // Render vehicle selection panel
+  const renderSelectionPanel = () => (
+    <Animated.View 
+      style={[
+        styles.bottomPanel,
+        {
+          transform: [{
+            translateY: panelAnim.interpolate({
+              inputRange: [0, 1],
+              outputRange: [400, 0],
+            }),
+          }],
+        },
+      ]}
+    >
+      <View style={styles.panelHandle} />
+      
+      <View style={styles.panelHeader}>
+        <View>
+          <Text style={styles.panelTitle}>Choisir un véhicule</Text>
+          <Text style={styles.panelSubtitle}>{destination}</Text>
         </View>
-      ) : (
-        <View style={styles.headerLeft}>
-          <Text style={styles.greeting}>Bonjour,</Text>
-          <Text style={styles.userName}>{user?.name}</Text>
-        </View>
-      )}
-      <View style={styles.headerActions}>
-        {isGuest ? (
-          <TouchableOpacity style={styles.loginHeaderButton} onPress={login}>
-            <Ionicons name="person" size={20} color="#D4AF37" />
-            <Text style={styles.loginHeaderText}>Connexion</Text>
-          </TouchableOpacity>
-        ) : (
-          <>
-            <TouchableOpacity 
-              style={styles.switchButton}
-              onPress={async () => {
-                try {
-                  await axios.post(
-                    `${BACKEND_URL}/api/user/toggle-role`,
-                    {},
-                    { headers: { Authorization: `Bearer ${sessionToken}` } }
-                  );
-                  router.replace('/driver-dispatch');
-                } catch (error) {
-                  console.error('Switch mode error:', error);
-                }
-              }}
-            >
-              <Ionicons name="car-sport" size={20} color="#D4AF37" />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.logoutButton} onPress={logout}>
-              <Ionicons name="log-out-outline" size={24} color="#D4AF37" />
-            </TouchableOpacity>
-          </>
-        )}
+        <TouchableOpacity onPress={handleCancel} style={styles.closeButton}>
+          <Feather name="x" size={24} color={COLORS.gray600} />
+        </TouchableOpacity>
       </View>
+
+      <ScrollView style={styles.vehicleList} showsVerticalScrollIndicator={false}>
+        {VEHICLES.map((vehicle) => (
+          <TouchableOpacity
+            key={vehicle.id}
+            style={[
+              styles.vehicleCard,
+              selectedVehicle?.id === vehicle.id && styles.vehicleCardSelected,
+            ]}
+            onPress={() => handleSelectVehicle(vehicle)}
+            activeOpacity={0.7}
+          >
+            <View style={styles.vehicleIconContainer}>
+              <Ionicons 
+                name={vehicle.icon as any} 
+                size={32} 
+                color={selectedVehicle?.id === vehicle.id ? COLORS.darkBlue : COLORS.gray600} 
+              />
+            </View>
+            
+            <View style={styles.vehicleInfo}>
+              <View style={styles.vehicleNameRow}>
+                <Text style={styles.vehicleName}>{vehicle.name}</Text>
+                <View style={styles.capacityBadge}>
+                  <Feather name="user" size={12} color={COLORS.gray500} />
+                  <Text style={styles.capacityText}>{vehicle.capacity}</Text>
+                </View>
+              </View>
+              <Text style={styles.vehicleDescription}>{vehicle.description}</Text>
+              <View style={styles.vehicleTimeRow}>
+                <Feather name="clock" size={14} color={COLORS.gray400} />
+                <Text style={styles.vehicleTime}>{vehicle.waitTime} min</Text>
+              </View>
+            </View>
+            
+            <View style={styles.vehiclePriceContainer}>
+              <Text style={styles.vehiclePrice}>CHF {vehicle.price.toFixed(2)}</Text>
+            </View>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+
+      {/* Payment Method */}
+      <View style={styles.paymentSection}>
+        <TouchableOpacity style={styles.paymentMethod}>
+          <Feather name="credit-card" size={20} color={COLORS.gray600} />
+          <Text style={styles.paymentText}>Apple Pay •••• 4242</Text>
+          <Feather name="chevron-right" size={20} color={COLORS.gray400} />
+        </TouchableOpacity>
+      </View>
+
+      {/* Book Button */}
+      <TouchableOpacity
+        style={[
+          styles.bookButton,
+          !selectedVehicle && styles.bookButtonDisabled,
+        ]}
+        onPress={handleBook}
+        disabled={!selectedVehicle}
+        activeOpacity={0.8}
+      >
+        <Text style={styles.bookButtonText}>
+          {isGuest ? 'Se connecter pour commander' : 'Commander'}
+        </Text>
+        {selectedVehicle && (
+          <Text style={styles.bookButtonPrice}>
+            CHF {selectedVehicle.price.toFixed(2)}
+          </Text>
+        )}
+      </TouchableOpacity>
+    </Animated.View>
+  );
+
+  // Render tracking panel
+  const renderTrackingPanel = () => (
+    <Animated.View 
+      style={[
+        styles.bottomPanel,
+        styles.trackingPanel,
+        {
+          transform: [{
+            translateY: panelAnim.interpolate({
+              inputRange: [0, 1],
+              outputRange: [400, 0],
+            }),
+          }],
+        },
+      ]}
+    >
+      <View style={styles.panelHandle} />
+
+      {isSearching ? (
+        <View style={styles.searchingContainer}>
+          <ActivityIndicator size="large" color={COLORS.darkBlue} />
+          <Text style={styles.searchingText}>Recherche de chauffeur...</Text>
+          <Text style={styles.searchingSubtext}>Cela peut prendre quelques instants</Text>
+          
+          <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
+            <Text style={styles.cancelButtonText}>Annuler</Text>
+          </TouchableOpacity>
+        </View>
+      ) : driverFound ? (
+        <View style={styles.driverContainer}>
+          {/* Driver Info */}
+          <View style={styles.driverHeader}>
+            <View style={styles.driverPhotoContainer}>
+              {DRIVER.photo ? (
+                <Image source={{ uri: DRIVER.photo }} style={styles.driverPhoto} />
+              ) : (
+                <View style={styles.driverPhotoPlaceholder}>
+                  <Feather name="user" size={32} color={COLORS.gray400} />
+                </View>
+              )}
+            </View>
+            
+            <View style={styles.driverInfo}>
+              <Text style={styles.driverName}>{DRIVER.name}</Text>
+              <View style={styles.driverRatingRow}>
+                <Feather name="star" size={14} color={COLORS.darkBlue} />
+                <Text style={styles.driverRating}>{DRIVER.rating}</Text>
+                <Text style={styles.driverTrips}>• {DRIVER.trips} trajets</Text>
+              </View>
+            </View>
+            
+            <View style={styles.arrivalBadge}>
+              <Text style={styles.arrivalTime}>{DRIVER.arrivalTime}</Text>
+              <Text style={styles.arrivalLabel}>min</Text>
+            </View>
+          </View>
+
+          {/* Car Info */}
+          <View style={styles.carInfo}>
+            <View style={styles.carIconContainer}>
+              <Ionicons name="car-sport-outline" size={24} color={COLORS.gray600} />
+            </View>
+            <View style={styles.carDetails}>
+              <Text style={styles.carModel}>{DRIVER.car}</Text>
+              <Text style={styles.carPlate}>{DRIVER.plate}</Text>
+            </View>
+          </View>
+
+          {/* Trip Info */}
+          <View style={styles.tripInfo}>
+            <View style={styles.tripPoint}>
+              <View style={styles.tripDotGreen} />
+              <Text style={styles.tripAddress}>Position actuelle</Text>
+            </View>
+            <View style={styles.tripLine} />
+            <View style={styles.tripPoint}>
+              <View style={styles.tripDotBlack} />
+              <Text style={styles.tripAddress}>{destination}</Text>
+            </View>
+          </View>
+
+          {/* Actions */}
+          <View style={styles.driverActions}>
+            <TouchableOpacity style={styles.actionButton}>
+              <Feather name="phone" size={20} color={COLORS.darkBlue} />
+              <Text style={styles.actionButtonText}>Appeler</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity style={styles.actionButton}>
+              <Feather name="message-circle" size={20} color={COLORS.darkBlue} />
+              <Text style={styles.actionButtonText}>Message</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity style={styles.actionButton}>
+              <Feather name="share-2" size={20} color={COLORS.darkBlue} />
+              <Text style={styles.actionButtonText}>Partager</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Cancel */}
+          <TouchableOpacity style={styles.cancelTripButton} onPress={handleCancel}>
+            <Text style={styles.cancelTripText}>Annuler la course</Text>
+          </TouchableOpacity>
+        </View>
+      ) : null}
+    </Animated.View>
+  );
+
+  // Render header with user info
+  const renderHeader = () => (
+    <View style={styles.header}>
+      <TouchableOpacity style={styles.menuButton}>
+        <Feather name="menu" size={24} color={COLORS.darkBlue} />
+      </TouchableOpacity>
+      
+      <View style={styles.headerTitle}>
+        <Text style={styles.brandName}>ROMUO</Text>
+      </View>
+      
+      {isGuest ? (
+        <TouchableOpacity style={styles.loginButton} onPress={login}>
+          <Text style={styles.loginButtonText}>Connexion</Text>
+        </TouchableOpacity>
+      ) : (
+        <TouchableOpacity style={styles.profileButton} onPress={logout}>
+          <Feather name="user" size={20} color={COLORS.white} />
+        </TouchableOpacity>
+      )}
     </View>
   );
 
@@ -464,31 +488,20 @@ export default function IndexScreen() {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      {/* Desktop Layout: Map + Sidebar */}
-      {isDesktop ? (
-        <View style={styles.desktopLayout}>
-          {/* Map takes most space */}
-          <View style={styles.mapContainerDesktop}>
-            <MapComponent currentLocation={currentLocation} />
-          </View>
-          
-          {/* Sidebar with booking panel */}
-          {renderBookingPanel()}
-        </View>
-      ) : (
-        /* Mobile/Tablet Layout */
-        <>
-          {renderMobileHeader()}
-          
-          {/* Map */}
-          <View style={styles.mapContainer}>
-            <MapComponent currentLocation={currentLocation} />
-          </View>
-
-          {/* Bottom Sheet */}
-          {renderBookingPanel()}
-        </>
-      )}
+      {/* Map Background */}
+      {renderMap()}
+      
+      {/* Header */}
+      {renderHeader()}
+      
+      {/* Search Bar (only in map state) */}
+      {appState === 'map' && renderSearchBar()}
+      
+      {/* Selection Panel */}
+      {appState === 'selection' && renderSelectionPanel()}
+      
+      {/* Tracking Panel */}
+      {appState === 'tracking' && renderTrackingPanel()}
     </KeyboardAvoidingView>
   );
 }
@@ -496,375 +509,566 @@ export default function IndexScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0A0A0A',
+    backgroundColor: COLORS.gray100,
   },
-  
-  // Desktop Layout
-  desktopLayout: {
+
+  // Map Styles
+  mapContainer: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  mapBackground: {
     flex: 1,
-    flexDirection: 'row',
+    backgroundColor: COLORS.gray100,
+    position: 'relative',
   },
-  mapContainerDesktop: {
-    flex: 1,
-    height: '100%',
+  mapStreetH: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    height: 1,
+    backgroundColor: COLORS.gray200,
   },
-  
-  // Mobile Header
-  mobileHeader: {
+  mapStreetV: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    width: 1,
+    backgroundColor: COLORS.gray200,
+  },
+  mapMainRoad: {
+    position: 'absolute',
+    height: 30,
+    backgroundColor: COLORS.white,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: COLORS.gray300,
+  },
+  mapMainRoadV: {
+    position: 'absolute',
+    width: 30,
+    backgroundColor: COLORS.white,
+    borderLeftWidth: 1,
+    borderRightWidth: 1,
+    borderColor: COLORS.gray300,
+  },
+  mapPark: {
+    position: 'absolute',
+    backgroundColor: '#E8F5E9',
+    borderRadius: 8,
+  },
+  userMarker: {
+    position: 'absolute',
+    top: '45%',
+    left: '48%',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  userMarkerDot: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: COLORS.blue,
+    borderWidth: 3,
+    borderColor: COLORS.white,
+    shadowColor: COLORS.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  userMarkerPulse: {
+    position: 'absolute',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(59, 130, 246, 0.2)',
+  },
+  destinationMarker: {
+    position: 'absolute',
+    top: '25%',
+    left: '65%',
+  },
+  routeLine: {
+    position: 'absolute',
+    top: '35%',
+    left: '50%',
+    width: 100,
+    height: 3,
+    backgroundColor: COLORS.blue,
+    transform: [{ rotate: '-45deg' }],
+  },
+
+  // Header Styles
+  header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: responsive.padding,
-    paddingTop: safeAreaPadding.top,
-    paddingBottom: 16,
-    backgroundColor: '#0A0A0A',
+    paddingTop: 60,
+    paddingHorizontal: 20,
+    paddingBottom: 10,
   },
-  headerLeft: {
-    flex: 1,
-  },
-  appName: {
-    fontSize: responsive.fontSize.large,
-    fontWeight: '700',
-    color: '#D4AF37',
-    letterSpacing: 1,
-  },
-  appTagline: {
-    fontSize: responsive.fontSize.small,
-    color: '#A0A0A0',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
-  greeting: {
-    fontSize: responsive.fontSize.small,
-    color: '#A0A0A0',
-  },
-  userName: {
-    fontSize: responsive.fontSize.medium + 2,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
-  headerActions: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  loginHeaderButton: {
-    flexDirection: 'row',
+  menuButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: COLORS.white,
+    justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#2C2C2C',
+    shadowColor: COLORS.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  headerTitle: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  brandName: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: COLORS.darkBlue,
+    letterSpacing: 3,
+  },
+  loginButton: {
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 24,
-    gap: 8,
+    paddingVertical: 10,
+    backgroundColor: COLORS.white,
+    borderRadius: 20,
+    shadowColor: COLORS.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
   },
-  loginHeaderText: {
-    fontSize: responsive.fontSize.normal,
+  loginButtonText: {
+    fontSize: 14,
     fontWeight: '600',
-    color: '#D4AF37',
+    color: COLORS.darkBlue,
   },
-  switchButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#2C2C2C',
+  profileButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: COLORS.darkBlue,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  logoutButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#2C2C2C',
-    justifyContent: 'center',
-    alignItems: 'center',
+
+  // Search Styles
+  searchContainer: {
+    paddingHorizontal: 20,
+    paddingTop: 10,
   },
-  
-  // Map
-  mapContainer: {
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.white,
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    shadowColor: COLORS.black,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 5,
+  },
+  searchInput: {
     flex: 1,
+    fontSize: 16,
+    color: COLORS.darkBlue,
+    marginLeft: 12,
   },
-  
-  // Booking Panel (Bottom sheet on mobile, sidebar on desktop)
-  bookingPanel: {
-    backgroundColor: '#1A1A1A',
+  quickDestinations: {
+    marginTop: 12,
+    backgroundColor: COLORS.white,
+    borderRadius: 16,
+    overflow: 'hidden',
+    shadowColor: COLORS.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  quickDestItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.gray100,
+  },
+  quickDestIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: COLORS.gray100,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  quickDestText: {
+    fontSize: 15,
+    color: COLORS.gray700,
+    fontWeight: '500',
+  },
+
+  // Bottom Panel Styles
+  bottomPanel: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: COLORS.white,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    paddingTop: 24,
-    paddingBottom: safeAreaPadding.bottom,
+    paddingTop: 12,
+    paddingBottom: 34,
+    paddingHorizontal: 20,
+    shadowColor: COLORS.black,
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 16,
+    elevation: 10,
+    maxHeight: '70%',
+  },
+  trackingPanel: {
     maxHeight: '60%',
   },
-  bookingPanelDesktop: {
-    width: 420,
-    maxHeight: '100%',
-    borderTopLeftRadius: 0,
-    borderTopRightRadius: 0,
-    borderLeftWidth: 1,
-    borderLeftColor: '#2C2C2C',
-    paddingTop: 0,
-    paddingBottom: 24,
+  panelHandle: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: COLORS.gray300,
+    alignSelf: 'center',
+    marginBottom: 16,
   },
-  
-  // Desktop Sidebar Header
-  sidebarHeader: {
-    padding: 24,
-    borderBottomWidth: 1,
-    borderBottomColor: '#2C2C2C',
+  panelHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 20,
   },
-  logoRow: {
+  panelTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: COLORS.darkBlue,
+    marginBottom: 4,
+  },
+  panelSubtitle: {
+    fontSize: 14,
+    color: COLORS.gray500,
+  },
+  closeButton: {
+    padding: 8,
+  },
+
+  // Vehicle List Styles
+  vehicleList: {
+    maxHeight: 250,
+  },
+  vehicleCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    backgroundColor: COLORS.gray50,
+    borderRadius: 16,
+    marginBottom: 10,
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  vehicleCardSelected: {
+    borderColor: COLORS.darkBlue,
+    backgroundColor: COLORS.white,
+  },
+  vehicleIconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 12,
+    backgroundColor: COLORS.white,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 14,
+  },
+  vehicleInfo: {
+    flex: 1,
+  },
+  vehicleNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  vehicleName: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: COLORS.darkBlue,
+    marginRight: 8,
+  },
+  capacityBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.gray200,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 10,
+  },
+  capacityText: {
+    fontSize: 12,
+    color: COLORS.gray500,
+    marginLeft: 4,
+  },
+  vehicleDescription: {
+    fontSize: 13,
+    color: COLORS.gray500,
+    marginBottom: 6,
+  },
+  vehicleTimeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  vehicleTime: {
+    fontSize: 13,
+    color: COLORS.gray400,
+    marginLeft: 6,
+  },
+  vehiclePriceContainer: {
+    alignItems: 'flex-end',
+  },
+  vehiclePrice: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: COLORS.darkBlue,
+  },
+
+  // Payment Styles
+  paymentSection: {
+    marginTop: 16,
+    marginBottom: 16,
+  },
+  paymentMethod: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    backgroundColor: COLORS.gray50,
+    borderRadius: 12,
+  },
+  paymentText: {
+    flex: 1,
+    fontSize: 15,
+    color: COLORS.gray700,
+    marginLeft: 12,
+  },
+
+  // Book Button Styles
+  bookButton: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: COLORS.darkBlue,
+    borderRadius: 16,
+    paddingVertical: 18,
+    paddingHorizontal: 24,
+  },
+  bookButtonDisabled: {
+    backgroundColor: COLORS.gray300,
+  },
+  bookButtonText: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: COLORS.white,
+  },
+  bookButtonPrice: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: COLORS.white,
+  },
+
+  // Tracking Styles
+  searchingContainer: {
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  searchingText: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: COLORS.darkBlue,
+    marginTop: 20,
+  },
+  searchingSubtext: {
+    fontSize: 14,
+    color: COLORS.gray500,
+    marginTop: 8,
+  },
+  cancelButton: {
+    marginTop: 30,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: COLORS.gray300,
+  },
+  cancelButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: COLORS.gray600,
+  },
+
+  // Driver Styles
+  driverContainer: {
+    paddingTop: 8,
+  },
+  driverHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 20,
   },
-  logoText: {
-    marginLeft: 12,
+  driverPhotoContainer: {
+    marginRight: 14,
   },
-  logoTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#D4AF37',
+  driverPhoto: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
   },
-  logoSubtitle: {
-    fontSize: 12,
-    color: '#A0A0A0',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
-  desktopLoginButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#2C2C2C',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 12,
-    gap: 8,
-  },
-  desktopLoginText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#D4AF37',
-  },
-  userInfoDesktop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  userNameDesktop: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FFFFFF',
-  },
-  userActions: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  iconButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#2C2C2C',
+  driverPhotoPlaceholder: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: COLORS.gray100,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  
-  // Scroll Content
-  scrollContent: {
+  driverInfo: {
     flex: 1,
   },
-  scrollContentContainer: {
-    paddingHorizontal: 24,
-    paddingBottom: 16,
-  },
-  
-  // Section Title
-  sectionTitle: {
-    fontSize: responsive.fontSize.large,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    marginBottom: 24,
-    marginTop: 8,
-  },
-  
-  // Input Groups
-  inputGroup: {
-    marginBottom: 24,
-  },
-  inputLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#A0A0A0',
-    marginBottom: 12,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  
-  // Search Input
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#2C2C2C',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-  },
-  searchIcon: {
-    marginRight: 12,
-  },
-  searchInput: {
-    flex: 1,
-    color: '#FFFFFF',
-    fontSize: 16,
-    paddingVertical: 16,
-  },
-  
-  // Passenger Selector
-  passengerSelector: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#2C2C2C',
-    borderRadius: 12,
-    padding: 8,
-  },
-  passengerButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#3A3A3A',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  passengerCount: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 32,
-    gap: 8,
-  },
-  passengerCountText: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
-  
-  // Vehicle Grid
-  vehicleGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
-  vehicleGridDesktop: {
-    flexDirection: 'column',
-  },
-  vehicleCard: {
-    backgroundColor: '#2C2C2C',
-    borderRadius: 16,
-    padding: 16,
-    width: '48%',
-    borderWidth: 2,
-    borderColor: 'transparent',
-  },
-  vehicleCardDesktop: {
-    width: '100%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-  },
-  vehicleCardSelected: {
-    borderColor: '#D4AF37',
-    backgroundColor: '#3A3A3A',
-  },
-  vehicleIcon: {
-    fontSize: 32,
-    marginBottom: 8,
-  },
-  vehicleName: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    marginBottom: 4,
-  },
-  vehicleCapacity: {
-    fontSize: 12,
-    color: '#A0A0A0',
-    marginBottom: 4,
-  },
-  vehiclePrice: {
-    fontSize: 14,
-    color: '#D4AF37',
-    fontWeight: '600',
-  },
-  vehicleHint: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#2C2C2C',
-    padding: 12,
-    borderRadius: 8,
-    marginTop: 12,
-    gap: 8,
-  },
-  vehicleHintText: {
-    fontSize: 13,
-    color: '#D4AF37',
-    flex: 1,
-  },
-  priceTag: {
-    marginTop: 8,
-    backgroundColor: '#D4AF37',
-    borderRadius: 8,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    alignSelf: 'flex-start',
-  },
-  priceText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#0A0A0A',
-  },
-  
-  // Price Summary
-  priceSummary: {
-    backgroundColor: '#2C2C2C',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-  },
-  priceRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  priceLabel: {
-    fontSize: 16,
-    color: '#A0A0A0',
-  },
-  priceValue: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#D4AF37',
-  },
-  priceNote: {
-    fontSize: 12,
-    color: '#666',
-    marginTop: 8,
-  },
-  
-  // Book Button
-  bookButtonContainer: {
-    paddingHorizontal: 24,
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#2C2C2C',
-  },
-  bookButton: {
-    backgroundColor: '#D4AF37',
-    borderRadius: 12,
-    paddingVertical: 18,
-    alignItems: 'center',
-  },
-  bookButtonDisabled: {
-    backgroundColor: '#4A4A4A',
-  },
-  bookButtonText: {
+  driverName: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#0A0A0A',
+    color: COLORS.darkBlue,
+    marginBottom: 4,
+  },
+  driverRatingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  driverRating: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.darkBlue,
+    marginLeft: 4,
+  },
+  driverTrips: {
+    fontSize: 14,
+    color: COLORS.gray500,
+    marginLeft: 8,
+  },
+  arrivalBadge: {
+    backgroundColor: COLORS.darkBlue,
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+  },
+  arrivalTime: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: COLORS.white,
+  },
+  arrivalLabel: {
+    fontSize: 12,
+    color: COLORS.gray300,
+  },
+
+  // Car Info Styles
+  carInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    backgroundColor: COLORS.gray50,
+    borderRadius: 12,
+    marginBottom: 16,
+  },
+  carIconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 10,
+    backgroundColor: COLORS.white,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  carDetails: {
+    flex: 1,
+  },
+  carModel: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: COLORS.darkBlue,
+  },
+  carPlate: {
+    fontSize: 14,
+    color: COLORS.gray500,
+    marginTop: 2,
+  },
+
+  // Trip Info Styles
+  tripInfo: {
+    paddingVertical: 16,
+    paddingHorizontal: 8,
+    marginBottom: 16,
+  },
+  tripPoint: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  tripDotGreen: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: COLORS.success,
+    marginRight: 14,
+  },
+  tripDotBlack: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: COLORS.darkBlue,
+    marginRight: 14,
+  },
+  tripLine: {
+    width: 2,
+    height: 30,
+    backgroundColor: COLORS.gray300,
+    marginLeft: 4,
+    marginVertical: 4,
+  },
+  tripAddress: {
+    fontSize: 14,
+    color: COLORS.gray700,
+  },
+
+  // Driver Actions Styles
+  driverActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: 20,
+  },
+  actionButton: {
+    alignItems: 'center',
+    padding: 12,
+  },
+  actionButtonText: {
+    fontSize: 13,
+    color: COLORS.gray600,
+    marginTop: 6,
+  },
+
+  cancelTripButton: {
+    alignItems: 'center',
+    paddingVertical: 14,
+  },
+  cancelTripText: {
+    fontSize: 15,
+    color: COLORS.gray500,
+    textDecorationLine: 'underline',
   },
 });
