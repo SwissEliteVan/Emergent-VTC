@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Swiss International Style - Base Styles */
+/* Luxe Suisse - Premium VTC Design System */
 @layer base {
   * {
     @apply box-border;
@@ -15,7 +15,7 @@
 
   body {
     @apply m-0 p-0 font-sans antialiased;
-    @apply text-black bg-white;
+    @apply text-navy-900 bg-white;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
@@ -39,38 +39,61 @@
   input:-webkit-autofill:hover,
   input:-webkit-autofill:focus {
     -webkit-box-shadow: 0 0 0 30px white inset !important;
-    -webkit-text-fill-color: #000000 !important;
+    -webkit-text-fill-color: #0F172A !important;
   }
 }
 
-/* Swiss Design Components */
+/* Luxe Suisse Components */
 @layer components {
-  /* Primary CTA Button - Large, Black */
+  /* Primary CTA Button - Deep Navy */
   .btn-primary {
-    @apply bg-black text-white font-semibold;
+    @apply bg-navy-900 text-white font-semibold;
     @apply px-8 py-4 rounded-swiss-lg;
     @apply transition-all duration-200 ease-swiss;
-    @apply hover:bg-gray-800 active:scale-[0.98];
-    @apply focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2;
+    @apply hover:bg-navy-800 active:scale-[0.98];
+    @apply focus:outline-none focus:ring-2 focus:ring-navy-900 focus:ring-offset-2;
     @apply disabled:bg-gray-300 disabled:cursor-not-allowed;
+  }
+
+  /* Gold Accent Button */
+  .btn-gold {
+    @apply bg-gradient-gold text-navy-900 font-semibold;
+    @apply px-8 py-4 rounded-swiss-lg;
+    @apply transition-all duration-200 ease-swiss;
+    @apply hover:shadow-gold active:scale-[0.98];
+    @apply focus:outline-none focus:ring-2 focus:ring-gold-400 focus:ring-offset-2;
   }
 
   /* Secondary Button */
   .btn-secondary {
-    @apply bg-white text-black font-medium;
+    @apply bg-white text-navy-900 font-medium;
     @apply px-6 py-3 rounded-swiss border border-gray-200;
     @apply transition-all duration-200 ease-swiss;
     @apply hover:bg-gray-50 hover:border-gray-300;
-    @apply focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2;
+    @apply focus:outline-none focus:ring-2 focus:ring-navy-900 focus:ring-offset-2;
+  }
+
+  /* Outline Button */
+  .btn-outline {
+    @apply bg-transparent text-navy-900 font-medium;
+    @apply px-6 py-3 rounded-swiss border-2 border-navy-900;
+    @apply transition-all duration-200 ease-swiss;
+    @apply hover:bg-navy-900 hover:text-white;
+    @apply focus:outline-none focus:ring-2 focus:ring-navy-900 focus:ring-offset-2;
+  }
+
+  /* Small Button */
+  .btn-sm {
+    @apply px-4 py-2 text-sm rounded-swiss;
   }
 
   /* Swiss Input Field */
   .input-swiss {
-    @apply bg-white text-black;
+    @apply bg-white text-navy-900;
     @apply px-4 py-4 rounded-swiss w-full;
     @apply border border-gray-200;
     @apply transition-all duration-200 ease-swiss;
-    @apply focus:outline-none focus:border-black focus:ring-1 focus:ring-black;
+    @apply focus:outline-none focus:border-navy-900 focus:ring-1 focus:ring-navy-900;
     @apply placeholder:text-gray-400;
   }
 
@@ -82,7 +105,18 @@
   }
 
   .vehicle-card.selected {
-    @apply border-black border-2 bg-gray-50;
+    @apply border-navy-900 border-2 bg-navy-50;
+  }
+
+  /* Premium Vehicle Card */
+  .vehicle-card-premium {
+    @apply bg-white border border-gold-400/30 rounded-swiss-lg p-4;
+    @apply transition-all duration-200 ease-swiss cursor-pointer;
+    @apply hover:border-gold-400 hover:shadow-gold;
+  }
+
+  .vehicle-card-premium.selected {
+    @apply border-gold-400 border-2 bg-gold-50;
   }
 
   /* Bottom Sheet */
@@ -97,6 +131,18 @@
   .floating-card {
     @apply bg-white rounded-swiss-xl shadow-swiss-lg;
     @apply border border-gray-100;
+  }
+
+  /* Premium Card */
+  .card-premium {
+    @apply bg-white rounded-swiss-xl shadow-swiss-lg;
+    @apply border border-gold-400/20;
+    @apply relative overflow-hidden;
+  }
+
+  .card-premium::before {
+    content: '';
+    @apply absolute top-0 left-0 right-0 h-1 bg-gradient-gold;
   }
 
   /* Map Container */
@@ -118,7 +164,7 @@
   .search-pulse::before {
     content: '';
     @apply absolute inset-0 rounded-full;
-    @apply bg-black/10 animate-pulse-dot;
+    @apply bg-navy-900/10 animate-pulse-dot;
   }
 
   /* Driver Card */
@@ -130,13 +176,55 @@
   /* Swiss Plate Style */
   .swiss-plate {
     @apply inline-flex items-center gap-1 px-2 py-1;
-    @apply bg-white border-2 border-black rounded;
+    @apply bg-white border-2 border-navy-900 rounded;
     @apply font-mono text-sm font-bold tracking-wider;
+  }
+
+  /* Status Badge */
+  .badge {
+    @apply inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium;
+  }
+
+  .badge-success {
+    @apply bg-success-100 text-success-600;
+  }
+
+  .badge-warning {
+    @apply bg-warning-100 text-warning-600;
+  }
+
+  .badge-danger {
+    @apply bg-danger-100 text-danger-600;
+  }
+
+  .badge-gold {
+    @apply bg-gold-100 text-gold-700;
+  }
+
+  .badge-navy {
+    @apply bg-navy-100 text-navy-700;
+  }
+
+  /* Status Dot */
+  .status-dot {
+    @apply w-2.5 h-2.5 rounded-full;
+  }
+
+  .status-dot-available {
+    @apply bg-success-500 animate-pulse-dot;
+  }
+
+  .status-dot-busy {
+    @apply bg-danger-500;
+  }
+
+  .status-dot-offline {
+    @apply bg-gray-400;
   }
 
   /* Custom Scrollbar - Minimal */
   .custom-scrollbar::-webkit-scrollbar {
-    @apply w-1;
+    @apply w-1.5;
   }
 
   .custom-scrollbar::-webkit-scrollbar-track {
@@ -153,11 +241,143 @@
 
   /* Loading Spinner */
   .spinner {
-    @apply w-5 h-5 border-2 border-gray-200 border-t-black rounded-full animate-spin;
+    @apply w-5 h-5 border-2 border-gray-200 border-t-navy-900 rounded-full animate-spin;
+  }
+
+  .spinner-gold {
+    @apply w-5 h-5 border-2 border-gold-200 border-t-gold-500 rounded-full animate-spin;
+  }
+
+  /* Admin Sidebar */
+  .admin-sidebar {
+    @apply fixed left-0 top-0 bottom-0 w-64;
+    @apply bg-navy-900 text-white;
+    @apply flex flex-col;
+  }
+
+  .admin-sidebar-link {
+    @apply flex items-center gap-3 px-4 py-3;
+    @apply text-navy-200 hover:text-white hover:bg-navy-800;
+    @apply transition-colors duration-200;
+    @apply rounded-swiss mx-2;
+  }
+
+  .admin-sidebar-link.active {
+    @apply bg-gold-400/20 text-gold-400;
+  }
+
+  /* Admin Content */
+  .admin-content {
+    @apply ml-64 p-6 min-h-screen bg-gray-50;
+  }
+
+  /* Admin Card */
+  .admin-card {
+    @apply bg-white rounded-swiss-lg shadow-swiss p-6;
+    @apply border border-gray-100;
+  }
+
+  /* Table Styles */
+  .table-swiss {
+    @apply w-full text-left;
+  }
+
+  .table-swiss th {
+    @apply px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider;
+    @apply border-b border-gray-200 bg-gray-50;
+  }
+
+  .table-swiss td {
+    @apply px-4 py-4 text-sm text-navy-900;
+    @apply border-b border-gray-100;
+  }
+
+  .table-swiss tbody tr:hover {
+    @apply bg-gray-50;
+  }
+
+  /* Stat Card */
+  .stat-card {
+    @apply bg-white rounded-swiss-lg p-5 border border-gray-100;
+  }
+
+  .stat-card-gold {
+    @apply bg-gradient-to-br from-gold-50 to-white rounded-swiss-lg p-5;
+    @apply border border-gold-200;
+  }
+
+  /* Modal Overlay */
+  .modal-overlay {
+    @apply fixed inset-0 bg-navy-900/50 backdrop-blur-sm;
+    @apply flex items-center justify-center p-4 z-50;
+  }
+
+  .modal-content {
+    @apply bg-white rounded-swiss-xl shadow-swiss-xl;
+    @apply max-w-lg w-full max-h-[90vh] overflow-y-auto;
+  }
+
+  /* Form Group */
+  .form-group {
+    @apply space-y-2;
+  }
+
+  .form-label {
+    @apply block text-sm font-medium text-gray-700;
+  }
+
+  .form-input {
+    @apply w-full px-4 py-3 rounded-swiss border border-gray-200;
+    @apply focus:outline-none focus:ring-2 focus:ring-navy-900 focus:border-transparent;
+    @apply transition-all duration-200;
+  }
+
+  .form-select {
+    @apply w-full px-4 py-3 rounded-swiss border border-gray-200;
+    @apply focus:outline-none focus:ring-2 focus:ring-navy-900 focus:border-transparent;
+    @apply bg-white appearance-none cursor-pointer;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 0.75rem center;
+    background-repeat: no-repeat;
+    background-size: 1.5em 1.5em;
+    padding-right: 2.5rem;
+  }
+
+  /* Payment Method Card */
+  .payment-card {
+    @apply flex items-center gap-4 p-4 rounded-swiss border-2 border-gray-200;
+    @apply cursor-pointer transition-all duration-200;
+    @apply hover:border-gray-300;
+  }
+
+  .payment-card.selected {
+    @apply border-navy-900 bg-navy-50;
+  }
+
+  /* Trip History Card */
+  .trip-card {
+    @apply bg-white rounded-swiss-lg p-4 border border-gray-100;
+    @apply transition-all duration-200 hover:shadow-swiss-md;
+  }
+
+  /* Tabs */
+  .tabs-container {
+    @apply flex border-b border-gray-200;
+  }
+
+  .tab {
+    @apply px-6 py-3 text-sm font-medium text-gray-500;
+    @apply border-b-2 border-transparent;
+    @apply hover:text-navy-900 transition-colors;
+    @apply cursor-pointer;
+  }
+
+  .tab.active {
+    @apply text-navy-900 border-navy-900;
   }
 }
 
-/* Leaflet Map Customization - Swiss Style */
+/* Leaflet Map Customization - Premium Style */
 .leaflet-container {
   @apply h-full w-full;
   font-family: inherit;
@@ -165,7 +385,7 @@
 }
 
 .leaflet-popup-content-wrapper {
-  @apply bg-white text-black rounded-swiss shadow-swiss-lg;
+  @apply bg-white text-navy-900 rounded-swiss shadow-swiss-lg;
   padding: 0;
 }
 
@@ -183,7 +403,7 @@
 }
 
 .leaflet-control-zoom a {
-  @apply bg-white text-black;
+  @apply bg-white text-navy-900;
   border: none !important;
   width: 36px !important;
   height: 36px !important;
@@ -205,14 +425,28 @@
 
 /* Custom Marker */
 .custom-marker {
-  @apply bg-black text-white rounded-full;
+  @apply bg-navy-900 text-white rounded-full;
   @apply flex items-center justify-center;
   @apply w-8 h-8 shadow-swiss-md;
 }
 
+.custom-marker-gold {
+  @apply bg-gold-400 text-navy-900 rounded-full;
+  @apply flex items-center justify-center;
+  @apply w-8 h-8 shadow-gold;
+}
+
+/* Driver Marker */
+.driver-marker {
+  @apply bg-navy-900 text-white rounded-full;
+  @apply flex items-center justify-center;
+  @apply w-10 h-10 shadow-swiss-lg;
+  @apply border-2 border-gold-400;
+}
+
 /* Route Polyline */
 .leaflet-interactive {
-  stroke: #000000;
+  stroke: #0F172A;
   stroke-width: 4;
   stroke-linecap: round;
 }
@@ -229,6 +463,52 @@
   @apply bg-gray-100;
 }
 
+/* FullCalendar Customization */
+.fc {
+  @apply font-sans;
+}
+
+.fc .fc-toolbar-title {
+  @apply text-xl font-semibold text-navy-900;
+}
+
+.fc .fc-button-primary {
+  @apply bg-navy-900 border-navy-900;
+  @apply hover:bg-navy-800;
+}
+
+.fc .fc-button-primary:disabled {
+  @apply bg-gray-300 border-gray-300;
+}
+
+.fc .fc-daygrid-day-number {
+  @apply text-navy-900;
+}
+
+.fc .fc-event {
+  @apply border-0 rounded-sm px-1;
+}
+
+.fc .fc-event-title {
+  @apply text-xs font-medium;
+}
+
+.fc-event-pending {
+  @apply bg-warning-500 text-white;
+}
+
+.fc-event-assigned {
+  @apply bg-navy-600 text-white;
+}
+
+.fc-event-completed {
+  @apply bg-success-500 text-white;
+}
+
+.fc-event-cancelled {
+  @apply bg-danger-500 text-white;
+}
+
 /* Safe area padding for mobile */
 @supports (padding-bottom: env(safe-area-inset-bottom)) {
   .safe-bottom {
@@ -240,5 +520,55 @@
 @media (max-width: 768px) {
   body {
     overscroll-behavior: none;
+  }
+
+  .admin-sidebar {
+    @apply hidden;
+  }
+
+  .admin-content {
+    @apply ml-0;
+  }
+}
+
+/* Print styles for invoices */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    @apply bg-white text-black;
+  }
+}
+
+/* Animation utilities */
+.animate-in {
+  animation: fadeInUp 0.4s ease-out forwards;
+}
+
+.animate-in-delay-1 {
+  animation: fadeInUp 0.4s ease-out 0.1s forwards;
+  opacity: 0;
+}
+
+.animate-in-delay-2 {
+  animation: fadeInUp 0.4s ease-out 0.2s forwards;
+  opacity: 0;
+}
+
+.animate-in-delay-3 {
+  animation: fadeInUp 0.4s ease-out 0.3s forwards;
+  opacity: 0;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
