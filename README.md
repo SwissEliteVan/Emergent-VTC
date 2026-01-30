@@ -1,425 +1,337 @@
-# Romuo.ch - Plateforme VTC Suisse
+# Romuo - Transport VTC Suisse Romande
 
-**Plateforme de transport VTC pour le marché suisse** avec application mobile (iOS/Android), PWA web et dashboard administrateur.
+Service de transport VTC en Suisse romande. **Voiture, Van, Bus** de 1 a 50 passagers.
+Ligne nocturne **Martigny-Lausanne** chaque week-end.
 
-**Version**: 4.0.0 Production Ready
-**Tech Stack**: React Native (Expo) + React PWA + FastAPI + MongoDB 8.0
-**Marché**: Suisse (CHF pricing, French language)
+**Version**: 5.0.0
+**Stack**: React + Vite + TailwindCSS | FastAPI + MongoDB | Hostinger VPS
 
 ---
 
-## 🚀 DÉPLOIEMENT RAPIDE
+## Apercu
 
-### Installation Automatique (15-20 minutes)
+```
+https://romuo.ch              # Landing page + Reservation
+https://romuo.ch/pwa          # Progressive Web App
+https://api.romuo.ch          # Backend API
+```
+
+---
+
+## Services
+
+| Service | Capacite | Prix de base | Prix/km | Ideal pour |
+|---------|----------|--------------|---------|------------|
+| **Voiture** | 4 places | 8 CHF | 3.5 CHF | Trajets quotidiens, aeroports |
+| **Van** | 9 places | 15 CHF | 5.5 CHF | Familles, groupes d'amis |
+| **Bus** | 50 places | 80 CHF | 12 CHF | Evenements, entreprises |
+
+### Offres Speciales
+
+| Offre | Reduction | Conditions |
+|-------|-----------|------------|
+| **Tarif Jeune** | -15% | Moins de 26 ans |
+| **Covoiturage** | -25% | 2+ passagers |
+| **Ligne Nocturne** | Des 25 CHF | Martigny-Lausanne, Ven/Sam |
+
+---
+
+## Structure du Projet
+
+```
+Emergent-VTC/
+├── frontend-romuo/          # Landing page React + Vite
+│   ├── src/
+│   │   ├── App.jsx          # Page d'accueil marketing
+│   │   ├── components/
+│   │   │   ├── AutocompleteInput.jsx   # Photon + Nominatim
+│   │   │   └── OptimizedImage.jsx      # Lazy loading
+│   │   └── utils/
+│   │       └── vehicles.js  # Services et tarifs
+│   └── public/
+│       ├── .htaccess        # Config Apache/Hostinger
+│       ├── sw.js            # Service Worker v3
+│       ├── offline.html     # Page hors ligne
+│       └── manifest.json    # PWA manifest
+│
+├── backend/                 # FastAPI Python
+│   ├── server.py           # API principale
+│   └── requirements.txt
+│
+├── nginx/                   # Config serveur VPS
+│   ├── romuo.ch.conf       # Configuration nginx
+│   └── deploy-vps.sh       # Script de deploiement
+│
+├── pwa/                     # PWA Vanilla JS
+├── pwa-react/               # PWA React standalone
+└── frontend/                # App mobile React Native
+```
+
+---
+
+## Deploiement
+
+### Hostinger Mutualis (FTP)
+
+Le deploiement est automatique via GitHub Actions sur push vers `main`.
+
+**Secrets GitHub requis:**
+- `FTP_SERVER` - Serveur FTP Hostinger
+- `FTP_USERNAME` - Utilisateur FTP
+- `FTP_PASSWORD` - Mot de passe FTP
+- `FTP_SERVER_DIR` - `/public_html/`
+
+Voir: [HOSTINGER_GUIDE.md](./HOSTINGER_GUIDE.md)
+
+### VPS Ubuntu (nginx)
 
 ```bash
-# Connectez-vous à votre VPS
-ssh root@76.13.6.218
-
-# Lancez le script d'installation
-curl -fsSL https://raw.githubusercontent.com/SwissEliteVan/Emergent-VTC/main/install_rapide.sh | bash
+# Sur le VPS
+git clone https://github.com/SwissEliteVan/Emergent-VTC.git
+cd Emergent-VTC
+sudo chmod +x nginx/deploy-vps.sh
+sudo ./nginx/deploy-vps.sh
 ```
 
-**Voir le guide complet**: [DEPLOY_NOW.md](./DEPLOY_NOW.md)
+Le script installe automatiquement nginx, Node.js, Let's Encrypt SSL.
 
 ---
 
-## Documentation
+## Developpement Local
 
-### Guides de Déploiement
-
-- **[DEPLOY_NOW.md](./DEPLOY_NOW.md)** - Guide ultra-rapide (START HERE!)
-- **[DEPLOIEMENT_RAPIDE_VPS.md](./DEPLOIEMENT_RAPIDE_VPS.md)** - Guide détaillé étape par étape
-- **[MONGODB_8_OPTIMIZATIONS.md](./MONGODB_8_OPTIMIZATIONS.md)** - Spécifique MongoDB 8.0
-- **[GUIDE_COMPLET_DEPLOIEMENT.md](./GUIDE_COMPLET_DEPLOIEMENT.md)** - Guide complet original
-- **[PRODUCTION_GUIDE.md](./PRODUCTION_GUIDE.md)** - Guide de production complet
-
-### Documentation PWA
-
-- **[pwa/README.md](./pwa/README.md)** - PWA Emergent VTC (Vanilla JS)
-- **[pwa-react/README.md](./pwa-react/README.md)** - PWA Romuo.ch (React + TailwindCSS)
-
-### Documentation Technique
-
-- **[PROJECT_README.md](./PROJECT_README.md)** - Architecture et fonctionnalités
-- **[PHASE2_DRIVER_DOCS.md](./PHASE2_DRIVER_DOCS.md)** - Interface conducteur
-- **[GUEST_MODE_DOCS.md](./GUEST_MODE_DOCS.md)** - Mode invité (sans login)
-- **[HOSTINGER_HORIZON_PROMPT.md](./HOSTINGER_HORIZON_PROMPT.md)** - Prompt optimisé pour Hostinger Horizon
-
----
-
-## Architecture
-
-```
-romuo-ch/
-├── backend/                 # FastAPI (Python 3.11)
-│   ├── server.py           # API principale (1500+ lignes)
-│   ├── requirements.txt    # Dépendances Python
-│   └── .env                # Configuration (MongoDB, admin)
-│
-├── frontend/               # React Native (Expo SDK 52)
-│   ├── app/               # Screens (Expo Router)
-│   ├── components/        # Composants réutilisables
-│   ├── contexts/          # AuthContext
-│   └── store/             # Zustand state management
-│
-├── pwa/                    # PWA Vanilla JS (Emergent VTC)
-│   ├── index.html         # App complète
-│   ├── styles.css         # Design System
-│   ├── app.js             # Logique JavaScript
-│   └── service-worker.js  # Support offline (résilient)
-│
-├── pwa-react/              # PWA React + TailwindCSS (Romuo.ch)
-│   ├── index.html         # App React standalone
-│   ├── manifest.json      # Configuration PWA
-│   └── service-worker.js  # Support offline (résilient)
-│
-└── docs/                  # Documentation complète
-```
-
----
-
-## PWA Web Applications
-
-Deux Progressive Web Apps sont disponibles pour un déploiement web instantané:
-
-### PWA Romuo.ch (React + TailwindCSS)
-
-**Dossier**: `pwa-react/`
+### Frontend (Landing Page)
 
 ```bash
-# Déploiement local
-cd pwa-react
-npx serve .
-# Ouvrir http://localhost:3000
+cd frontend-romuo
+npm install
+npm run dev
+# http://localhost:3000
 ```
 
-**Caractéristiques**:
-- Design Swiss International Style
-- Pickup restreint à la Suisse (autocomplete 10 villes)
-- Destination ouverte à toute l'Europe
-- Pricing en CHF:
-  - Eco (Toyota): 6.00 CHF + 2.50 CHF/km
-  - Berline (Mercedes): 10.00 CHF + 3.50 CHF/km
-  - Van (V-Class): 15.00 CHF + 4.50 CHF/km
-- Icônes SVG (Lucide-style), zéro emoji
-- Service Worker résilient (fonctionne même si icônes manquantes)
-
-### PWA Emergent VTC (Vanilla JS)
-
-**Dossier**: `pwa/`
-
-```bash
-# Déploiement local
-cd pwa
-python -m http.server 8000
-# Ouvrir http://localhost:8000
-```
-
-**Caractéristiques**:
-- 3 onglets: Accueil, Activités, Compte
-- Carte CSS vectorielle (pas d'image statique)
-- Bottom sheet sélection véhicule
-- Animation recherche chauffeur
-- Section parrainage (Growth Hacking)
-- Design corporate, zéro emoji
-
----
-
-## ✨ Fonctionnalités
-
-### Phase 1: MVP Passager ✅
-- Mode invité (estimation de prix sans login)
-- Authentification Google OAuth (Emergent)
-- 3 types de véhicules (Eco, Berline Luxe, Van)
-- Calcul de prix en temps réel
-- Réservation de courses
-- Suivi de statut en temps réel
-
-### Phase 2: Interface Conducteur ✅
-- Basculement Passager/Conducteur
-- Flux de dispatch en temps réel (polling 5s)
-- Accepter/Refuser des courses
-- Navigation Waze/Google Maps
-- Gestion complète du cycle de vie
-- Tableau de bord des gains
-
-### Phase 3: Admin & B2B ✅
-- Dashboard admin web (/admin)
-- Dispatch manuel pour réservations téléphoniques
-- Comptes corporate (business vs personal)
-- Facturation mensuelle pour entreprises
-- Tracking TVA/IDE suisse
-- Statistiques plateforme
-
----
-
-## 🌐 URLs de Production
-
-| Service | URL | Credentials |
-|---------|-----|-------------|
-| **API Backend** | https://api.romuo.ch | - |
-| **Documentation API** | https://api.romuo.ch/docs | - |
-| **Admin Dashboard** | https://romuo.ch/admin | `RomuoAdmin2025!` |
-| **MongoDB** | localhost:27017 | `romuo_root` / voir .env |
-
----
-
-## 🛠️ Installation Développement
-
-### Prérequis
-- Python 3.11+
-- Node.js 20+
-- MongoDB 8.0
-- Expo CLI
-
-### Backend
+### Backend API
 
 ```bash
 cd backend
-
-# Créer l'environnement virtuel
-python3.11 -m venv venv
-source venv/bin/activate  # Linux/Mac
-# ou venv\Scripts\activate  # Windows
-
-# Installer les dépendances
+python3 -m venv venv
+source venv/bin/activate
 pip install -r requirements.txt
 
-# Créer le .env
+# Configurer .env
 cat > .env << EOF
 MONGO_URL=mongodb://localhost:27017
 DB_NAME=romuo_dev
 ADMIN_PASSWORD=admin123
 EOF
 
-# Lancer le serveur
 uvicorn server:app --reload --port 8001
+# http://localhost:8001/docs
 ```
 
-**Test**: http://localhost:8001/api/vehicles
-
-### Frontend
+### Build Production
 
 ```bash
-cd frontend
-
-# Installer les dépendances
-yarn install
-
-# Créer le .env
-cat > .env << EOF
-EXPO_PUBLIC_BACKEND_URL=http://localhost:8001
-EXPO_PUBLIC_GOOGLE_MAPS_API_KEY=YOUR_KEY_HERE
-EOF
-
-# Lancer Expo
-yarn start
+cd frontend-romuo
+npm run build
+# Output: dist/
 ```
 
 ---
 
-## 🧪 Tests API
+## Fonctionnalites Techniques
+
+### Autocompletion d'Adresses
+
+Double API pour une fiabilite maximale:
+1. **Photon** (Komoot) - Rapide, biais Suisse romande
+2. **Nominatim** - Fallback OpenStreetMap
+
+```jsx
+<AutocompleteInput
+  value={address}
+  onChange={setAddress}
+  onSelect={(place) => console.log(place.lat, place.lon)}
+  placeholder="Entrez une adresse"
+/>
+```
+
+### Service Worker (PWA)
+
+| Strategie | Ressources |
+|-----------|-----------|
+| Cache-First | JS/CSS (assets Vite), Google Fonts |
+| Network-First + TTL | APIs Photon/Nominatim (5min) |
+| Stale-While-Revalidate | Images Unsplash, tiles OSM |
+| Offline Fallback | HTML → offline.html |
+
+### SEO
+
+- Meta tags Open Graph + Twitter Card
+- Schema.org LocalBusiness + FAQ
+- Preconnect aux APIs externes
+- Sitemap.xml + robots.txt
+
+---
+
+## API Endpoints
+
+### Vehicules
 
 ```bash
-# Test vehicles
-curl http://localhost:8001/api/vehicles
-
-# Test calcul de prix
-curl -X POST http://localhost:8001/api/rides/calculate \
-  -H "Content-Type: application/json" \
-  -d '{
-    "pickup": {"latitude": 46.5197, "longitude": 6.6323, "address": "Lausanne"},
-    "destination": {"latitude": 46.2044, "longitude": 6.1432, "address": "Geneva"},
-    "vehicle_type": "berline",
-    "distance_km": 65.5
-  }'
+GET /api/vehicles
+# Retourne les 3 types de vehicules avec tarifs
 ```
 
----
+### Calcul de Prix
 
-## 🇨🇭 Configuration Suisse
-
-### Tarification (CHF)
-- **Eco**: CHF 6.00 base + CHF 3.00/km
-- **Berline Luxe**: CHF 10.00 base + CHF 5.00/km
-- **Van**: CHF 15.00 base + CHF 6.00/km
-
-### Langue
-- Interface en français
-- Messages d'erreur en français
-
-### Conformité
-- TVA suisse: 7.7%
-- Numéros IDE trackés pour B2B
-- Facturation mensuelle pour entreprises
-
----
-
-## 📊 Base de Données
-
-### Collections MongoDB
-
-```javascript
-// users
+```bash
+POST /api/rides/calculate
 {
-  user_id: "user_abc123",
-  email: "user@example.com",
-  name: "Jean Dupont",
-  role: "passenger" | "driver",
-  account_type: "personal" | "business",
-  company_name: "...",  // Si business
-  vat_number: "CHE-..."  // Si business
+  "pickup": "Martigny",
+  "destination": "Lausanne",
+  "vehicle_type": "voiture",
+  "distance_km": 75
 }
+# Retourne: { "total": 270, "currency": "CHF" }
+```
 
-// rides
-{
-  ride_id: "ride_abc123",
-  user_id: "user_abc123",
-  driver_id: "user_xyz789",
-  pickup: { latitude, longitude, address },
-  destination: { latitude, longitude, address },
-  vehicle_type: "eco" | "berline" | "van",
-  price: 337.50,
-  status: "pending" | "accepted" | "in_progress" | "completed",
-  billing_type: "immediate" | "monthly"
-}
+### Reservation
 
-// user_sessions
+```bash
+POST /api/rides
 {
-  user_id: "user_abc123",
-  session_token: "token_xyz...",
-  expires_at: ISODate("...")  // 7 jours
+  "pickup": { "address": "...", "lat": 46.1, "lon": 7.0 },
+  "destination": { "address": "...", "lat": 46.5, "lon": 6.6 },
+  "vehicle_type": "van",
+  "passengers": 6
 }
 ```
 
----
-
-## 🔒 Sécurité
-
-### MongoDB
-- Authentification activée (MongoDB 8.0)
-- Utilisateur dédié avec permissions limitées
-- Connexion via `authSource=admin`
-
-### API
-- Session tokens (7 jours)
-- Admin password protected
-- HTTPS forcé (production)
-
-### Firewall
-- Ports ouverts: 22 (SSH), 80 (HTTP), 443 (HTTPS)
-- MongoDB accessible uniquement en localhost
+Documentation complete: https://api.romuo.ch/docs
 
 ---
 
-## 🚨 Dépannage
+## Tarification
 
-### Backend ne démarre pas
+### Formule
 
-```bash
-# Voir les logs
-journalctl -u romuo-backend -n 50
-
-# Tester manuellement
-cd /var/www/romuo-ch/backend
-source venv/bin/activate
-uvicorn server:app --host 0.0.0.0 --port 8001
+```
+Prix = Base + (Distance × Prix/km)
 ```
 
-### MongoDB erreur authentification
+### Reductions
+
+| Reduction | Pourcentage | Application |
+|-----------|-------------|-------------|
+| Jeune (<26 ans) | -15% | Automatique |
+| Covoiturage | -25% | 2+ passagers |
+| Hors-pointe | -10% | En dehors de 7-9h et 17-19h |
+
+### Supplements
+
+| Supplement | Montant |
+|------------|---------|
+| Nocturne (22h-6h) | +10 CHF |
+| Aeroport | +15 CHF |
+| Attente (15 min) | +10 CHF |
+
+---
+
+## Ligne Nocturne Martigny-Lausanne
+
+**Chaque vendredi et samedi soir**
+
+| Depart | Heure |
+|--------|-------|
+| Martigny | 23:00 |
+| Martigny | 01:00 |
+| Lausanne (retour) | 03:00 |
+
+**Arrets:** Martigny → Sion → Montreux → Vevey → Lausanne
+
+**Prix:** Des 25 CHF par personne
+
+---
+
+## Configuration Serveur
+
+### Apache (.htaccess)
+
+- Routing SPA (toutes les routes → index.html)
+- Compression GZIP
+- Cache navigateur (1 an pour assets hashes)
+- Headers de securite (CSP, HSTS, X-Frame-Options)
+- HTTPS force
+
+### nginx (VPS)
 
 ```bash
-# Vérifier l'utilisateur
-mongosh -u romuo_root -p --authenticationDatabase admin
+# Tester la config
+sudo nginx -t
 
-# Voir la config
-cat /etc/mongod.conf
+# Recharger
+sudo systemctl reload nginx
+
+# Logs
+tail -f /var/log/nginx/romuo.ch.error.log
 ```
 
-### Nginx 502 Bad Gateway
+---
 
-```bash
-# Vérifier que le backend écoute
-ss -ltnp | grep 8001
+## Troubleshooting
 
-# Tester l'API
-curl http://localhost:8001/api/vehicles
+### Erreur 404 sur romuo.ch
 
-# Logs Nginx
-tail -f /var/log/nginx/error.log
-```
+1. Verifier que `.htaccess` est present dans `/public_html/`
+2. Verifier que `mod_rewrite` est active (Hostinger hPanel)
+3. Verifier les logs nginx si VPS
 
-**Guide complet**: [MONGODB_8_OPTIMIZATIONS.md](./MONGODB_8_OPTIMIZATIONS.md)
+### Autocompletion ne fonctionne pas
+
+1. Verifier la console navigateur pour les erreurs CORS
+2. Verifier que `photon.komoot.io` est accessible
+3. Fallback automatique vers Nominatim
+
+### PWA ne s'installe pas
+
+1. Verifier HTTPS (obligatoire)
+2. Verifier `manifest.json` est accessible
+3. Verifier `sw.js` est enregistre
 
 ---
 
-## 📞 Support
+## Performance
 
-### Commandes Utiles
+### Lighthouse Scores (Objectifs)
 
-```bash
-# Health check
-/root/romuo_health.sh
+| Metrique | Score |
+|----------|-------|
+| Performance | 90+ |
+| Accessibility | 95+ |
+| Best Practices | 95+ |
+| SEO | 100 |
 
-# Redémarrer les services
-systemctl restart mongod romuo-backend nginx
+### Optimisations Implementees
 
-# Backup MongoDB
-mongodump --uri="mongodb://romuo_root:PASSWORD@localhost:27017/romuo_production?authSource=admin" --out=/backup/$(date +%Y%m%d)
-
-# Mettre à jour le code
-cd /var/www/romuo-ch
-git pull origin main
-systemctl restart romuo-backend
-```
-
-### Documentation
-
-- **Questions MongoDB 8.0**: Voir [MONGODB_8_OPTIMIZATIONS.md](./MONGODB_8_OPTIMIZATIONS.md)
-- **Questions déploiement**: Voir [DEPLOIEMENT_RAPIDE_VPS.md](./DEPLOIEMENT_RAPIDE_VPS.md)
-- **Questions features**: Voir [PRODUCTION_GUIDE.md](./PRODUCTION_GUIDE.md)
+- Pre-compression GZIP des assets
+- Lazy loading des images (Intersection Observer)
+- Preconnect aux APIs externes
+- Font display swap
+- Service Worker avec cache strategies
 
 ---
 
-## 🎯 Roadmap
+## Contact
 
-### Phase 4: Paiements (À venir)
-- [ ] Intégration Stripe
-- [ ] Intégration Twint (paiement mobile suisse)
-- [ ] Facturation automatique PDF
-- [ ] Reçus par email
-
-### Phase 5: Notifications (À venir)
-- [ ] Push notifications (Expo)
-- [ ] Email notifications (SendGrid)
-- [ ] SMS notifications (Twilio)
-
-### Phase 6: Features Avancées (À venir)
-- [ ] WebSocket temps réel
-- [ ] Système de notes conducteurs
-- [ ] Courses planifiées
-- [ ] Partage de course
-- [ ] Codes promo
+- **Telephone:** +41 79 123 45 67
+- **Email:** info@romuo.ch
+- **Site:** https://romuo.ch
 
 ---
 
-## 📄 Licence
+## Licence
 
-Propriétaire - Romuo.ch © 2025
-
----
-
-## 🤝 Contribution
-
-Pour contribuer au projet:
-
-1. Fork le repository
-2. Créer une branche feature (`git checkout -b feature/AmazingFeature`)
-3. Commit vos changements (`git commit -m 'Add AmazingFeature'`)
-4. Push vers la branche (`git push origin feature/AmazingFeature`)
-5. Ouvrir une Pull Request
+Proprietaire - Romuo © 2025
 
 ---
 
-**Développé avec ❤️ pour le marché suisse 🇨🇭**
+**Transport VTC en Suisse romande - Voiture, Van, Bus - De 1 a 50 passagers**
