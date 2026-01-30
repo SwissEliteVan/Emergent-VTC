@@ -4,15 +4,21 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/romuo-icon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
-    <meta name="description" content="Romuo.ch - Service VTC premium avec Tesla dans la region de Vevey et Montreux. Reservez votre chauffeur prive en toute simplicite." />
-    <meta name="keywords" content="VTC, Chauffeur prive, Vevey, Montreux, Riviera suisse, Transport de luxe, Tesla, Transport premium Suisse" />
+
+    <!-- SEO Meta Tags -->
+    <title>Romuo - Transport VTC Suisse Romande | Voiture, Van, Bus | Martigny-Lausanne</title>
+    <meta name="description" content="Service VTC en Suisse romande. Voiture, Van, Bus de 1 a 50 passagers. Ligne nocturne Martigny-Lausanne chaque week-end. Tarif jeune -15%. Reservez en ligne." />
+    <meta name="keywords" content="VTC Suisse, transport Martigny Lausanne, chauffeur prive, van 9 places, bus 50 places, ligne nocturne, tarif jeune, Valais, Vaud, Montreux, Sion" />
+    <meta name="author" content="Romuo" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://romuo.ch/" />
 
     <!-- PWA Meta Tags -->
     <meta name="theme-color" content="#D4AF37" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="Romuo VTC" />
+    <meta name="apple-mobile-web-app-title" content="Romuo" />
     <link rel="manifest" href="/manifest.json" />
 
     <!-- Apple Touch Icons -->
@@ -23,72 +29,201 @@
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://romuo.ch/" />
-    <meta property="og:title" content="Romuo.ch - VTC Premium Tesla | Vevey & Montreux" />
-    <meta property="og:description" content="Service VTC haut de gamme avec Tesla en Suisse romande. Chauffeur prive 24/7." />
-    <meta property="og:image" content="https://romuo.ch/icon-512x512.png" />
+    <meta property="og:title" content="Romuo - Transport VTC | Voiture, Van, Bus | Suisse Romande" />
+    <meta property="og:description" content="De 1 a 50 passagers. Ligne nocturne Martigny-Lausanne. Tarif jeune -15%. Reservez votre transport en Suisse romande." />
+    <meta property="og:image" content="https://romuo.ch/og-image.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
     <meta property="og:locale" content="fr_CH" />
-    <meta property="og:site_name" content="Romuo.ch" />
+    <meta property="og:site_name" content="Romuo" />
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Romuo.ch - VTC Premium Tesla | Vevey & Montreux" />
-    <meta name="twitter:description" content="Service VTC haut de gamme avec Tesla en Suisse romande." />
-    <meta name="twitter:image" content="https://romuo.ch/icon-512x512.png" />
+    <meta name="twitter:title" content="Romuo - Transport VTC Suisse Romande" />
+    <meta name="twitter:description" content="Voiture, Van, Bus. Ligne nocturne Martigny-Lausanne. Tarif jeune -15%." />
+    <meta name="twitter:image" content="https://romuo.ch/og-image.jpg" />
 
-    <!-- DNS Prefetch & Preconnect pour ressources externes -->
-    <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
-    <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
-    <link rel="dns-prefetch" href="https://unpkg.com" />
-    <link rel="dns-prefetch" href="https://images.unsplash.com" />
-    <link rel="dns-prefetch" href="https://tile.openstreetmap.org" />
-
+    <!-- Preconnect - Critical pour la performance -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="preconnect" href="https://images.unsplash.com" />
+    <link rel="preconnect" href="https://photon.komoot.io" />
+    <link rel="preconnect" href="https://nominatim.openstreetmap.org" />
 
-    <!-- Fonts - avec display=swap pour eviter le blocage du rendu -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet" />
+    <!-- DNS Prefetch - Pour les ressources secondaires -->
+    <link rel="dns-prefetch" href="https://unpkg.com" />
+    <link rel="dns-prefetch" href="https://tile.openstreetmap.org" />
+    <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com" />
 
-    <!-- Leaflet CSS - preload pour charger plus tot -->
-    <link rel="preload" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" as="style" onload="this.onload=null;this.rel='stylesheet'" />
-    <noscript><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" /></noscript>
+    <!-- Fonts - avec display=swap pour eviter FOIT -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
-    <!-- Schema.org Structured Data pour SEO -->
+    <!-- Schema.org Structured Data - LocalBusiness + Services -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "LocalBusiness",
-      "name": "Romuo VTC",
-      "description": "Service de transport VTC premium avec Tesla en Suisse romande",
+      "@id": "https://romuo.ch/#business",
+      "name": "Romuo",
+      "description": "Service de transport VTC en Suisse romande. Voiture, Van et Bus de 1 a 50 passagers. Ligne nocturne Martigny-Lausanne.",
       "url": "https://romuo.ch",
+      "logo": "https://romuo.ch/icon-512x512.png",
+      "image": "https://romuo.ch/og-image.jpg",
+      "telephone": "+41791234567",
+      "email": "info@romuo.ch",
       "address": {
         "@type": "PostalAddress",
-        "addressLocality": "Vevey",
-        "addressRegion": "Vaud",
+        "addressLocality": "Martigny",
+        "addressRegion": "Valais",
+        "postalCode": "1920",
         "addressCountry": "CH"
       },
       "geo": {
         "@type": "GeoCoordinates",
-        "latitude": 46.4607,
-        "longitude": 6.8427
+        "latitude": 46.1028,
+        "longitude": 7.0736
       },
       "areaServed": [
-        "Vevey", "Montreux", "Lausanne", "Geneve", "Riviera vaudoise"
+        {
+          "@type": "GeoCircle",
+          "geoMidpoint": {
+            "@type": "GeoCoordinates",
+            "latitude": 46.3,
+            "longitude": 6.8
+          },
+          "geoRadius": "100000"
+        }
       ],
-      "priceRange": "CHF",
+      "priceRange": "CHF 8 - CHF 500",
+      "currenciesAccepted": "CHF",
+      "paymentAccepted": "Cash, Credit Card, TWINT",
       "openingHoursSpecification": {
         "@type": "OpeningHoursSpecification",
         "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],
         "opens": "00:00",
         "closes": "23:59"
-      }
+      },
+      "hasOfferCatalog": {
+        "@type": "OfferCatalog",
+        "name": "Services de transport",
+        "itemListElement": [
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "Voiture",
+              "description": "Berline premium 4 places pour vos deplacements"
+            },
+            "priceSpecification": {
+              "@type": "PriceSpecification",
+              "price": "8",
+              "priceCurrency": "CHF",
+              "unitText": "prise en charge"
+            }
+          },
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "Van",
+              "description": "Van spacieux 7-9 places pour groupes et familles"
+            },
+            "priceSpecification": {
+              "@type": "PriceSpecification",
+              "price": "15",
+              "priceCurrency": "CHF",
+              "unitText": "prise en charge"
+            }
+          },
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "Bus",
+              "description": "Minibus ou Bus jusqu'a 50 places pour evenements"
+            },
+            "priceSpecification": {
+              "@type": "PriceSpecification",
+              "price": "80",
+              "priceCurrency": "CHF",
+              "unitText": "prise en charge"
+            }
+          },
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "Ligne Nocturne Martigny-Lausanne",
+              "description": "Navette de nuit chaque vendredi et samedi"
+            },
+            "priceSpecification": {
+              "@type": "PriceSpecification",
+              "price": "25",
+              "priceCurrency": "CHF",
+              "unitText": "par personne"
+            }
+          }
+        ]
+      },
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.9",
+        "reviewCount": "200",
+        "bestRating": "5"
+      },
+      "sameAs": [
+        "https://www.facebook.com/romuovtc",
+        "https://www.instagram.com/romuovtc"
+      ]
     }
     </script>
 
-    <title>Romuo.ch - VTC Premium Tesla | Vevey & Montreux | Chauffeur Prive Suisse</title>
+    <!-- FAQ Schema pour SEO -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Quels sont les tarifs de Romuo ?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Voiture: 8 CHF + 3.5 CHF/km. Van: 15 CHF + 5.5 CHF/km. Bus: 80 CHF + 12 CHF/km. Tarif jeune -15% pour les moins de 26 ans."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Quelle est la ligne nocturne Martigny-Lausanne ?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Chaque vendredi et samedi, navettes a 23h00, 01h00 depuis Martigny et retour a 03h00 depuis Lausanne. Arrets a Sion, Montreux, Vevey. Des 25 CHF."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Comment beneficier du tarif jeune ?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Si vous avez moins de 26 ans, la reduction de 15% est appliquee automatiquement sur presentation d'une piece d'identite."
+          }
+        }
+      ]
+    }
+    </script>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
+
+    <!-- Noscript fallback -->
+    <noscript>
+      <div style="padding: 2rem; text-align: center; font-family: sans-serif;">
+        <h1>Romuo - Transport VTC Suisse Romande</h1>
+        <p>JavaScript est necessaire pour utiliser cette application.</p>
+        <p>Appelez-nous au <a href="tel:+41791234567">+41 79 123 45 67</a></p>
+      </div>
+    </noscript>
   </body>
 </html>
