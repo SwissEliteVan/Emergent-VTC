@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { MapPin, Navigation, Users as UsersIcon, LogIn, ArrowRight } from 'lucide-react';
 import VehicleCard from './VehicleCard';
 import AutocompleteInput from './AutocompleteInput';
-import { VEHICLE_TYPES, calculatePrice, estimateDistance, getAllPricesForRoute } from '../utils/vehicles';
+import { VEHICLE_TYPES, estimateDistance, getAllPricesForRoute } from '../utils/vehicles';
 
 export default function Sidebar() {
   const [pickup, setPickup] = useState('Vevey');

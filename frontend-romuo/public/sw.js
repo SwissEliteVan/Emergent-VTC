@@ -1,3 +1,4 @@
+/* eslint-env serviceworker */
 // ==========================================================
 // Romuo Service Worker - Strategies de cache avancees
 // ==========================================================
