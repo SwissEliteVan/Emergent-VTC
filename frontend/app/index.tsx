@@ -18,6 +18,7 @@ import { Ionicons, Feather } from '@expo/vector-icons';
 import { useAuth } from '../contexts/AuthContext';
 import { useRideStore } from '../store/rideStore';
 import Constants from 'expo-constants';
+import DesktopLayout from '../components/DesktopLayout';
 
 const BACKEND_URL = Constants.expoConfig?.extra?.EXPO_PUBLIC_BACKEND_URL || process.env.EXPO_PUBLIC_BACKEND_URL;
 // ══════════════════════════════════════════════════════════════
@@ -158,14 +159,8 @@ export default function IndexScreen() {
   const router = useRouter();
   const rideStore = useRideStore();
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
-  const isDesktop = Platform.OS === 'web' && windowWidth >= 768;
-  const sidebarMin = 400;
-  const sidebarPreferred = windowWidth * 0.34;
-  const sidebarMax = windowWidth * 0.4;
-  const sidebarWidth = isDesktop
-    ? Math.max(sidebarMin, Math.min(sidebarPreferred, sidebarMax))
-    : 0;
-  const mapWidth = isDesktop ? windowWidth - sidebarWidth : windowWidth;
+  const isDesktop = windowWidth > 1024;
+  const mapWidth = windowWidth;
 
   // States
   const [appState, setAppState] = useState<AppState>('splash');
@@ -202,11 +197,6 @@ export default function IndexScreen() {
 
   // Panel animation
   useEffect(() => {
-    if (isDesktop) {
-      panelSlide.setValue(0);
-      return;
-    }
-
     if (appState === 'selection' || appState === 'tracking') {
       Animated.spring(panelSlide, {
         toValue: 0,
@@ -221,7 +211,7 @@ export default function IndexScreen() {
         useNativeDriver: true,
       }).start();
     }
-  }, [appState, isDesktop, panelSlide, windowHeight]);
+  }, [appState, panelSlide, windowHeight]);
 
   // Handle splash to map transition
   const handleEnterApp = () => {
@@ -448,55 +438,24 @@ export default function IndexScreen() {
   // RENDER: HEADER
   // ════════════════════════════════════════════════════════════
   const renderHeader = () => (
-    <View style={isDesktop ? styles.desktopHeader : styles.header}>
-      {isDesktop ? (
-        <>
-          <View style={styles.desktopBrand}>
-            <View style={styles.desktopLogoIcon}>
-              <Feather name="navigation" size={18} color={COLORS.white} />
-            </View>
-            <Text style={styles.desktopBrandText}>ROMUO</Text>
-          </View>
+    <View style={styles.header}>
+      <TouchableOpacity style={styles.headerButton}>
+        <Feather name="menu" size={22} color={COLORS.gray700} />
+      </TouchableOpacity>
 
-          <View style={styles.desktopHeaderActions}>
-            <TouchableOpacity style={styles.desktopSupportBtn}>
-              <Feather name="help-circle" size={18} color={COLORS.gray600} />
-              <Text style={styles.desktopSupportText}>Assistance</Text>
-            </TouchableOpacity>
-            {isGuest ? (
-              <TouchableOpacity style={styles.desktopLoginBtn} onPress={login}>
-                <Feather name="user" size={18} color={COLORS.white} />
-                <Text style={styles.desktopLoginText}>Connexion</Text>
-              </TouchableOpacity>
-            ) : (
-              <TouchableOpacity style={styles.desktopProfileBtn} onPress={logout}>
-                <Feather name="user" size={18} color={COLORS.white} />
-                <Text style={styles.desktopProfileText}>Profil</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-        </>
+      <View style={styles.headerCenter}>
+        <Text style={styles.headerBrand}>ROMUO</Text>
+      </View>
+
+      {isGuest ? (
+        <TouchableOpacity style={styles.headerLoginBtn} onPress={login}>
+          <Feather name="user" size={18} color={COLORS.gray700} />
+          <Text style={styles.headerLoginText}>Connexion</Text>
+        </TouchableOpacity>
       ) : (
-        <>
-          <TouchableOpacity style={styles.headerButton}>
-            <Feather name="menu" size={22} color={COLORS.gray700} />
-          </TouchableOpacity>
-
-          <View style={styles.headerCenter}>
-            <Text style={styles.headerBrand}>ROMUO</Text>
-          </View>
-
-          {isGuest ? (
-            <TouchableOpacity style={styles.headerLoginBtn} onPress={login}>
-              <Feather name="user" size={18} color={COLORS.gray700} />
-              <Text style={styles.headerLoginText}>Connexion</Text>
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity style={styles.headerProfileBtn} onPress={logout}>
-              <Feather name="user" size={18} color={COLORS.white} />
-            </TouchableOpacity>
-          )}
-        </>
+        <TouchableOpacity style={styles.headerProfileBtn} onPress={logout}>
+          <Feather name="user" size={18} color={COLORS.white} />
+        </TouchableOpacity>
       )}
     </View>
   );
@@ -820,6 +779,10 @@ export default function IndexScreen() {
   // ════════════════════════════════════════════════════════════
   // MAIN RENDER
   // ════════════════════════════════════════════════════════════
+  if (isDesktop) {
+    return <DesktopLayout />;
+  }
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -833,32 +796,11 @@ export default function IndexScreen() {
       {/* Main App */}
       {appState !== 'splash' && (
         <>
-          {isDesktop ? (
-            <View style={styles.desktopLayout}>
-              <View style={[styles.sidebar, { width: sidebarWidth }]}>
-                {renderHeader()}
-                <ScrollView
-                  contentContainerStyle={styles.sidebarContent}
-                  showsVerticalScrollIndicator={false}
-                >
-                  {renderSearchBar('desktop')}
-                  {appState === 'selection' && renderSelectionPanel('desktop')}
-                  {appState === 'tracking' && renderTrackingPanel('desktop')}
-                </ScrollView>
-              </View>
-              <View style={styles.desktopMap}>
-                {renderMap()}
-              </View>
-            </View>
-          ) : (
-            <>
-              {renderMap()}
-              {renderHeader()}
-              {appState === 'map' && renderSearchBar()}
-              {appState === 'selection' && renderSelectionPanel()}
-              {appState === 'tracking' && renderTrackingPanel()}
-            </>
-          )}
+          {renderMap()}
+          {renderHeader()}
+          {appState === 'map' && renderSearchBar()}
+          {appState === 'selection' && renderSelectionPanel()}
+          {appState === 'tracking' && renderTrackingPanel()}
         </>
       )}
     </KeyboardAvoidingView>
