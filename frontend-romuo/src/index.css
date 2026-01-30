@@ -10,42 +10,42 @@
 
   body {
     @apply m-0 p-0 font-sans antialiased;
-    @apply text-gray-100 bg-dark-900;
+    @apply text-ink bg-white;
   }
 
   html, body, #root {
-    @apply h-full w-full overflow-hidden;
+    @apply h-full w-full;
   }
 }
 
 /* Composants personnalisés */
 @layer components {
-  /* Bouton primaire doré */
+  /* Bouton principal premium */
   .btn-primary {
-    @apply bg-primary hover:bg-primary-600 text-dark-900 font-semibold;
+    @apply bg-night hover:bg-night/90 text-white font-semibold;
     @apply px-6 py-3 rounded-lg transition-all duration-300;
     @apply shadow-lg hover:shadow-luxury;
-    @apply focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-dark-900;
+    @apply focus:outline-none focus:ring-2 focus:ring-night focus:ring-offset-2 focus:ring-offset-white;
   }
 
-  /* Input style dark mode */
+  /* Input style light mode */
   .input-dark {
-    @apply bg-dark-800 border border-dark-700 text-gray-100;
-    @apply px-4 py-3 rounded-lg w-full;
-    @apply focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary;
+    @apply bg-white border border-night/10 text-ink;
+    @apply px-4 py-3 rounded-2xl w-full shadow-soft;
+    @apply focus:outline-none focus:border-night focus:ring-1 focus:ring-night/30;
     @apply transition-colors duration-200;
-    @apply placeholder:text-gray-500;
+    @apply placeholder:text-ink/40;
   }
 
   /* Card véhicule */
   .vehicle-card {
-    @apply bg-dark-800 border border-dark-700 rounded-xl p-4;
+    @apply bg-white border border-night/10 rounded-xl p-4;
     @apply transition-all duration-300 cursor-pointer;
-    @apply hover:border-primary hover:shadow-luxury;
+    @apply hover:border-night hover:shadow-card;
   }
 
   .vehicle-card.selected {
-    @apply border-primary bg-dark-700;
+    @apply border-night bg-night/5;
   }
 
   /* Scrollbar personnalisée */
@@ -54,15 +54,15 @@
   }
 
   .custom-scrollbar::-webkit-scrollbar-track {
-    @apply bg-dark-800;
+    @apply bg-white;
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    @apply bg-dark-600 rounded-full;
+    @apply bg-night/20 rounded-full;
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    @apply bg-primary;
+    @apply bg-night;
   }
 }
 
@@ -73,17 +73,17 @@
 }
 
 .leaflet-popup-content-wrapper {
-  @apply bg-dark-800 text-gray-100 rounded-lg shadow-dark;
+  @apply bg-white text-ink rounded-lg shadow-card;
 }
 
 .leaflet-popup-tip {
-  @apply bg-dark-800;
+  @apply bg-white;
 }
 
 .leaflet-control-zoom a {
-  @apply bg-dark-800 text-gray-100 border-dark-700;
+  @apply bg-white text-ink border-night/10 shadow-soft;
 }
 
 .leaflet-control-zoom a:hover {
-  @apply bg-dark-700 border-primary;
+  @apply bg-night/5 border-night/40;
 }

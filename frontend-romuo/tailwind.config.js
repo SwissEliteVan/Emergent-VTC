@@ -7,41 +7,21 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Couleurs de marque Romuo.ch
-        primary: {
-          DEFAULT: '#D4AF37', // Or classique
-          50: '#FDF9E7',
-          100: '#F9F0C7',
-          200: '#F3E18F',
-          300: '#EDD257',
-          400: '#E7C32F',
-          500: '#D4AF37', // Base
-          600: '#B8952E',
-          700: '#8F7423',
-          800: '#66531A',
-          900: '#3D3210',
-        },
-        dark: {
-          DEFAULT: '#1A1A1A', // Noir anthracite
-          50: '#F5F5F5',
-          100: '#E0E0E0',
-          200: '#C2C2C2',
-          300: '#A3A3A3',
-          400: '#858585',
-          500: '#666666',
-          600: '#4D4D4D',
-          700: '#333333',
-          800: '#262626',
-          900: '#1A1A1A', // Base
-        },
+        // Palette Swiss International
+        white: '#FFFFFF',
+        ink: '#111827',
+        night: '#0F172A',
+        swiss: '#FF0000',
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
         display: ['Poppins', 'Inter', 'sans-serif'],
       },
       boxShadow: {
-        'luxury': '0 10px 40px rgba(212, 175, 55, 0.15)',
-        'dark': '0 10px 40px rgba(0, 0, 0, 0.3)',
+        luxury: '0 10px 40px rgba(15, 23, 42, 0.15)',
+        dark: '0 10px 40px rgba(0, 0, 0, 0.3)',
+        soft: '0 12px 30px rgba(15, 23, 42, 0.08)',
+        card: '0 24px 60px rgba(15, 23, 42, 0.08)',
       },
       animation: {
         'fade-in': 'fadeIn 0.5s ease-in-out',
