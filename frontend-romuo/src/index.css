@@ -2,88 +2,243 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Reset et styles de base */
+/* Swiss International Style - Base Styles */
 @layer base {
   * {
     @apply box-border;
   }
 
+  html {
+    @apply scroll-smooth;
+    -webkit-tap-highlight-color: transparent;
+  }
+
   body {
     @apply m-0 p-0 font-sans antialiased;
-    @apply text-ink bg-white;
+    @apply text-black bg-white;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   html, body, #root {
     @apply h-full w-full;
   }
+
+  /* Typography - Swiss International Style */
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display tracking-tight;
+  }
+
+  /* Remove default button styles */
+  button {
+    @apply font-sans;
+  }
+
+  /* Input autofill styling */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0 30px white inset !important;
+    -webkit-text-fill-color: #000000 !important;
+  }
 }
 
-/* Composants personnalisés */
+/* Swiss Design Components */
 @layer components {
-  /* Bouton principal premium */
+  /* Primary CTA Button - Large, Black */
   .btn-primary {
-    @apply bg-night hover:bg-night/90 text-white font-semibold;
-    @apply px-6 py-3 rounded-lg transition-all duration-300;
-    @apply shadow-lg hover:shadow-luxury;
-    @apply focus:outline-none focus:ring-2 focus:ring-night focus:ring-offset-2 focus:ring-offset-white;
+    @apply bg-black text-white font-semibold;
+    @apply px-8 py-4 rounded-swiss-lg;
+    @apply transition-all duration-200 ease-swiss;
+    @apply hover:bg-gray-800 active:scale-[0.98];
+    @apply focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2;
+    @apply disabled:bg-gray-300 disabled:cursor-not-allowed;
   }
 
-  /* Input style light mode */
-  .input-dark {
-    @apply bg-white border border-night/10 text-ink;
-    @apply px-4 py-3 rounded-2xl w-full shadow-soft;
-    @apply focus:outline-none focus:border-night focus:ring-1 focus:ring-night/30;
-    @apply transition-colors duration-200;
-    @apply placeholder:text-ink/40;
+  /* Secondary Button */
+  .btn-secondary {
+    @apply bg-white text-black font-medium;
+    @apply px-6 py-3 rounded-swiss border border-gray-200;
+    @apply transition-all duration-200 ease-swiss;
+    @apply hover:bg-gray-50 hover:border-gray-300;
+    @apply focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2;
   }
 
-  /* Card véhicule */
+  /* Swiss Input Field */
+  .input-swiss {
+    @apply bg-white text-black;
+    @apply px-4 py-4 rounded-swiss w-full;
+    @apply border border-gray-200;
+    @apply transition-all duration-200 ease-swiss;
+    @apply focus:outline-none focus:border-black focus:ring-1 focus:ring-black;
+    @apply placeholder:text-gray-400;
+  }
+
+  /* Vehicle Selection Card */
   .vehicle-card {
-    @apply bg-white border border-night/10 rounded-xl p-4;
-    @apply transition-all duration-300 cursor-pointer;
-    @apply hover:border-night hover:shadow-card;
+    @apply bg-white border border-gray-100 rounded-swiss-lg p-4;
+    @apply transition-all duration-200 ease-swiss cursor-pointer;
+    @apply hover:border-gray-300 hover:shadow-swiss-md;
   }
 
   .vehicle-card.selected {
-    @apply border-night bg-night/5;
+    @apply border-black border-2 bg-gray-50;
   }
 
-  /* Scrollbar personnalisée */
+  /* Bottom Sheet */
+  .bottom-sheet {
+    @apply fixed bottom-0 left-0 right-0;
+    @apply bg-white rounded-t-swiss-xl;
+    @apply shadow-bottomsheet;
+    @apply pb-safe-bottom;
+  }
+
+  /* Floating Card */
+  .floating-card {
+    @apply bg-white rounded-swiss-xl shadow-swiss-lg;
+    @apply border border-gray-100;
+  }
+
+  /* Map Container */
+  .map-container {
+    @apply relative w-full h-full;
+    @apply bg-gray-100;
+  }
+
+  /* Connector Line between inputs */
+  .connector-line {
+    @apply absolute left-6 top-[calc(50%-1rem)] h-8 w-0.5 bg-gray-200;
+  }
+
+  /* Pulse Animation for Search */
+  .search-pulse {
+    @apply relative;
+  }
+
+  .search-pulse::before {
+    content: '';
+    @apply absolute inset-0 rounded-full;
+    @apply bg-black/10 animate-pulse-dot;
+  }
+
+  /* Driver Card */
+  .driver-card {
+    @apply bg-white rounded-swiss-lg p-4;
+    @apply border border-gray-100 shadow-swiss-md;
+  }
+
+  /* Swiss Plate Style */
+  .swiss-plate {
+    @apply inline-flex items-center gap-1 px-2 py-1;
+    @apply bg-white border-2 border-black rounded;
+    @apply font-mono text-sm font-bold tracking-wider;
+  }
+
+  /* Custom Scrollbar - Minimal */
   .custom-scrollbar::-webkit-scrollbar {
-    @apply w-2;
+    @apply w-1;
   }
 
   .custom-scrollbar::-webkit-scrollbar-track {
-    @apply bg-white;
+    @apply bg-transparent;
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    @apply bg-night/20 rounded-full;
+    @apply bg-gray-300 rounded-full;
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    @apply bg-night;
+    @apply bg-gray-400;
+  }
+
+  /* Loading Spinner */
+  .spinner {
+    @apply w-5 h-5 border-2 border-gray-200 border-t-black rounded-full animate-spin;
   }
 }
 
-/* Fix pour Leaflet dans Tailwind */
+/* Leaflet Map Customization - Swiss Style */
 .leaflet-container {
   @apply h-full w-full;
   font-family: inherit;
+  background: #F5F5F5;
 }
 
 .leaflet-popup-content-wrapper {
-  @apply bg-white text-ink rounded-lg shadow-card;
+  @apply bg-white text-black rounded-swiss shadow-swiss-lg;
+  padding: 0;
+}
+
+.leaflet-popup-content {
+  margin: 12px 16px;
 }
 
 .leaflet-popup-tip {
   @apply bg-white;
 }
 
+.leaflet-control-zoom {
+  border: none !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
+}
+
 .leaflet-control-zoom a {
-  @apply bg-white text-ink border-night/10 shadow-soft;
+  @apply bg-white text-black;
+  border: none !important;
+  width: 36px !important;
+  height: 36px !important;
+  line-height: 36px !important;
+  font-size: 18px !important;
 }
 
 .leaflet-control-zoom a:hover {
-  @apply bg-night/5 border-night/40;
+  @apply bg-gray-100;
+}
+
+.leaflet-control-zoom-in {
+  border-radius: 8px 8px 0 0 !important;
+}
+
+.leaflet-control-zoom-out {
+  border-radius: 0 0 8px 8px !important;
+}
+
+/* Custom Marker */
+.custom-marker {
+  @apply bg-black text-white rounded-full;
+  @apply flex items-center justify-center;
+  @apply w-8 h-8 shadow-swiss-md;
+}
+
+/* Route Polyline */
+.leaflet-interactive {
+  stroke: #000000;
+  stroke-width: 4;
+  stroke-linecap: round;
+}
+
+/* Suggestion Dropdown */
+.suggestion-item {
+  @apply px-4 py-3 cursor-pointer;
+  @apply transition-colors duration-150;
+  @apply hover:bg-gray-50;
+  @apply border-b border-gray-100 last:border-b-0;
+}
+
+.suggestion-item.selected {
+  @apply bg-gray-100;
+}
+
+/* Safe area padding for mobile */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* Prevent overscroll bounce on iOS */
+@media (max-width: 768px) {
+  body {
+    overscroll-behavior: none;
+  }
 }

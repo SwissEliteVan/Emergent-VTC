@@ -1,13 +1,13 @@
 {
-  "name": "Romuo - Transport VTC Suisse Romande",
+  "name": "Romuo.ch - Votre Chauffeur Suisse",
   "short_name": "Romuo",
-  "description": "Service VTC en Suisse romande. Voiture, Van, Bus de 1 a 50 passagers. Ligne nocturne Martigny-Lausanne. Tarif jeune -15%.",
+  "description": "Transport prive premium en Suisse. Eco, Berline, Van, Bus. Prix fixes en CHF. Service 24/7.",
   "start_url": "/",
   "id": "/",
   "display": "standalone",
   "display_override": ["window-controls-overlay", "standalone"],
-  "background_color": "#1A1A1A",
-  "theme_color": "#D4AF37",
+  "background_color": "#FFFFFF",
+  "theme_color": "#000000",
   "orientation": "portrait-primary",
   "scope": "/",
   "lang": "fr-CH",
@@ -67,24 +67,10 @@
   ],
   "shortcuts": [
     {
-      "name": "Reserver un trajet",
+      "name": "Reserver une course",
       "short_name": "Reserver",
-      "description": "Reserver un transport VTC",
-      "url": "/#booking",
-      "icons": [{"src": "/icon-96x96.png", "sizes": "96x96"}]
-    },
-    {
-      "name": "Ligne Nocturne",
-      "short_name": "Nuit",
-      "description": "Navette Martigny-Lausanne",
-      "url": "/#ligne-nocturne",
-      "icons": [{"src": "/icon-96x96.png", "sizes": "96x96"}]
-    },
-    {
-      "name": "Appeler",
-      "short_name": "Appeler",
-      "description": "Appeler Romuo",
-      "url": "tel:+41791234567",
+      "description": "Reservez votre chauffeur maintenant",
+      "url": "/",
       "icons": [{"src": "/icon-96x96.png", "sizes": "96x96"}]
     }
   ],
