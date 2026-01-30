@@ -1,364 +1,174 @@
-import { Car, Bus, Users } from 'lucide-react';
+import { Car, Users, Bus } from 'lucide-react';
 
 // ==========================================================
-// SERVICES ROMUO - Voiture, Van, Bus
+// ROMUO.CH - Vehicle Types & Pricing
+// Swiss VTC Service - All prices in CHF
 // ==========================================================
 
 export const VEHICLE_TYPES = [
   {
-    id: 'voiture',
-    name: 'Voiture',
-    shortName: 'Voiture',
-    description: 'Confort et elegance pour vos deplacements',
-    vehicleModel: 'Berline Premium',
+    id: 'eco',
+    name: 'Eco',
+    model: 'Toyota Prius',
+    description: 'Economique et ecologique',
     icon: Car,
-    basePrice: 8,
-    pricePerKm: 3.5,
+    basePrice: 6.00,
+    pricePerKm: 2.50,
+    capacity: 4,
+    luggage: 2,
+    waitTime: '3-5 min',
+    priceRange: { min: 25, max: 30 },
+    features: [
+      'Vehicule hybride',
+      'Climatisation',
+      '4 places',
+    ],
+  },
+  {
+    id: 'berline',
+    name: 'Berline',
+    model: 'Mercedes Classe E',
+    description: 'Confort et elegance',
+    icon: Car,
+    basePrice: 10.00,
+    pricePerKm: 3.50,
     capacity: 4,
     luggage: 3,
-    image: 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=800&auto=format&fit=crop',
+    waitTime: '4-6 min',
+    priceRange: { min: 45, max: 50 },
     features: [
-      'Berline haut de gamme',
-      'Climatisation automatique',
-      'Sieges cuir confortables',
-      'Chauffeur professionnel',
-      'Bouteille d\'eau offerte',
-      'Chargeurs USB'
+      'Berline premium',
+      'Sieges cuir',
+      'WiFi gratuit',
     ],
-    badge: 'POPULAIRE',
     popular: true,
-    idealFor: 'Trajets quotidiens, rendez-vous, aeroports'
   },
   {
     id: 'van',
     name: 'Van',
-    shortName: 'Van',
-    description: 'Espace et confort pour groupes et familles',
-    vehicleModel: 'Van 7-9 places',
+    model: 'Mercedes V-Class',
+    description: 'Espace pour groupes et familles',
     icon: Users,
-    basePrice: 15,
-    pricePerKm: 5.5,
-    capacity: 9,
-    luggage: 8,
-    image: 'https://images.unsplash.com/photo-1559416523-140ddc3d238c?w=800&auto=format&fit=crop',
+    basePrice: 15.00,
+    pricePerKm: 4.50,
+    capacity: 7,
+    luggage: 6,
+    waitTime: '5-8 min',
+    priceRange: { min: 65, max: 80 },
     features: [
-      'Van spacieux 7-9 places',
-      'Grand espace bagages',
-      'Ideal familles et groupes',
+      'Van luxe 7 places',
+      'Grand coffre',
       'Confort premium',
-      'Climatisation zone arriere',
-      'WiFi disponible'
     ],
-    badge: 'FAMILLE',
-    popular: false,
-    idealFor: 'Familles, groupes d\'amis, sorties'
   },
   {
     id: 'bus',
     name: 'Bus',
-    shortName: 'Bus',
-    description: 'Transport de groupe jusqu\'a 50 personnes',
-    vehicleModel: 'Minibus / Bus',
+    model: 'Mercedes Sprinter',
+    description: 'Transport de groupe jusqu\'a 20 personnes',
     icon: Bus,
-    basePrice: 80,
-    pricePerKm: 12,
-    capacity: 50,
-    luggage: 50,
-    image: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=800&auto=format&fit=crop',
+    basePrice: 25.00,
+    pricePerKm: 6.00,
+    capacity: 20,
+    luggage: 20,
+    waitTime: '10-15 min',
+    priceRange: { min: 95, max: 120 },
     features: [
-      'Minibus 20 places ou Bus 50 places',
-      'Ideal evenements et excursions',
-      'Soute a bagages XXL',
-      'Microphone pour guide',
-      'Climatisation',
-      'Prix degressif par personne'
+      'Minibus 20 places',
+      'Ideal evenements',
+      'Climatisation zone',
     ],
-    badge: 'GROUPE',
-    popular: false,
-    idealFor: 'Entreprises, associations, evenements'
-  }
+  },
 ];
 
 // ==========================================================
-// OFFRES SPECIALES
-// ==========================================================
-
-export const SPECIAL_OFFERS = {
-  youth: {
-    id: 'youth',
-    name: 'Tarif Jeune',
-    description: 'Moins de 26 ans',
-    discount: 15, // %
-    badge: '-15%',
-    color: 'green',
-    conditions: 'Valable sur presentation d\'une piece d\'identite'
-  },
-  nightLine: {
-    id: 'nightLine',
-    name: 'Ligne Nocturne',
-    description: 'Martigny - Lausanne',
-    subtitle: 'Chaque week-end',
-    schedules: ['Vendredi', 'Samedi'],
-    departures: ['23h00', '01h00', '03h00'],
-    route: {
-      from: 'Martigny',
-      to: 'Lausanne',
-      stops: ['Sion', 'Montreux', 'Vevey']
-    },
-    priceFrom: 25,
-    badge: 'NOCTAMBULES'
-  },
-  rideshare: {
-    id: 'rideshare',
-    name: 'Covoiturage',
-    description: 'Partagez votre trajet',
-    discount: 25, // %
-    badge: '-25%',
-    conditions: 'Prix par personne, minimum 2 passagers'
-  }
-};
-
-// ==========================================================
-// LIGNES REGULIERES
-// ==========================================================
-
-export const REGULAR_LINES = [
-  {
-    id: 'martigny-lausanne-night',
-    name: 'Ligne Nocturne Martigny-Lausanne',
-    type: 'night',
-    from: 'Martigny',
-    to: 'Lausanne',
-    stops: ['Sion', 'Montreux', 'Vevey', 'Lausanne'],
-    schedule: {
-      days: ['Vendredi', 'Samedi'],
-      departures: [
-        { time: '23:00', from: 'Martigny' },
-        { time: '01:00', from: 'Martigny' },
-        { time: '03:00', from: 'Lausanne (retour)' }
-      ]
-    },
-    priceFrom: 25,
-    duration: '1h30',
-    distance: 100
-  }
-];
-
-// ==========================================================
-// TRAJETS POPULAIRES
-// ==========================================================
-
-export const POPULAR_ROUTES = [
-  {
-    id: 'martigny-lausanne',
-    from: 'Martigny',
-    to: 'Lausanne',
-    distance: 75,
-    duration: '55 min',
-    priceFrom: 270,
-    description: 'Ligne directe'
-  },
-  {
-    id: 'martigny-geneve',
-    from: 'Martigny',
-    to: 'Geneve Aeroport',
-    distance: 110,
-    duration: '1h20',
-    priceFrom: 390,
-    description: 'Transfert aeroport'
-  },
-  {
-    id: 'lausanne-geneve',
-    from: 'Lausanne',
-    to: 'Geneve Aeroport',
-    distance: 65,
-    duration: '45 min',
-    priceFrom: 235,
-    description: 'Transfert aeroport'
-  },
-  {
-    id: 'montreux-lausanne',
-    from: 'Montreux',
-    to: 'Lausanne',
-    distance: 30,
-    duration: '25 min',
-    priceFrom: 115,
-    description: 'Riviera'
-  },
-  {
-    id: 'sion-lausanne',
-    from: 'Sion',
-    to: 'Lausanne',
-    distance: 95,
-    duration: '1h10',
-    priceFrom: 340,
-    description: 'Valais - Vaud'
-  }
-];
-
-// ==========================================================
-// CIBLES CLIENTELE
-// ==========================================================
-
-export const TARGET_AUDIENCES = [
-  {
-    id: 'youth',
-    title: 'Jeunes',
-    subtitle: 'Sorties du week-end',
-    icon: 'party',
-    description: 'Rentrez en toute securite apres vos soirees',
-    benefit: 'Tarifs reduits -15%',
-    cta: 'Decouvrir les tarifs jeunes'
-  },
-  {
-    id: 'seniors',
-    title: 'Seniors',
-    subtitle: 'Courses quotidiennes',
-    icon: 'heart',
-    description: 'Medecin, courses, visites... on s\'occupe de tout',
-    benefit: 'Service porte-a-porte',
-    cta: 'Reserver un transport'
-  },
-  {
-    id: 'nocar',
-    title: 'Sans vehicule',
-    subtitle: 'Liberte de deplacement',
-    icon: 'map',
-    description: 'Plus besoin de voiture pour vous deplacer',
-    benefit: 'Disponible 7j/7',
-    cta: 'Commander maintenant'
-  },
-  {
-    id: 'business',
-    title: 'Professionnels',
-    subtitle: 'Trajets d\'affaires',
-    icon: 'briefcase',
-    description: 'Ponctualite et discretion pour vos rendez-vous',
-    benefit: 'Facturation entreprise',
-    cta: 'Ouvrir un compte pro'
-  }
-];
-
-// ==========================================================
-// TARIFS ADDITIONNELS
-// ==========================================================
-
-export const ADDITIONAL_FEES = {
-  nightSurcharge: {
-    label: 'Supplement nocturne',
-    description: '22h00 - 06h00',
-    amount: 10,
-    currency: 'CHF',
-    type: 'fixed'
-  },
-  airportPickup: {
-    label: 'Prise en charge aeroport',
-    description: 'Geneve, Zurich',
-    amount: 15,
-    currency: 'CHF',
-    type: 'fixed'
-  },
-  waitingTime: {
-    label: 'Temps d\'attente',
-    description: 'Par tranche de 15 minutes',
-    amount: 10,
-    currency: 'CHF',
-    type: 'per_unit'
-  },
-  childSeat: {
-    label: 'Siege enfant',
-    description: 'Sur demande',
-    amount: 0,
-    currency: 'CHF',
-    type: 'fixed'
-  }
-};
-
-// ==========================================================
-// FONCTIONS UTILITAIRES
+// PRICE CALCULATION
 // ==========================================================
 
 /**
- * Calcule le prix d'un trajet
+ * Calculate price for a given distance and vehicle type
+ * @param {number} distanceKm - Distance in kilometers
+ * @param {string} vehicleId - Vehicle type ID
+ * @returns {number} - Estimated price in CHF
  */
-export const calculatePrice = (distance, vehicleType, options = {}) => {
-  const vehicle = VEHICLE_TYPES.find(v => v.id === vehicleType);
-  if (!vehicle) return null;
+export const calculatePrice = (distanceKm, vehicleId) => {
+  const vehicle = VEHICLE_TYPES.find(v => v.id === vehicleId);
+  if (!vehicle || !distanceKm) return null;
 
-  let total = vehicle.basePrice + (distance * vehicle.pricePerKm);
-
-  // Reductions
-  if (options.isYouth) {
-    total *= (1 - SPECIAL_OFFERS.youth.discount / 100);
-  }
-  if (options.isRideshare) {
-    total *= (1 - SPECIAL_OFFERS.rideshare.discount / 100);
-  }
-
-  // Supplements
-  if (options.nightTime) total += ADDITIONAL_FEES.nightSurcharge.amount;
-  if (options.airport) total += ADDITIONAL_FEES.airportPickup.amount;
-  if (options.waitingTime) total += ADDITIONAL_FEES.waitingTime.amount * options.waitingTime;
-
-  return {
-    basePrice: vehicle.basePrice,
-    distancePrice: Math.round(distance * vehicle.pricePerKm),
-    discounts: options.isYouth || options.isRideshare ? 'Reduction appliquee' : null,
-    additionalFees: total - vehicle.basePrice - (distance * vehicle.pricePerKm),
-    total: Math.round(total),
-    currency: 'CHF',
-    distance: distance,
-    vehicle: vehicle.name
-  };
+  const total = vehicle.basePrice + (distanceKm * vehicle.pricePerKm);
+  return Math.round(total);
 };
 
 /**
- * Estime la distance entre deux villes
+ * Calculate all vehicle prices for a given distance
+ * @param {number} distanceKm - Distance in kilometers
+ * @returns {Object} - Object with vehicle IDs as keys and prices as values
  */
-export const estimateDistance = (from, to) => {
-  const normalizedFrom = from.toLowerCase();
-  const normalizedTo = to.toLowerCase();
+export const calculateAllPrices = (distanceKm) => {
+  if (!distanceKm) return {};
 
-  // Distances connues
-  const distances = {
-    'martigny-lausanne': 75,
-    'martigny-geneve': 110,
-    'martigny-sion': 30,
-    'lausanne-geneve': 65,
-    'lausanne-montreux': 30,
-    'lausanne-vevey': 25,
-    'montreux-vevey': 7,
-    'sion-lausanne': 95,
-    'sion-geneve': 160
-  };
-
-  const key1 = `${normalizedFrom}-${normalizedTo}`;
-  const key2 = `${normalizedTo}-${normalizedFrom}`;
-
-  if (distances[key1]) return distances[key1];
-  if (distances[key2]) return distances[key2];
-
-  // Distance par defaut
-  return 30;
-};
-
-/**
- * Calcule tous les prix pour un trajet
- */
-export const getAllPricesForRoute = (distance, options = {}) => {
   const prices = {};
   VEHICLE_TYPES.forEach(vehicle => {
-    const priceData = calculatePrice(distance, vehicle.id, options);
-    if (priceData) {
-      prices[vehicle.id] = priceData.total;
-    }
+    prices[vehicle.id] = calculatePrice(distanceKm, vehicle.id);
   });
   return prices;
 };
 
 /**
- * Formate un prix en CHF
+ * Format price in CHF
+ * @param {number} amount - Amount in CHF
+ * @returns {string} - Formatted price string
  */
 export const formatPrice = (amount) => {
+  if (amount === null || amount === undefined) return '--';
   return `${Math.round(amount)} CHF`;
+};
+
+/**
+ * Get vehicle by ID
+ * @param {string} vehicleId - Vehicle type ID
+ * @returns {Object|null} - Vehicle object or null
+ */
+export const getVehicleById = (vehicleId) => {
+  return VEHICLE_TYPES.find(v => v.id === vehicleId) || null;
+};
+
+// ==========================================================
+// SWISS CITIES - For autocomplete suggestions (Pickup only)
+// ==========================================================
+
+export const SWISS_CITIES = [
+  { name: 'Geneve', canton: 'GE', lat: 46.2044, lon: 6.1432 },
+  { name: 'Lausanne', canton: 'VD', lat: 46.5197, lon: 6.6323 },
+  { name: 'Montreux', canton: 'VD', lat: 46.4312, lon: 6.9107 },
+  { name: 'Vevey', canton: 'VD', lat: 46.4628, lon: 6.8418 },
+  { name: 'Nyon', canton: 'VD', lat: 46.3833, lon: 6.2398 },
+  { name: 'Morges', canton: 'VD', lat: 46.5117, lon: 6.4992 },
+  { name: 'Yverdon-les-Bains', canton: 'VD', lat: 46.7785, lon: 6.6410 },
+  { name: 'Sion', canton: 'VS', lat: 46.2333, lon: 7.3667 },
+  { name: 'Martigny', canton: 'VS', lat: 46.1028, lon: 7.0736 },
+  { name: 'Sierre', canton: 'VS', lat: 46.2919, lon: 7.5353 },
+  { name: 'Monthey', canton: 'VS', lat: 46.2544, lon: 6.9544 },
+  { name: 'Fribourg', canton: 'FR', lat: 46.8065, lon: 7.1620 },
+  { name: 'Neuchatel', canton: 'NE', lat: 46.9900, lon: 6.9293 },
+  { name: 'Bern', canton: 'BE', lat: 46.9480, lon: 7.4474 },
+  { name: 'Zurich', canton: 'ZH', lat: 47.3769, lon: 8.5417 },
+  { name: 'Basel', canton: 'BS', lat: 47.5596, lon: 7.5886 },
+];
+
+// ==========================================================
+// DRIVER DATA (Mock)
+// ==========================================================
+
+export const MOCK_DRIVER = {
+  name: 'Marc Dubois',
+  photo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=face',
+  rating: 4.9,
+  trips: 1247,
+  vehicle: {
+    brand: 'Mercedes',
+    model: 'Classe E',
+    color: 'Noir',
+    plate: 'VD 123 456',
+  },
 };
