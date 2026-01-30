@@ -158,8 +158,13 @@ export default function IndexScreen() {
   const router = useRouter();
   const rideStore = useRideStore();
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
-  const isDesktop = windowWidth >= 1024;
-  const sidebarWidth = isDesktop ? Math.min(420, Math.max(320, windowWidth * 0.32)) : 0;
+  const isDesktop = Platform.OS === 'web' && windowWidth >= 768;
+  const sidebarMin = 400;
+  const sidebarPreferred = windowWidth * 0.34;
+  const sidebarMax = windowWidth * 0.4;
+  const sidebarWidth = isDesktop
+    ? Math.max(sidebarMin, Math.min(sidebarPreferred, sidebarMax))
+    : 0;
   const mapWidth = isDesktop ? windowWidth - sidebarWidth : windowWidth;
 
   // States
@@ -830,21 +835,19 @@ export default function IndexScreen() {
         <>
           {isDesktop ? (
             <View style={styles.desktopLayout}>
-              {renderHeader()}
-              <View style={styles.desktopBody}>
-                <View style={[styles.sidebar, { width: sidebarWidth }]}>
-                  <ScrollView
-                    contentContainerStyle={styles.sidebarContent}
-                    showsVerticalScrollIndicator={false}
-                  >
-                    {appState === 'map' && renderSearchBar('desktop')}
-                    {appState === 'selection' && renderSelectionPanel('desktop')}
-                    {appState === 'tracking' && renderTrackingPanel('desktop')}
-                  </ScrollView>
-                </View>
-                <View style={styles.desktopMap}>
-                  {renderMap()}
-                </View>
+              <View style={[styles.sidebar, { width: sidebarWidth }]}>
+                {renderHeader()}
+                <ScrollView
+                  contentContainerStyle={styles.sidebarContent}
+                  showsVerticalScrollIndicator={false}
+                >
+                  {renderSearchBar('desktop')}
+                  {appState === 'selection' && renderSelectionPanel('desktop')}
+                  {appState === 'tracking' && renderTrackingPanel('desktop')}
+                </ScrollView>
+              </View>
+              <View style={styles.desktopMap}>
+                {renderMap()}
               </View>
             </View>
           ) : (
@@ -1181,21 +1184,18 @@ const styles = StyleSheet.create({
   desktopLayout: {
     flex: 1,
     backgroundColor: COLORS.gray50,
+    flexDirection: 'row',
   },
   desktopHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 32,
+    paddingHorizontal: 24,
     paddingTop: 24,
-    paddingBottom: 20,
+    paddingBottom: 16,
     backgroundColor: COLORS.white,
-    shadowColor: COLORS.black,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 10,
-    elevation: 4,
-    zIndex: 2,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.gray100,
   },
   desktopBrand: {
     flexDirection: 'row',
@@ -1263,10 +1263,6 @@ const styles = StyleSheet.create({
     color: COLORS.white,
     marginLeft: 8,
   },
-  desktopBody: {
-    flex: 1,
-    flexDirection: 'row',
-  },
   sidebar: {
     backgroundColor: COLORS.white,
     borderRightWidth: 1,
@@ -1280,6 +1276,8 @@ const styles = StyleSheet.create({
   },
   sidebarContent: {
     padding: 24,
+    paddingTop: 20,
+    paddingBottom: 32,
   },
   desktopMap: {
     flex: 1,
@@ -1484,7 +1482,7 @@ const styles = StyleSheet.create({
     maxHeight: 280,
   },
   vehicleListDesktop: {
-    maxHeight: 360,
+    maxHeight: 520,
   },
   vehicleCard: {
     flexDirection: 'row',
