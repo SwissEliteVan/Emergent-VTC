@@ -10,7 +10,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Animated,
-  Dimensions,
+  useWindowDimensions,
   StatusBar,
 } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -20,8 +20,6 @@ import { useRideStore } from '../store/rideStore';
 import Constants from 'expo-constants';
 
 const BACKEND_URL = Constants.expoConfig?.extra?.EXPO_PUBLIC_BACKEND_URL || process.env.EXPO_PUBLIC_BACKEND_URL;
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
-
 // ══════════════════════════════════════════════════════════════
 // DESIGN SYSTEM - Corporate Premium
 // ══════════════════════════════════════════════════════════════
@@ -30,6 +28,8 @@ const COLORS = {
   white: '#FFFFFF',
   black: '#000000',
   primary: '#0F172A',      // Slate 900 - Dark blue
+  accent: '#C6A15B',       // Gold accent
+  accentSoft: '#F7F2E8',
   
   // Grays (for map and UI)
   gray50: '#F8FAFC',       // Lightest
@@ -157,6 +157,10 @@ export default function IndexScreen() {
   const { user, isGuest, login, logout } = useAuth();
   const router = useRouter();
   const rideStore = useRideStore();
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
+  const isDesktop = windowWidth >= 1024;
+  const sidebarWidth = isDesktop ? Math.min(420, Math.max(320, windowWidth * 0.32)) : 0;
+  const mapWidth = isDesktop ? windowWidth - sidebarWidth : windowWidth;
 
   // States
   const [appState, setAppState] = useState<AppState>('splash');
@@ -168,7 +172,7 @@ export default function IndexScreen() {
 
   // Animations
   const splashFade = useRef(new Animated.Value(1)).current;
-  const panelSlide = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
+  const panelSlide = useRef(new Animated.Value(windowHeight)).current;
   const mapPulse = useRef(new Animated.Value(1)).current;
 
   // Pulse animation for user marker
@@ -193,6 +197,11 @@ export default function IndexScreen() {
 
   // Panel animation
   useEffect(() => {
+    if (isDesktop) {
+      panelSlide.setValue(0);
+      return;
+    }
+
     if (appState === 'selection' || appState === 'tracking') {
       Animated.spring(panelSlide, {
         toValue: 0,
@@ -202,12 +211,12 @@ export default function IndexScreen() {
       }).start();
     } else {
       Animated.timing(panelSlide, {
-        toValue: SCREEN_HEIGHT,
+        toValue: windowHeight,
         duration: 300,
         useNativeDriver: true,
       }).start();
     }
-  }, [appState]);
+  }, [appState, isDesktop, panelSlide, windowHeight]);
 
   // Handle splash to map transition
   const handleEnterApp = () => {
@@ -346,7 +355,7 @@ export default function IndexScreen() {
   // RENDER: VECTORIAL MAP (Optimized Design)
   // ════════════════════════════════════════════════════════════
   const renderMap = () => (
-    <View style={styles.mapContainer}>
+    <View style={[styles.mapContainer, isDesktop && styles.mapContainerDesktop]}>
       {/* Map Background - Vectorial Style */}
       <View style={styles.mapBackground}>
         
@@ -397,7 +406,7 @@ export default function IndexScreen() {
 
         {/* Main roads (wider, white) */}
         <View style={[styles.mapMainRoadH, { top: 240 }]} />
-        <View style={[styles.mapMainRoadV, { left: SCREEN_WIDTH / 2 - 20 }]} />
+        <View style={[styles.mapMainRoadV, { left: mapWidth / 2 - 20 }]} />
 
         {/* Route line (when tracking) */}
         {appState === 'tracking' && (
@@ -434,24 +443,55 @@ export default function IndexScreen() {
   // RENDER: HEADER
   // ════════════════════════════════════════════════════════════
   const renderHeader = () => (
-    <View style={styles.header}>
-      <TouchableOpacity style={styles.headerButton}>
-        <Feather name="menu" size={22} color={COLORS.gray700} />
-      </TouchableOpacity>
+    <View style={isDesktop ? styles.desktopHeader : styles.header}>
+      {isDesktop ? (
+        <>
+          <View style={styles.desktopBrand}>
+            <View style={styles.desktopLogoIcon}>
+              <Feather name="navigation" size={18} color={COLORS.white} />
+            </View>
+            <Text style={styles.desktopBrandText}>ROMUO</Text>
+          </View>
 
-      <View style={styles.headerCenter}>
-        <Text style={styles.headerBrand}>ROMUO</Text>
-      </View>
-
-      {isGuest ? (
-        <TouchableOpacity style={styles.headerLoginBtn} onPress={login}>
-          <Feather name="user" size={18} color={COLORS.gray700} />
-          <Text style={styles.headerLoginText}>Connexion</Text>
-        </TouchableOpacity>
+          <View style={styles.desktopHeaderActions}>
+            <TouchableOpacity style={styles.desktopSupportBtn}>
+              <Feather name="help-circle" size={18} color={COLORS.gray600} />
+              <Text style={styles.desktopSupportText}>Assistance</Text>
+            </TouchableOpacity>
+            {isGuest ? (
+              <TouchableOpacity style={styles.desktopLoginBtn} onPress={login}>
+                <Feather name="user" size={18} color={COLORS.white} />
+                <Text style={styles.desktopLoginText}>Connexion</Text>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity style={styles.desktopProfileBtn} onPress={logout}>
+                <Feather name="user" size={18} color={COLORS.white} />
+                <Text style={styles.desktopProfileText}>Profil</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </>
       ) : (
-        <TouchableOpacity style={styles.headerProfileBtn} onPress={logout}>
-          <Feather name="user" size={18} color={COLORS.white} />
-        </TouchableOpacity>
+        <>
+          <TouchableOpacity style={styles.headerButton}>
+            <Feather name="menu" size={22} color={COLORS.gray700} />
+          </TouchableOpacity>
+
+          <View style={styles.headerCenter}>
+            <Text style={styles.headerBrand}>ROMUO</Text>
+          </View>
+
+          {isGuest ? (
+            <TouchableOpacity style={styles.headerLoginBtn} onPress={login}>
+              <Feather name="user" size={18} color={COLORS.gray700} />
+              <Text style={styles.headerLoginText}>Connexion</Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity style={styles.headerProfileBtn} onPress={logout}>
+              <Feather name="user" size={18} color={COLORS.white} />
+            </TouchableOpacity>
+          )}
+        </>
       )}
     </View>
   );
@@ -459,10 +499,19 @@ export default function IndexScreen() {
   // ════════════════════════════════════════════════════════════
   // RENDER: SEARCH BAR
   // ════════════════════════════════════════════════════════════
-  const renderSearchBar = () => (
-    <View style={styles.searchContainer}>
+  const renderSearchBar = (variant: 'mobile' | 'desktop' = 'mobile') => (
+    <View style={[
+      styles.searchContainer,
+      variant === 'desktop' && styles.searchContainerDesktop,
+    ]}>
+      {variant === 'desktop' && (
+        <View style={styles.searchHeader}>
+          <Text style={styles.searchHeaderTitle}>Réserver une course</Text>
+          <Text style={styles.searchHeaderSubtitle}>Service VTC premium</Text>
+        </View>
+      )}
       {/* Search Input */}
-      <View style={styles.searchCard}>
+      <View style={[styles.searchCard, variant === 'desktop' && styles.searchCardDesktop]}>
         <View style={styles.searchInputRow}>
           <View style={styles.searchIconContainer}>
             <Feather name="search" size={20} color={COLORS.gray400} />
@@ -488,7 +537,7 @@ export default function IndexScreen() {
       </View>
 
       {/* Quick Destinations */}
-      <View style={styles.quickDestCard}>
+      <View style={[styles.quickDestCard, variant === 'desktop' && styles.quickDestCardDesktop]}>
         <Text style={styles.quickDestTitle}>Destinations populaires</Text>
         
         {[
@@ -521,18 +570,18 @@ export default function IndexScreen() {
   // ════════════════════════════════════════════════════════════
   // RENDER: VEHICLE SELECTION PANEL (Structured Pricing)
   // ════════════════════════════════════════════════════════════
-  const renderSelectionPanel = () => (
+  const renderSelectionPanel = (variant: 'mobile' | 'desktop' = 'mobile') => (
     <Animated.View
       style={[
-        styles.bottomPanel,
-        { transform: [{ translateY: panelSlide }] }
+        variant === 'desktop' ? styles.sidebarPanel : styles.bottomPanel,
+        variant === 'mobile' && { transform: [{ translateY: panelSlide }] }
       ]}
     >
       {/* Handle */}
-      <View style={styles.panelHandle} />
+      {variant === 'mobile' && <View style={styles.panelHandle} />}
 
       {/* Header */}
-      <View style={styles.panelHeader}>
+      <View style={[styles.panelHeader, variant === 'desktop' && styles.panelHeaderDesktop]}>
         <View>
           <Text style={styles.panelTitle}>Choisir un véhicule</Text>
           <View style={styles.panelDestRow}>
@@ -548,7 +597,10 @@ export default function IndexScreen() {
 
       {/* Vehicle Cards */}
       <ScrollView 
-        style={styles.vehicleList}
+        style={[
+          styles.vehicleList,
+          variant === 'desktop' && styles.vehicleListDesktop,
+        ]}
         showsVerticalScrollIndicator={false}
       >
         {VEHICLES.map((vehicle) => {
@@ -607,6 +659,12 @@ export default function IndexScreen() {
 
               {/* Price - Bold & Big */}
               <View style={styles.priceContainer}>
+                {isSelected && (
+                  <View style={styles.selectedBadge}>
+                    <Feather name="check" size={12} color={COLORS.primary} />
+                    <Text style={styles.selectedBadgeText}>Sélectionné</Text>
+                  </View>
+                )}
                 <Text style={[
                   styles.priceValue,
                   isSelected && styles.priceValueSelected
@@ -661,15 +719,15 @@ export default function IndexScreen() {
   // ════════════════════════════════════════════════════════════
   // RENDER: TRACKING PANEL
   // ════════════════════════════════════════════════════════════
-  const renderTrackingPanel = () => (
+  const renderTrackingPanel = (variant: 'mobile' | 'desktop' = 'mobile') => (
     <Animated.View
       style={[
-        styles.bottomPanel,
-        styles.trackingPanel,
-        { transform: [{ translateY: panelSlide }] }
+        variant === 'desktop' ? styles.sidebarPanel : styles.bottomPanel,
+        variant === 'mobile' && styles.trackingPanel,
+        variant === 'mobile' && { transform: [{ translateY: panelSlide }] }
       ]}
     >
-      <View style={styles.panelHandle} />
+      {variant === 'mobile' && <View style={styles.panelHandle} />}
 
       {isSearching ? (
         <View style={styles.searchingState}>
@@ -770,11 +828,34 @@ export default function IndexScreen() {
       {/* Main App */}
       {appState !== 'splash' && (
         <>
-          {renderMap()}
-          {renderHeader()}
-          {appState === 'map' && renderSearchBar()}
-          {appState === 'selection' && renderSelectionPanel()}
-          {appState === 'tracking' && renderTrackingPanel()}
+          {isDesktop ? (
+            <View style={styles.desktopLayout}>
+              {renderHeader()}
+              <View style={styles.desktopBody}>
+                <View style={[styles.sidebar, { width: sidebarWidth }]}>
+                  <ScrollView
+                    contentContainerStyle={styles.sidebarContent}
+                    showsVerticalScrollIndicator={false}
+                  >
+                    {appState === 'map' && renderSearchBar('desktop')}
+                    {appState === 'selection' && renderSelectionPanel('desktop')}
+                    {appState === 'tracking' && renderTrackingPanel('desktop')}
+                  </ScrollView>
+                </View>
+                <View style={styles.desktopMap}>
+                  {renderMap()}
+                </View>
+              </View>
+            </View>
+          ) : (
+            <>
+              {renderMap()}
+              {renderHeader()}
+              {appState === 'map' && renderSearchBar()}
+              {appState === 'selection' && renderSelectionPanel()}
+              {appState === 'tracking' && renderTrackingPanel()}
+            </>
+          )}
         </>
       )}
     </KeyboardAvoidingView>
@@ -909,6 +990,10 @@ const styles = StyleSheet.create({
   // ═══════════════════════════════════════════════════════════
   mapContainer: {
     ...StyleSheet.absoluteFillObject,
+  },
+  mapContainerDesktop: {
+    position: 'relative',
+    flex: 1,
   },
   mapBackground: {
     flex: 1,
@@ -1093,6 +1178,113 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  desktopLayout: {
+    flex: 1,
+    backgroundColor: COLORS.gray50,
+  },
+  desktopHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 32,
+    paddingTop: 24,
+    paddingBottom: 20,
+    backgroundColor: COLORS.white,
+    shadowColor: COLORS.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    elevation: 4,
+    zIndex: 2,
+  },
+  desktopBrand: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  desktopLogoIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    backgroundColor: COLORS.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  desktopBrandText: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: COLORS.primary,
+    letterSpacing: 2,
+  },
+  desktopHeaderActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  desktopSupportBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.gray50,
+    marginRight: 12,
+  },
+  desktopSupportText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.gray600,
+    marginLeft: 8,
+  },
+  desktopLoginBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.primary,
+  },
+  desktopLoginText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.white,
+    marginLeft: 8,
+  },
+  desktopProfileBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.primary,
+  },
+  desktopProfileText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.white,
+    marginLeft: 8,
+  },
+  desktopBody: {
+    flex: 1,
+    flexDirection: 'row',
+  },
+  sidebar: {
+    backgroundColor: COLORS.white,
+    borderRightWidth: 1,
+    borderRightColor: COLORS.gray100,
+    shadowColor: COLORS.black,
+    shadowOffset: { width: 6, height: 0 },
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    elevation: 4,
+    zIndex: 1,
+  },
+  sidebarContent: {
+    padding: 24,
+  },
+  desktopMap: {
+    flex: 1,
+    backgroundColor: COLORS.mapBackground,
+  },
 
   // ═══════════════════════════════════════════════════════════
   // SEARCH STYLES
@@ -1100,6 +1292,23 @@ const styles = StyleSheet.create({
   searchContainer: {
     paddingHorizontal: 20,
     paddingTop: 8,
+  },
+  searchContainerDesktop: {
+    paddingHorizontal: 0,
+    paddingTop: 0,
+  },
+  searchHeader: {
+    marginBottom: 16,
+  },
+  searchHeaderTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: COLORS.primary,
+  },
+  searchHeaderSubtitle: {
+    fontSize: 14,
+    color: COLORS.gray500,
+    marginTop: 4,
   },
   searchCard: {
     backgroundColor: COLORS.white,
@@ -1109,6 +1318,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 12,
     elevation: 5,
+  },
+  searchCardDesktop: {
+    borderWidth: 1,
+    borderColor: COLORS.gray100,
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
   },
   searchInputRow: {
     flexDirection: 'row',
@@ -1136,6 +1351,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.06,
     shadowRadius: 8,
     elevation: 2,
+  },
+  quickDestCardDesktop: {
+    borderWidth: 1,
+    borderColor: COLORS.gray100,
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
   },
   quickDestTitle: {
     fontSize: 13,
@@ -1199,6 +1420,19 @@ const styles = StyleSheet.create({
     elevation: 15,
     maxHeight: '75%',
   },
+  sidebarPanel: {
+    position: 'relative',
+    backgroundColor: COLORS.white,
+    borderRadius: RADIUS.lg,
+    paddingTop: 12,
+    paddingBottom: 24,
+    paddingHorizontal: 20,
+    shadowColor: COLORS.black,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 6,
+  },
   trackingPanel: {
     maxHeight: '65%',
   },
@@ -1215,6 +1449,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     marginBottom: 20,
+  },
+  panelHeaderDesktop: {
+    paddingHorizontal: 0,
   },
   panelTitle: {
     fontSize: 22,
@@ -1246,20 +1483,29 @@ const styles = StyleSheet.create({
   vehicleList: {
     maxHeight: 280,
   },
+  vehicleListDesktop: {
+    maxHeight: 360,
+  },
   vehicleCard: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
-    backgroundColor: COLORS.gray50,
+    backgroundColor: COLORS.white,
     borderRadius: RADIUS.md,
     marginBottom: 10,
-    borderWidth: 2,
-    borderColor: 'transparent',
+    borderWidth: 1,
+    borderColor: COLORS.gray100,
+    shadowColor: COLORS.black,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    elevation: 4,
     position: 'relative',
   },
   vehicleCardSelected: {
     backgroundColor: COLORS.white,
-    borderColor: COLORS.primary,
+    borderColor: COLORS.accent,
+    shadowOpacity: 0.12,
   },
   popularBadge: {
     position: 'absolute',
@@ -1267,7 +1513,7 @@ const styles = StyleSheet.create({
     right: 12,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.accent,
     paddingVertical: 4,
     paddingHorizontal: 10,
     borderRadius: RADIUS.sm,
@@ -1282,7 +1528,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: RADIUS.md,
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.gray50,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 14,
@@ -1344,9 +1590,24 @@ const styles = StyleSheet.create({
   priceContainer: {
     alignItems: 'flex-end',
   },
+  selectedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.accentSoft,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: RADIUS.sm,
+    marginBottom: 6,
+  },
+  selectedBadgeText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: COLORS.primary,
+    marginLeft: 4,
+  },
   priceValue: {
-    fontSize: 28,
-    fontWeight: '700',
+    fontSize: 30,
+    fontWeight: '800',
     color: COLORS.gray900,
   },
   priceValueSelected: {
@@ -1417,7 +1678,7 @@ const styles = StyleSheet.create({
     color: COLORS.white,
   },
   bookButtonPrice: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: COLORS.accent,
     paddingVertical: 6,
     paddingHorizontal: 14,
     borderRadius: RADIUS.sm,
