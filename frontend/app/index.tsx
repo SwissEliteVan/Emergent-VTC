@@ -190,17 +190,17 @@ export default function IndexScreen() {
           />
         </View>
 
-        <View style={styles.inputGroup}>
-          <Text style={styles.inputLabel}>Arrivée</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Adresse d'arrivée"
-            placeholderTextColor="#94A3B8"
-            value={arrival}
-            onFocus={() => setActiveField('arrival')}
-            onChangeText={(value) => handleInputChange('arrival', value)}
-          />
-        </View>
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Arrivée</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Adresse d'arrivée"
+                placeholderTextColor="#94A3B8"
+                value={arrival}
+                onFocus={() => setActiveField('arrival')}
+                onChangeText={(value) => handleInputChange('arrival', value)}
+              />
+            </View>
 
         {query.trim().length > 0 && (
           <View style={styles.resultsCard}>
