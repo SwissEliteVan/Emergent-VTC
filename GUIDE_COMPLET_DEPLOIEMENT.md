@@ -29,6 +29,127 @@ ssh root@XXX.XXX.XXX.XXX
 
 ---
 
+## ÉTAPE 1B : PRÉPARATION DU SERVEUR NODE.JS (OUTILS, NGINX, PM2)
+
+> Cette étape met en place les dépendances système, Node.js 20 LTS, Nginx en reverse proxy, PM2 et un pare-feu de base.
+
+### 1B.1 Mettre à jour le système + installer les dépendances de base
+
+```bash
+sudo apt update && sudo apt upgrade -y
+sudo apt install -y curl wget git nano ufw software-properties-common gnupg
+```
+
+**Pourquoi :** applique les correctifs de sécurité et installe les outils essentiels (téléchargement, éditeur, firewall).
+
+### 1B.2 Installer Node.js 20.x (LTS) + npm
+
+```bash
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs
+```
+
+Vérification rapide (optionnel) :
+
+```bash
+node -v
+npm -v
+```
+
+**Pourquoi :** installe la version LTS de Node.js pour un environnement stable en production.
+
+### 1B.3 Installer Nginx et configurer le reverse proxy
+
+```bash
+sudo apt install -y nginx
+sudo systemctl enable nginx
+sudo systemctl start nginx
+```
+
+Créer la configuration Nginx (remplacez votre-domaine.com et le port si besoin) :
+
+```bash
+sudo nano /etc/nginx/sites-available/votre-domaine.com
+```
+
+Collez (adaptez domaine + port) :
+
+```nginx
+server {
+    listen 80;
+    server_name votre-domaine.com www.votre-domaine.com;
+
+    location / {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+Activer le site + recharger Nginx :
+
+```bash
+sudo ln -s /etc/nginx/sites-available/votre-domaine.com /etc/nginx/sites-enabled/
+sudo nginx -t
+sudo systemctl reload nginx
+```
+
+**Pourquoi :** Nginx sert de reverse proxy, expose l’application et gère le trafic HTTP/HTTPS.
+
+### 1B.4 Installer PM2 (gestion du processus Node.js)
+
+```bash
+sudo npm install -g pm2
+```
+
+Démarrer l’app :
+
+```bash
+cd /var/www/votre-app
+pm2 start server.js --name votre-app
+pm2 save
+pm2 startup
+```
+
+Vérification :
+
+```bash
+pm2 status
+```
+
+**Pourquoi :** PM2 garde l’application en ligne, relance en cas de crash et active le démarrage automatique.
+
+### 1B.5 Configurer le pare-feu UFW (sécurité réseau)
+
+```bash
+sudo ufw allow 22/tcp
+sudo ufw allow 80/tcp
+sudo ufw allow 443/tcp
+sudo ufw --force enable
+sudo ufw status
+```
+
+**Pourquoi :** limite l’exposition aux ports indispensables (SSH, HTTP, HTTPS).
+
+### 1B.6 Créer un utilisateur dédié (non-root)
+
+```bash
+sudo adduser vtcapp
+sudo usermod -aG sudo vtcapp
+sudo mkdir -p /var/www/votre-app
+sudo chown -R vtcapp:vtcapp /var/www/votre-app
+```
+
+**Pourquoi :** applique le principe du moindre privilège pour l’exécution de l’app.
+
+---
+
 ## ÉTAPE 2 : MISE À JOUR DU SYSTÈME
 
 ```bash
