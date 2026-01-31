@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Estimation VTC</title>
+    <style>
+      body {
+        font-family: "Segoe UI", sans-serif;
+        margin: 40px;
+        background: #f6f7fb;
+        color: #1f2933;
+      }
+      .card {
+        max-width: 520px;
+        margin: 0 auto;
+        background: #ffffff;
+        padding: 24px;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+      }
+      h1 {
+        margin-top: 0;
+      }
+      label {
+        display: block;
+        margin-bottom: 6px;
+        font-weight: 600;
+      }
+      input {
+        width: 100%;
+        padding: 10px 12px;
+        margin-bottom: 16px;
+        border-radius: 8px;
+        border: 1px solid #d6dce5;
+      }
+      button {
+        width: 100%;
+        padding: 12px;
+        border: none;
+        background: #2563eb;
+        color: white;
+        border-radius: 8px;
+        font-size: 16px;
+        cursor: pointer;
+      }
+      button:disabled {
+        background: #9bb0e5;
+        cursor: not-allowed;
+      }
+      .result {
+        margin-top: 20px;
+        padding: 16px;
+        background: #eef2ff;
+        border-radius: 8px;
+      }
+      .error {
+        color: #b91c1c;
+        margin-top: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <h1>Estimation de course VTC</h1>
+      <p>Entrez vos adresses pour obtenir une estimation du prix.</p>
+      <form id="estimate-form">
+        <label for="origin">Adresse de depart</label>
+        <input id="origin" name="origin" type="text" required />
+
+        <label for="destination">Adresse d'arrivee</label>
+        <input id="destination" name="destination" type="text" required />
+
+        <button type="submit">Calculer le prix</button>
+      </form>
+      <div id="result" class="result" hidden></div>
+      <div id="error" class="error"></div>
+    </div>
+
+    <script>
+      const form = document.getElementById("estimate-form");
+      const result = document.getElementById("result");
+      const error = document.getElementById("error");
+      const button = form.querySelector("button");
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        error.textContent = "";
+        result.hidden = true;
+        button.disabled = true;
+
+        const payload = {
+          origin: form.origin.value,
+          destination: form.destination.value
+        };
+
+        try {
+          const response = await fetch("/api/estimate", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify(payload)
+          });
+
+          const data = await response.json();
+
+          if (!response.ok) {
+            throw new Error(data.error || "Une erreur est survenue.");
+          }
+
+          result.hidden = false;
+          result.innerHTML = `
+            <strong>Prix estime :</strong> ${data.priceEstimate} €<br />
+            <strong>Distance :</strong> ${data.distanceKm} km<br />
+            <strong>Duree :</strong> ${data.durationMinutes} minutes
+          `;
+        } catch (err) {
+          error.textContent = err.message;
+        } finally {
+          button.disabled = false;
+        }
+      });
+    </script>
+  </body>
+</html>
