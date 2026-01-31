@@ -21,6 +21,11 @@ BACKUP_DIR="${BACKUP_DIR:-/var/backups/vtcapp}"
 BACKUP_RETENTION_DAYS="${BACKUP_RETENTION_DAYS:-7}"
 
 LOG_FILE="/var/log/${APP_NAME}-deploy.log"
+export DEBIAN_FRONTEND=noninteractive
+
+mkdir -p "$(dirname "$LOG_FILE")"
+touch "$LOG_FILE"
+chmod 600 "$LOG_FILE"
 
 # --- Fonctions utilitaires ---
 log() {
