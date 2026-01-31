@@ -17,14 +17,35 @@ Votre serveur doit avoir :
 
 Ce scénario correspond à un petit projet Node.js (ex: `server.js` + `index.html`) déployé sur un VPS Hostinger.
 
-### 1) Copier les fichiers sur le VPS (SCP ou FileZilla)
+### 1) Transférer les fichiers sur le VPS
 
-**Option A — SCP (recommandé, rapide) :**
+**Méthode 1 — SCP (commande exacte, rapide et fiable) :**
 ```bash
 scp -r /chemin/vers/mon-projet/ root@votre-ip-vps:/var/www/mon-chauffeur-prive
 ```
 
-**Option B — FileZilla (graphique) :**
+**Méthode 2 — Git (créer un repo puis cloner sur le VPS) :**
+1. **Créer le repository GitHub :**
+   - https://github.com/new
+   - Nom, description, **privé conseillé**
+   - **Ne pas** initialiser avec README
+2. **Pousser votre code depuis votre PC :**
+   ```bash
+   git remote add origin https://github.com/votre-username/mon-app.git
+   git branch -M main
+   git push -u origin main
+   ```
+3. **Sur le VPS : cloner le repo :**
+   ```bash
+   sudo apt install git -y
+   cd /var/www
+   sudo mkdir mon-chauffeur-prive
+   sudo chown -R $USER:$USER mon-chauffeur-prive
+   cd mon-chauffeur-prive
+   git clone https://github.com/votre-username/mon-app.git .
+   ```
+
+**Méthode 3 — FileZilla (SFTP) :**
 1. Ouvrez FileZilla et connectez-vous en **SFTP** :
    - Hôte : `votre-ip-vps`
    - Identifiant : `root` (ou votre user)
@@ -32,7 +53,21 @@ scp -r /chemin/vers/mon-projet/ root@votre-ip-vps:/var/www/mon-chauffeur-prive
    - Port : `22`
 2. Glissez vos fichiers (`server.js`, `index.html`, etc.) vers `/var/www/mon-chauffeur-prive`.
 
-### 2) Configurer la clé API ChatGPT + options Suisse (CHF)
+### 2) Installer Node.js (LTS) + npm
+
+```bash
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs
+```
+
+### 3) Installer les dépendances applicatives
+
+```bash
+cd /var/www/mon-chauffeur-prive
+npm install
+```
+
+### 4) Configurer la clé API ChatGPT + options Suisse (CHF)
 
 Sur le VPS, créez un fichier `.env` pour éviter d’exposer la clé :
 ```bash
@@ -49,9 +84,10 @@ DEFAULT_LOCALE=fr-CH
 
 Dans `server.js`, lisez la clé via `process.env.OPENAI_API_KEY` (ne jamais committer la clé).  
 
-### 3) Démarrer l’app avec PM2
+### 5) Démarrage du process : PM2 (recommandé)
 
 ```bash
+sudo npm install -g pm2
 cd /var/www/mon-chauffeur-prive
 pm2 start server.js --name mon-chauffeur-prive
 pm2 save
@@ -63,19 +99,67 @@ Vérification :
 pm2 status
 ```
 
-### 4) Configuration Nginx (reverse proxy vers Node.js)
+### 6) Alternative : service systemd (optionnel)
 
-Créez le fichier Nginx :
-```bash
-sudo nano /etc/nginx/sites-available/mon-chauffeur-prive.com
+```ini
+[Unit]
+Description=Mon App Node.js
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/var/www/mon-chauffeur-prive
+ExecStart=/usr/bin/node /var/www/mon-chauffeur-prive/server.js
+Restart=always
+RestartSec=10
+Environment=NODE_ENV=production
+
+[Install]
+WantedBy=multi-user.target
 ```
 
-**À copier-coller :**
+> Activez ensuite via `systemctl daemon-reload` puis `systemctl enable --now mon-chauffeur-prive`.
+
+### 7) Configuration Nginx (reverse proxy + HTTPS + perf + sécurité)
+
+**Fichier Nginx complet (HTTP → HTTPS + SSL + headers + gzip + cache) :**
 ```nginx
 server {
     listen 80;
+    listen [::]:80;
     server_name mon-chauffeur-prive.com www.mon-chauffeur-prive.com;
 
+    # Redirection HTTP vers HTTPS
+    return 301 https://$server_name$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name mon-chauffeur-prive.com www.mon-chauffeur-prive.com;
+
+    # Certificats SSL (Let's Encrypt via Certbot)
+    ssl_certificate /etc/letsencrypt/live/mon-chauffeur-prive.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/mon-chauffeur-prive.com/privkey.pem;
+    ssl_trusted_certificate /etc/letsencrypt/live/mon-chauffeur-prive.com/chain.pem;
+
+    # SSL sécurisé
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384;
+    ssl_prefer_server_ciphers off;
+    ssl_session_cache shared:SSL:10m;
+    ssl_session_timeout 1d;
+    ssl_session_tickets off;
+
+    # HSTS
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
+
+    # Logs
+    access_log /var/log/nginx/mon-chauffeur-prive.access.log;
+    error_log /var/log/nginx/mon-chauffeur-prive.error.log;
+
+    # Reverse proxy vers Node.js
     location / {
         proxy_pass http://127.0.0.1:3000;
         proxy_http_version 1.1;
@@ -85,18 +169,58 @@ server {
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 90;
     }
+
+    # Compression GZIP
+    gzip on;
+    gzip_vary on;
+    gzip_min_length 1024;
+    gzip_proxied any;
+    gzip_comp_level 6;
+    gzip_types text/plain text/css text/xml text/javascript application/json application/javascript application/xml application/xml+rss application/x-javascript application/wasm image/svg+xml font/woff font/woff2;
+
+    # Cache agressif pour assets
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot|webp|avif)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+        access_log off;
+    }
+
+    # Sécurité - headers
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+
+    # Bloquer fichiers sensibles
+    location ~ /\.(env|git|htaccess|htpasswd) { deny all; return 404; }
+    location ~ /\.(config|bak|sql|log)$ { deny all; return 404; }
 }
 ```
 
-Activez le site :
+**Activer le site :**
 ```bash
 sudo ln -s /etc/nginx/sites-available/mon-chauffeur-prive.com /etc/nginx/sites-enabled/
 sudo nginx -t
 sudo systemctl reload nginx
 ```
 
-### 5) HTTPS gratuit avec Certbot (Let’s Encrypt)
+### 8) Protection DDoS basique (rate-limit)
+
+Exemple minimal :
+```nginx
+# Dans http {}
+limit_req_zone $binary_remote_addr zone=api_limit:10m rate=10r/s;
+
+# Dans server {}
+location / {
+    limit_req zone=api_limit burst=20 nodelay;
+    proxy_pass http://127.0.0.1:3000;
+}
+```
+
+### 9) HTTPS gratuit avec Certbot (Let’s Encrypt)
 
 Installation + certificat :
 ```bash
@@ -108,6 +232,25 @@ sudo certbot --nginx -d mon-chauffeur-prive.com -d www.mon-chauffeur-prive.com
 Renouvellement automatique (déjà configuré par Certbot) :
 ```bash
 sudo certbot renew --dry-run
+```
+
+### 10) Surveillance & maintenance
+
+```bash
+# Logs Nginx
+sudo tail -f /var/log/nginx/mon-chauffeur-prive.error.log
+
+# Logs applicatifs (si systemd)
+sudo journalctl -u mon-chauffeur-prive -f
+
+# Redémarrages
+sudo systemctl restart nginx
+sudo systemctl restart mon-chauffeur-prive
+```
+
+**Backup MongoDB (exemple) :**
+```bash
+mongodump --uri="mongodb://user:pass@localhost:27017/mon_db?authSource=admin" --out=/backup/$(date +%Y%m%d)
 ```
 
 ---
