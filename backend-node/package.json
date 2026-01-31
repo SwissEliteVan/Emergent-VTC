@@ -1,0 +1,16 @@
+{
+  "name": "vtc-backend",
+  "version": "1.0.0",
+  "description": "Backend VTC Node.js pour calculer les prix et gerer les reservations",
+  "main": "src/server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "uuid": "^9.0.1"
+  }
+}
