@@ -9,6 +9,7 @@ export function createReservation({
   pickupTime,
   vehicleType,
   distanceKm,
+  durationMinutes,
   priceQuote
 }) {
   const reservation = {
@@ -21,6 +22,7 @@ export function createReservation({
     pickupTime,
     vehicleType,
     distanceKm,
+    durationMinutes,
     priceQuote
   };
 
