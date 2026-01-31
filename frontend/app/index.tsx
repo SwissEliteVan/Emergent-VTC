@@ -12,6 +12,7 @@ import {
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import DesktopLayout from '../components/DesktopLayout';
 
 type NominatimResult = {
   place_id: number;
@@ -162,40 +163,32 @@ export default function IndexScreen() {
     mapRef.current?.setView([lat, lon], 14);
   };
 
-  return (
-    <View style={[styles.container, !isDesktop && styles.containerStacked]}>
-      <View
-        style={[
-          styles.sidebar,
-          !isDesktop && styles.sidebarStacked,
-          isDesktop && styles.sidebarDesktop,
-        ]}
-      >
-        <ScrollView
-          contentContainerStyle={styles.sidebarContent}
-          showsVerticalScrollIndicator={false}
-        >
-          <View style={styles.logoRow}>
-            <View style={styles.logoIcon}>
-              <Text style={styles.logoIconText}>R</Text>
-            </View>
-            <Text style={styles.logoText}>ROMUO</Text>
-          </View>
+  const sidebarContent = (
+    <ScrollView
+      contentContainerStyle={styles.sidebarContent}
+      showsVerticalScrollIndicator={false}
+    >
+      <View style={styles.logoRow}>
+        <View style={styles.logoIcon}>
+          <Text style={styles.logoIconText}>R</Text>
+        </View>
+        <Text style={styles.logoText}>ROMUO</Text>
+      </View>
 
-          <Text style={styles.sectionTitle}>Réserver une course</Text>
+      <Text style={styles.sectionTitle}>Réserver une course</Text>
 
-          <View style={styles.inputSection}>
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Départ</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Adresse de départ"
-                placeholderTextColor="#94A3B8"
-                value={departure}
-                onFocus={() => setActiveField('departure')}
-                onChangeText={(value) => handleInputChange('departure', value)}
-              />
-            </View>
+      <View style={styles.inputSection}>
+        <View style={styles.inputGroup}>
+          <Text style={styles.inputLabel}>Départ</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Adresse de départ"
+            placeholderTextColor="#94A3B8"
+            value={departure}
+            onFocus={() => setActiveField('departure')}
+            onChangeText={(value) => handleInputChange('departure', value)}
+          />
+        </View>
 
             <View style={styles.inputGroup}>
               <Text style={styles.inputLabel}>Arrivée</Text>
@@ -209,108 +202,122 @@ export default function IndexScreen() {
               />
             </View>
 
-            {query.trim().length > 0 && (
-              <View style={styles.resultsCard}>
-                <Text style={styles.resultsTitle}>Suggestions</Text>
-                {isSearching && <Text style={styles.resultsStateText}>Recherche en cours...</Text>}
-                {!isSearching && searchError && (
-                  <Text style={styles.resultsStateText}>{searchError}</Text>
+        {query.trim().length > 0 && (
+          <View style={styles.resultsCard}>
+            <Text style={styles.resultsTitle}>Suggestions</Text>
+            {isSearching && <Text style={styles.resultsStateText}>Recherche en cours...</Text>}
+            {!isSearching && searchError && (
+              <Text style={styles.resultsStateText}>{searchError}</Text>
+            )}
+            {!isSearching && !searchError && results.length === 0 && (
+              <Text style={styles.resultsStateText}>Aucun résultat pour cette recherche.</Text>
+            )}
+            {!isSearching && !searchError && results.length > 0 && (
+              <FlatList
+                data={results}
+                keyExtractor={(item) => item.place_id.toString()}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    style={styles.resultItem}
+                    onPress={() => handleSelectResult(item)}
+                  >
+                    <Text style={styles.resultText}>{item.display_name}</Text>
+                  </TouchableOpacity>
                 )}
-                {!isSearching && !searchError && results.length === 0 && (
-                  <Text style={styles.resultsStateText}>Aucun résultat pour cette recherche.</Text>
-                )}
-                {!isSearching && !searchError && results.length > 0 && (
-                  <FlatList
-                    data={results}
-                    keyExtractor={(item) => item.place_id.toString()}
-                    renderItem={({ item }) => (
-                      <TouchableOpacity
-                        style={styles.resultItem}
-                        onPress={() => handleSelectResult(item)}
-                      >
-                        <Text style={styles.resultText}>{item.display_name}</Text>
-                      </TouchableOpacity>
-                    )}
-                  />
-                )}
-              </View>
+              />
             )}
           </View>
-
-          <Text style={styles.sectionTitle}>Véhicules disponibles</Text>
-          <View style={styles.vehicleList}>
-            {VEHICLES.map((vehicle) => {
-              const isSelected = selectedVehicle === vehicle.id;
-              return (
-                <TouchableOpacity
-                  key={vehicle.id}
-                  style={[styles.vehicleCard, isSelected && styles.vehicleCardSelected]}
-                  onPress={() => setSelectedVehicle(vehicle.id)}
-                  activeOpacity={0.85}
-                >
-                  <View style={styles.vehicleInfo}>
-                    <View style={styles.vehicleTitleRow}>
-                      <Text style={styles.vehicleName}>{vehicle.name}</Text>
-                      <Text style={styles.vehiclePrice}>{vehicle.price}</Text>
-                    </View>
-                    <Text style={styles.vehicleDescription}>{vehicle.description}</Text>
-                    <Text style={styles.vehicleMeta}>
-                      {vehicle.capacity} • {vehicle.luggage}
-                    </Text>
-                    <Text style={styles.vehicleEta}>Disponible en {vehicle.eta}</Text>
-                  </View>
-                  <View style={styles.vehicleAction}>
-                    <Text style={styles.vehicleActionLabel}>Réserver</Text>
-                  </View>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-
-          <View style={styles.fareCard}>
-            <Text style={styles.sectionTitle}>Grille tarifaire</Text>
-            {FARE_BREAKDOWN.map((fare) => (
-              <View key={fare.id} style={styles.fareRow}>
-                <Text style={styles.fareLabel}>{fare.label}</Text>
-                <Text style={styles.fareValue}>{fare.value}</Text>
-              </View>
-            ))}
-            <View style={styles.fareTotalRow}>
-              <Text style={styles.fareTotalLabel}>Total estimé</Text>
-              <Text style={styles.fareTotalValue}>28 CHF</Text>
-            </View>
-          </View>
-
-          <TouchableOpacity style={styles.orderButton}>
-            <Text style={styles.orderButtonText}>Réserver</Text>
-          </TouchableOpacity>
-        </ScrollView>
+        )}
       </View>
 
-      <View style={styles.mapWrapper}>
-        <MapContainer
-          center={LAUSANNE_CENTER}
-          zoom={13}
-          style={styles.map}
-          whenCreated={(mapInstance) => {
-            mapRef.current = mapInstance;
-          }}
-        >
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
-          {markers.map((marker) => (
-            <Marker
-              key={marker.id}
-              position={[marker.lat, marker.lon]}
-              icon={markerIcon}
+      <Text style={styles.sectionTitle}>Véhicules disponibles</Text>
+      <View style={styles.vehicleList}>
+        {VEHICLES.map((vehicle) => {
+          const isSelected = selectedVehicle === vehicle.id;
+          return (
+            <TouchableOpacity
+              key={vehicle.id}
+              style={[styles.vehicleCard, isSelected && styles.vehicleCardSelected]}
+              onPress={() => setSelectedVehicle(vehicle.id)}
+              activeOpacity={0.85}
             >
-              <Popup>{marker.label}</Popup>
-            </Marker>
-          ))}
-        </MapContainer>
+              <View style={styles.vehicleInfo}>
+                <View style={styles.vehicleTitleRow}>
+                  <Text style={styles.vehicleName}>{vehicle.name}</Text>
+                  <Text style={styles.vehiclePrice}>{vehicle.price}</Text>
+                </View>
+                <Text style={styles.vehicleDescription}>{vehicle.description}</Text>
+                <Text style={styles.vehicleMeta}>
+                  {vehicle.capacity} • {vehicle.luggage}
+                </Text>
+                <Text style={styles.vehicleEta}>Disponible en {vehicle.eta}</Text>
+              </View>
+              <View style={styles.vehicleAction}>
+                <Text style={styles.vehicleActionLabel}>Réserver</Text>
+              </View>
+            </TouchableOpacity>
+          );
+        })}
       </View>
+
+      <View style={styles.fareCard}>
+        <Text style={styles.sectionTitle}>Grille tarifaire</Text>
+        {FARE_BREAKDOWN.map((fare) => (
+          <View key={fare.id} style={styles.fareRow}>
+            <Text style={styles.fareLabel}>{fare.label}</Text>
+            <Text style={styles.fareValue}>{fare.value}</Text>
+          </View>
+        ))}
+        <View style={styles.fareTotalRow}>
+          <Text style={styles.fareTotalLabel}>Total estimé</Text>
+          <Text style={styles.fareTotalValue}>28 CHF</Text>
+        </View>
+      </View>
+
+      <TouchableOpacity style={styles.orderButton}>
+        <Text style={styles.orderButtonText}>Réserver</Text>
+      </TouchableOpacity>
+    </ScrollView>
+  );
+
+  const mapContent = (
+    <MapContainer
+      center={LAUSANNE_CENTER}
+      zoom={13}
+      style={styles.map}
+      whenCreated={(mapInstance) => {
+        mapRef.current = mapInstance;
+      }}
+    >
+      <TileLayer
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+      />
+      {markers.map((marker) => (
+        <Marker key={marker.id} position={[marker.lat, marker.lon]} icon={markerIcon}>
+          <Popup>{marker.label}</Popup>
+        </Marker>
+      ))}
+    </MapContainer>
+  );
+
+  if (isDesktop) {
+    return (
+      <DesktopLayout
+        sidebar={
+          <View style={[styles.sidebar, styles.sidebarDesktop]}>
+            {sidebarContent}
+          </View>
+        }
+        map={<View style={styles.mapWrapper}>{mapContent}</View>}
+      />
+    );
+  }
+
+  return (
+    <View style={[styles.container, styles.containerStacked]}>
+      <View style={[styles.sidebar, styles.sidebarStacked]}>{sidebarContent}</View>
+      <View style={styles.mapWrapper}>{mapContent}</View>
     </View>
   );
 }
@@ -358,6 +365,7 @@ const styles = StyleSheet.create({
   },
   sidebarContent: {
     paddingBottom: 24,
+    overflow: 'visible',
   },
   logoRow: {
     flexDirection: 'row',
@@ -394,6 +402,7 @@ const styles = StyleSheet.create({
   inputSection: {
     position: 'relative',
     zIndex: 1001,
+    overflow: 'visible',
   },
   inputGroup: {
     marginBottom: 16,
@@ -580,6 +589,7 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 400,
     zIndex: 0,
+    position: 'relative',
   },
   map: {
     height: '100%',
