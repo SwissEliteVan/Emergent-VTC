@@ -4,6 +4,7 @@ import path from "path";
 import PDFDocument from "pdfkit";
 import { fileURLToPath } from "url";
 import { confirmReservation, createReservation, getReservationById } from "./storage.js";
+import { generateTicketPDF } from "./ticketPdf.js";
 
 const app = express();
 const port = process.env.PORT || 8080;
@@ -17,8 +18,14 @@ const PRICE_BASE = 7;
 const PRICE_PER_KM = 1.8;
 const PRICE_PER_MINUTE = 0.5;
 const COMPANY_NAME = process.env.COMPANY_NAME || "Mon Entreprise VTC";
+const COMPANY_ADDRESS = process.env.COMPANY_ADDRESS || "1 rue de la Mobilité, 75000 Paris";
+const COMPANY_PHONE = process.env.COMPANY_PHONE || "+33 1 23 45 67 89";
+const COMPANY_EMAIL = process.env.COMPANY_EMAIL || "contact@mon-vtc.fr";
+const COMPANY_LICENSE = process.env.COMPANY_LICENSE || "VTC-XXXX-0000";
+const COMPANY_SIRET = process.env.COMPANY_SIRET || "000 000 000 00000";
 const COMPANY_LOGO_PATH =
   process.env.COMPANY_LOGO_PATH || path.join(publicDir, "logo.png");
+const PDF_OUTPUT_DIR = process.env.PDF_OUTPUT_DIR || path.join(__dirname, "..", "generated");
 
 app.use(express.json({ limit: "1mb" }));
 app.use(express.static(publicDir));
@@ -80,8 +87,18 @@ app.post("/api/estimate", async (req, res) => {
 });
 
 app.post("/api/reservations", (req, res) => {
-  const { customerName, pickup, dropoff, pickupTime, vehicleType, distanceKm, priceQuote } =
-    req.body || {};
+  const {
+    customerName,
+    customerPhone,
+    customerEmail,
+    pickup,
+    dropoff,
+    pickupTime,
+    vehicleType,
+    distanceKm,
+    durationMinutes,
+    priceQuote
+  } = req.body || {};
 
   if (!customerName || !pickup || !dropoff || !pickupTime) {
     return res.status(400).json({
@@ -91,12 +108,13 @@ app.post("/api/reservations", (req, res) => {
   }
 
   const reservation = createReservation({
-    customer: { name: customerName },
+    customer: { name: customerName, phone: customerPhone, email: customerEmail },
     pickup,
     dropoff,
     pickupTime,
     vehicleType,
     distanceKm,
+    durationMinutes,
     priceQuote
   });
 
@@ -163,6 +181,97 @@ app.post("/api/reservations/:id/confirm", (req, res) => {
     );
 
   doc.end();
+});
+
+app.post("/api/reservations/:id/ticket", async (req, res) => {
+  try {
+    const reservation = getReservationById(req.params.id);
+
+    if (!reservation) {
+      return res.status(404).json({ error: "Reservation introuvable." });
+    }
+
+    const {
+      customerPhone,
+      customerEmail,
+      priceTTC,
+      priceDetails,
+      saveToDisk = false,
+      sendEmailSimulation = false,
+      company: companyOverrides = {}
+    } = req.body || {};
+
+    const totalTTC =
+      priceTTC ??
+      reservation.priceQuote?.totalTTC ??
+      reservation.priceQuote?.priceTTC ??
+      reservation.priceQuote;
+
+    const price = {
+      totalTTC,
+      details: Array.isArray(priceDetails) ? priceDetails : null
+    };
+
+    if (!price.details) {
+      price.base = PRICE_BASE;
+      if (reservation.distanceKm) {
+        price.distance = reservation.distanceKm * PRICE_PER_KM;
+      }
+      if (reservation.durationMinutes) {
+        price.duration = reservation.durationMinutes * PRICE_PER_MINUTE;
+      }
+    }
+
+    const { buffer, filePath, emailSimulation } = await generateTicketPDF({
+      reservationId: reservation.id,
+      company: {
+        name: companyOverrides.name || COMPANY_NAME,
+        address: companyOverrides.address || COMPANY_ADDRESS,
+        phone: companyOverrides.phone || COMPANY_PHONE,
+        email: companyOverrides.email || COMPANY_EMAIL,
+        licenseNumber: companyOverrides.licenseNumber || COMPANY_LICENSE,
+        siret: companyOverrides.siret || COMPANY_SIRET
+      },
+      customer: {
+        name: reservation.customer?.name || "Client",
+        phone: customerPhone || reservation.customer?.phone,
+        email: customerEmail || reservation.customer?.email
+      },
+      pickupTime: reservation.pickupTime,
+      pickupAddress: reservation.pickup,
+      dropoffAddress: reservation.dropoff,
+      price,
+      outputDir: PDF_OUTPUT_DIR,
+      saveToDisk,
+      sendEmailSimulation,
+      logoPath: COMPANY_LOGO_PATH,
+      notes: reservation.vehicleType
+        ? `Type de véhicule réservé : ${reservation.vehicleType}`
+        : undefined
+    });
+
+    if (req.query.format === "json") {
+      return res.json({
+        message: "Bon de réservation généré.",
+        filePath,
+        emailSimulation
+      });
+    }
+
+    const pdfFileName = filePath
+      ? path.basename(filePath)
+      : `bon-reservation-${reservation.id}.pdf`;
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `attachment; filename="${pdfFileName}"`);
+    return res.send(buffer);
+  } catch (error) {
+    const statusCode = error.statusCode || 500;
+    return res.status(statusCode).json({
+      error: "Impossible de générer le bon de réservation.",
+      details: error.message
+    });
+  }
 });
 
 app.get("/api/reservations/:id", (req, res) => {
