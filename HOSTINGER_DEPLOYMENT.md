@@ -13,6 +13,105 @@ Votre serveur doit avoir :
 
 ---
 
+## 🇨🇭 Déploiement rapide (Node.js : server.js + index.html) avec CHF et API ChatGPT
+
+Ce scénario correspond à un petit projet Node.js (ex: `server.js` + `index.html`) déployé sur un VPS Hostinger.
+
+### 1) Copier les fichiers sur le VPS (SCP ou FileZilla)
+
+**Option A — SCP (recommandé, rapide) :**
+```bash
+scp -r /chemin/vers/mon-projet/ root@votre-ip-vps:/var/www/mon-chauffeur-prive
+```
+
+**Option B — FileZilla (graphique) :**
+1. Ouvrez FileZilla et connectez-vous en **SFTP** :
+   - Hôte : `votre-ip-vps`
+   - Identifiant : `root` (ou votre user)
+   - Mot de passe : votre mot de passe SSH
+   - Port : `22`
+2. Glissez vos fichiers (`server.js`, `index.html`, etc.) vers `/var/www/mon-chauffeur-prive`.
+
+### 2) Configurer la clé API ChatGPT + options Suisse (CHF)
+
+Sur le VPS, créez un fichier `.env` pour éviter d’exposer la clé :
+```bash
+cd /var/www/mon-chauffeur-prive
+nano .env
+```
+
+**Exemple de variables :**
+```bash
+OPENAI_API_KEY=sk-xxxxxxxxxxxxxxxx
+DEFAULT_CURRENCY=CHF
+DEFAULT_LOCALE=fr-CH
+```
+
+Dans `server.js`, lisez la clé via `process.env.OPENAI_API_KEY` (ne jamais committer la clé).  
+
+### 3) Démarrer l’app avec PM2
+
+```bash
+cd /var/www/mon-chauffeur-prive
+pm2 start server.js --name mon-chauffeur-prive
+pm2 save
+pm2 startup
+```
+
+Vérification :
+```bash
+pm2 status
+```
+
+### 4) Configuration Nginx (reverse proxy vers Node.js)
+
+Créez le fichier Nginx :
+```bash
+sudo nano /etc/nginx/sites-available/mon-chauffeur-prive.com
+```
+
+**À copier-coller :**
+```nginx
+server {
+    listen 80;
+    server_name mon-chauffeur-prive.com www.mon-chauffeur-prive.com;
+
+    location / {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+Activez le site :
+```bash
+sudo ln -s /etc/nginx/sites-available/mon-chauffeur-prive.com /etc/nginx/sites-enabled/
+sudo nginx -t
+sudo systemctl reload nginx
+```
+
+### 5) HTTPS gratuit avec Certbot (Let’s Encrypt)
+
+Installation + certificat :
+```bash
+sudo apt update
+sudo apt install certbot python3-certbot-nginx -y
+sudo certbot --nginx -d mon-chauffeur-prive.com -d www.mon-chauffeur-prive.com
+```
+
+Renouvellement automatique (déjà configuré par Certbot) :
+```bash
+sudo certbot renew --dry-run
+```
+
+---
+
 ## 🚀 ÉTAPE 1 : Installation des dépendances système
 
 ```bash
