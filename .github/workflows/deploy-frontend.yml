@@ -1,4 +1,4 @@
-name: Deploy to Hostinger
+name: Deploy Romuo.ch to Hostinger
 
 on:
   push:
@@ -6,71 +6,128 @@ on:
       - main
     paths:
       - 'frontend-romuo/**'
+      - 'config/**'
       - '.github/workflows/deploy-frontend.yml'
   workflow_dispatch:
+    inputs:
+      force_deploy:
+        description: 'Forcer le deploiement meme sans changements'
+        required: false
+        default: 'false'
+        type: boolean
+
+# Annuler les builds precedents sur la meme branche
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '20'
+  DOMAIN: 'romuo.ch'
+  TIMEZONE: 'Europe/Zurich'
 
 jobs:
   build-and-deploy:
+    name: Build & Deploy Romuo.ch
     runs-on: ubuntu-latest
     timeout-minutes: 15
+
+    # Configuration Suisse
+    env:
+      TZ: Europe/Zurich
+      LANG: fr_CH.UTF-8
 
     steps:
       # 1. Checkout du code
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       # 2. Configuration de Node.js avec cache npm
-      - name: Setup Node.js
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
           cache-dependency-path: frontend-romuo/package-lock.json
 
-      # 3. Installation des dependances (avec cache)
-      - name: Install dependencies
-        working-directory: ./frontend-romuo
-        run: npm ci --prefer-offline
+      # 3. Cache des dependances npm
+      - name: Cache node_modules
+        uses: actions/cache@v4
+        id: npm-cache
+        with:
+          path: frontend-romuo/node_modules
+          key: ${{ runner.os }}-node-${{ env.NODE_VERSION }}-${{ hashFiles('frontend-romuo/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-${{ env.NODE_VERSION }}-
 
-      # 4. Build du projet React optimise
-      - name: Build project
+      # 4. Installation des dependances
+      - name: Install dependencies
+        if: steps.npm-cache.outputs.cache-hit != 'true'
+        working-directory: ./frontend-romuo
+        run: npm ci --prefer-offline --no-audit
+
+      # 5. Build du projet React optimise pour la Suisse
+      - name: Build project (Swiss optimized)
         working-directory: ./frontend-romuo
         run: npm run build
         env:
           NODE_ENV: production
+          VITE_COUNTRY: CH
+          VITE_CURRENCY: CHF
+          VITE_LOCALE: fr-CH
+          VITE_TIMEZONE: Europe/Zurich
+          VITE_APP_URL: https://romuo.ch
+          VITE_API_URL: https://api.romuo.ch
 
-      # 5. Garantir que le .htaccess est present dans dist/
+      # 6. Garantir que le .htaccess est present dans dist/
       - name: Ensure .htaccess is in dist
         working-directory: ./frontend-romuo
         run: |
-          echo "=== Verifying .htaccess deployment ==="
-          # Vite devrait copier public/ vers dist/, mais verifier au cas ou
+          echo "=== Verification .htaccess ==="
           if [ ! -f dist/.htaccess ]; then
-            echo "WARNING: .htaccess not found in dist/, copying manually..."
+            echo "Copie .htaccess vers dist/..."
             cp public/.htaccess dist/.htaccess
           fi
-          # Utiliser aussi le fichier htaccess (sans point) comme backup
           if [ -f public/htaccess ]; then
             cp public/htaccess dist/htaccess
           fi
-          echo "=== .htaccess verification complete ==="
+          echo "OK: .htaccess present"
           ls -la dist/.htaccess
-          head -30 dist/.htaccess
 
-      # 6. Afficher la taille du build
-      - name: Display build size
+      # 7. Generer le fichier robots.txt pour la Suisse
+      - name: Generate robots.txt
         working-directory: ./frontend-romuo
         run: |
-          echo "=== Build output size ==="
-          du -sh dist/
-          echo "=== Asset breakdown ==="
-          find dist -type f -name "*.js" -o -name "*.css" | head -20 | xargs ls -lh 2>/dev/null || true
-          echo "=== Gzipped assets ==="
-          find dist -type f -name "*.gz" | head -20 | xargs ls -lh 2>/dev/null || true
-          echo "=== All files in dist ==="
-          ls -la dist/
+          cat > dist/robots.txt << 'EOF'
+          User-agent: *
+          Allow: /
 
-      # 7. Deploiement via FTP vers Hostinger
+          Sitemap: https://romuo.ch/sitemap.xml
+
+          # Romuo.ch - VTC Premium Suisse
+          # Contact: contact@romuo.ch
+          EOF
+
+      # 8. Afficher les statistiques du build
+      - name: Build statistics
+        working-directory: ./frontend-romuo
+        run: |
+          echo "============================================"
+          echo "  ROMUO.CH - Build Statistics"
+          echo "============================================"
+          echo ""
+          echo "Taille totale: $(du -sh dist/ | cut -f1)"
+          echo ""
+          echo "Fichiers JS:   $(find dist -name '*.js' | wc -l) fichiers"
+          echo "Fichiers CSS:  $(find dist -name '*.css' | wc -l) fichiers"
+          echo "Fichiers GZ:   $(find dist -name '*.gz' | wc -l) fichiers pre-compresses"
+          echo ""
+          echo "Plus gros fichiers:"
+          find dist -type f -exec ls -lh {} \; | sort -k5 -hr | head -5
+
+      # 9. Deploiement via FTP vers Hostinger
       - name: Deploy to Hostinger via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
@@ -80,26 +137,53 @@ jobs:
           local-dir: ./frontend-romuo/dist/
           server-dir: ${{ secrets.FTP_SERVER_DIR }}
           dangerous-clean-slate: false
+          log-level: minimal
           exclude: |
             **/.git*/**
             **/node_modules/**
             **/.vscode/**
             **/.idea/**
+            **/*.map
+            **/.DS_Store
 
-      # 8. Notification de succes
-      - name: Deployment successful
+      # 10. Verification post-deploiement
+      - name: Post-deployment verification
         run: |
-          echo "=========================================="
-          echo "Deployment to Hostinger completed!"
-          echo "Site: https://romuo.ch"
-          echo "=========================================="
+          echo "============================================"
+          echo "  DEPLOIEMENT ROMUO.CH TERMINE!"
+          echo "============================================"
           echo ""
-          echo "Fichiers deployes:"
-          echo "- index.html (point d'entree)"
-          echo "- .htaccess (configuration Apache/SPA)"
-          echo "- assets/ (JS, CSS, images)"
+          echo "Site:     https://${{ env.DOMAIN }}"
+          echo "API:      https://api.${{ env.DOMAIN }}"
+          echo "Admin:    https://${{ env.DOMAIN }}/admin"
           echo ""
-          echo "Si erreur 'Not Found', verifier:"
-          echo "1. FTP_SERVER_DIR = /public_html/"
-          echo "2. .htaccess present sur le serveur"
-          echo "3. mod_rewrite active sur Hostinger"
+          echo "Configuration Suisse:"
+          echo "  Devise:   CHF"
+          echo "  Langue:   fr-CH"
+          echo "  Timezone: Europe/Zurich"
+          echo ""
+          echo "Verification rapide..."
+          sleep 5
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "https://${{ env.DOMAIN }}" || echo "000")
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "OK: Site accessible (HTTP $HTTP_CODE)"
+          else
+            echo "ATTENTION: Site retourne HTTP $HTTP_CODE"
+          fi
+
+      # 11. Notification du deploiement
+      - name: Create deployment summary
+        run: |
+          echo "## Deploiement Romuo.ch" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Element | Valeur |" >> $GITHUB_STEP_SUMMARY
+          echo "|---------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Domaine | https://${{ env.DOMAIN }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Branche | ${{ github.ref_name }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Commit | ${{ github.sha }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Date | $(TZ='Europe/Zurich' date '+%d.%m.%Y %H:%M') |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Configuration Suisse" >> $GITHUB_STEP_SUMMARY
+          echo "- Devise: CHF (Franc Suisse)" >> $GITHUB_STEP_SUMMARY
+          echo "- Langue: Francais (fr-CH)" >> $GITHUB_STEP_SUMMARY
+          echo "- Timezone: Europe/Zurich" >> $GITHUB_STEP_SUMMARY
