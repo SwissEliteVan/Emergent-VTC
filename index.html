@@ -4,26 +4,35 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Chauffeur Privé | Réservation</title>
+    <title>VTC Élite | Réservation instantanée</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap"
       rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+      integrity="sha512-0hH9b9m6k0P7jDfd6n7sUTyV1Gf5NQvVZ3GJAGbK3Q0ePZ0c6k6o6cyfN6RZqN6SxmqhjGdr0D5UNP4HGy7r6g=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
     />
     <style>
       :root {
         color-scheme: light;
-        --bg: #0f172a;
-        --surface: rgba(15, 23, 42, 0.78);
-        --card: rgba(255, 255, 255, 0.1);
-        --text: #e2e8f0;
-        --muted: #94a3b8;
-        --accent: #38bdf8;
-        --accent-strong: #0ea5e9;
-        --success: #22c55e;
-        --danger: #fb7185;
-        --shadow: 0 30px 60px rgba(15, 23, 42, 0.45);
+        --bg: #f5f7fb;
+        --surface: #ffffff;
+        --surface-alt: #f1f5f9;
+        --text: #0f172a;
+        --muted: #64748b;
+        --primary: #2563eb;
+        --primary-dark: #1e40af;
+        --accent: #f97316;
+        --success: #16a34a;
+        --danger: #ef4444;
+        --shadow: 0 30px 60px rgba(15, 23, 42, 0.12);
+        --radius: 18px;
       }
 
       * {
@@ -33,118 +42,156 @@
       }
 
       body {
-        font-family: "Manrope", system-ui, -apple-system, sans-serif;
-        background: radial-gradient(circle at top, #1e293b 0%, #0f172a 55%, #0b1120 100%);
+        font-family: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+        background: radial-gradient(circle at top, #e2e8f0 0%, #f8fafc 55%, #ffffff 100%);
         color: var(--text);
         min-height: 100vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 32px 16px 64px;
       }
 
       .page {
-        width: min(100%, 1080px);
+        width: min(100%, 1140px);
+        margin: 0 auto;
+        padding: 24px 18px 64px;
         display: grid;
-        gap: 32px;
+        gap: 28px;
       }
 
-      .hero {
+      header {
         display: flex;
         flex-direction: column;
         gap: 16px;
+        padding: 14px 0;
+        animation: fadeIn 0.8s ease;
+      }
+
+      .logo {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        font-weight: 700;
+        font-size: 1.1rem;
+        color: var(--primary-dark);
+      }
+
+      .logo i {
+        color: var(--accent);
+        font-size: 1.35rem;
+      }
+
+      .hero {
+        display: grid;
+        gap: 14px;
       }
 
       .hero h1 {
-        font-size: clamp(2rem, 4vw, 3.2rem);
+        font-size: clamp(2rem, 4vw, 3rem);
         font-weight: 700;
-        letter-spacing: -0.02em;
+        line-height: 1.1;
       }
 
       .hero p {
         color: var(--muted);
-        font-size: 1.05rem;
         line-height: 1.6;
-        max-width: 560px;
+        font-size: 1rem;
       }
 
-      .badge {
-        width: fit-content;
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
         padding: 6px 14px;
         border-radius: 999px;
-        background: rgba(56, 189, 248, 0.18);
-        color: var(--accent);
+        background: rgba(37, 99, 235, 0.1);
+        color: var(--primary);
         font-weight: 600;
         font-size: 0.85rem;
-        letter-spacing: 0.02em;
+      }
+
+      .layout {
+        display: grid;
+        gap: 22px;
       }
 
       .card {
         background: var(--surface);
-        border-radius: 24px;
-        padding: clamp(24px, 4vw, 40px);
+        border-radius: var(--radius);
+        padding: clamp(22px, 4vw, 36px);
         box-shadow: var(--shadow);
-        backdrop-filter: blur(18px);
-        border: 1px solid rgba(148, 163, 184, 0.2);
+        animation: slideUp 0.8s ease;
       }
 
-      form {
-        display: grid;
-        gap: 20px;
-      }
-
-      .grid {
+      .form-grid {
         display: grid;
         gap: 16px;
       }
 
-      .grid.two {
+      .form-grid.two {
         grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
       }
 
       label {
-        font-size: 0.9rem;
-        font-weight: 600;
-        color: var(--text);
-        margin-bottom: 8px;
         display: block;
+        font-weight: 600;
+        font-size: 0.9rem;
+        margin-bottom: 8px;
+      }
+
+      .input-group {
+        position: relative;
+      }
+
+      .input-group i {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--muted);
       }
 
       input {
         width: 100%;
-        padding: 14px 16px;
+        padding: 14px 14px 14px 42px;
         border-radius: 14px;
-        border: 1px solid transparent;
-        background: rgba(15, 23, 42, 0.6);
-        color: var(--text);
+        border: 1px solid #e2e8f0;
+        background: var(--surface-alt);
         font-size: 1rem;
         transition: border 0.2s ease, box-shadow 0.2s ease;
       }
 
       input::placeholder {
-        color: rgba(148, 163, 184, 0.8);
+        color: #94a3b8;
       }
 
       input:focus {
         outline: none;
-        border-color: rgba(56, 189, 248, 0.7);
-        box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2);
+        border-color: rgba(37, 99, 235, 0.6);
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
       }
 
       .actions {
         display: flex;
         flex-wrap: wrap;
         gap: 12px;
+        margin-top: 8px;
       }
 
       button {
         border: none;
         padding: 14px 22px;
-        border-radius: 12px;
-        font-size: 1rem;
+        border-radius: 14px;
         font-weight: 600;
+        font-size: 1rem;
         cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
         transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+      }
+
+      button:disabled {
+        cursor: wait;
+        opacity: 0.72;
       }
 
       button:active {
@@ -152,150 +199,275 @@
       }
 
       .btn-primary {
-        background: linear-gradient(135deg, var(--accent) 0%, var(--accent-strong) 100%);
-        color: #0f172a;
-        box-shadow: 0 12px 30px rgba(14, 165, 233, 0.25);
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+        color: #fff;
+        box-shadow: 0 14px 30px rgba(30, 64, 175, 0.25);
       }
 
       .btn-secondary {
-        background: rgba(148, 163, 184, 0.15);
-        color: var(--text);
-        border: 1px solid rgba(148, 163, 184, 0.3);
+        background: #fff;
+        color: var(--primary-dark);
+        border: 1px solid rgba(37, 99, 235, 0.2);
       }
 
-      .summary {
-        margin-top: 16px;
+      .btn-secondary:hover {
+        background: rgba(37, 99, 235, 0.08);
+      }
+
+      .results {
         display: grid;
         gap: 12px;
-        font-size: 0.95rem;
-        color: var(--muted);
+        background: var(--surface-alt);
+        border-radius: 16px;
+        padding: 18px;
+        margin-top: 10px;
       }
 
-      .summary strong {
-        color: var(--text);
+      .results h3 {
+        font-size: 1rem;
+      }
+
+      .metric {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 0.95rem;
+      }
+
+      .metric span {
+        color: var(--muted);
       }
 
       .status {
-        padding: 12px 16px;
-        border-radius: 14px;
-        background: rgba(34, 197, 94, 0.18);
-        color: var(--success);
-        font-weight: 600;
         display: none;
+        padding: 14px 18px;
+        border-radius: 14px;
+        font-weight: 600;
       }
 
-      .error {
-        background: rgba(248, 113, 113, 0.16);
+      .status.success {
+        background: rgba(22, 163, 74, 0.14);
+        color: var(--success);
+      }
+
+      .status.error {
+        background: rgba(239, 68, 68, 0.12);
         color: var(--danger);
       }
 
+      .loading-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+
+      .spinner {
+        width: 16px;
+        height: 16px;
+        border: 2px solid rgba(37, 99, 235, 0.2);
+        border-top: 2px solid var(--primary);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+
       .footer {
+        text-align: center;
         color: var(--muted);
         font-size: 0.85rem;
-        text-align: center;
-        margin-top: 24px;
+        margin-top: 18px;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes slideUp {
+        from {
+          opacity: 0;
+          transform: translateY(18px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
       }
 
       @media (min-width: 900px) {
-        .page {
+        .layout {
           grid-template-columns: 1.1fr 1fr;
           align-items: start;
-        }
-
-        .hero {
-          padding-top: 24px;
         }
       }
     </style>
   </head>
   <body>
     <main class="page">
-      <section class="hero">
-        <span class="badge">Chauffeur privé premium</span>
-        <h1>Réservez un trajet haut de gamme en quelques secondes.</h1>
-        <p>
-          Un service discret, ponctuel et sur-mesure. Obtenez une estimation immédiate et
-          validez votre réservation sans quitter la page.
-        </p>
-      </section>
+      <header>
+        <span class="logo"><i class="fa-solid fa-road"></i>VTC Élite</span>
+        <div class="hero">
+          <span class="pill"><i class="fa-solid fa-star"></i> Service premium 24/7</span>
+          <h1>Réservez votre chauffeur en quelques clics.</h1>
+          <p>
+            Une expérience fluide et sécurisée pour vos trajets professionnels ou personnels.
+            Estimez votre course, validez la réservation et recevez votre ticket PDF instantanément.
+          </p>
+        </div>
+      </header>
 
-      <section class="card">
-        <form id="booking-form">
-          <div class="grid two">
+      <section class="layout">
+        <div class="card">
+          <form id="booking-form" class="form-grid">
+            <div class="form-grid two">
+              <div>
+                <label for="name">Nom complet</label>
+                <div class="input-group">
+                  <i class="fa-solid fa-user"></i>
+                  <input id="name" name="name" type="text" placeholder="Marie Dupont" required />
+                </div>
+              </div>
+              <div>
+                <label for="phone">Téléphone</label>
+                <div class="input-group">
+                  <i class="fa-solid fa-phone"></i>
+                  <input
+                    id="phone"
+                    name="phone"
+                    type="tel"
+                    placeholder="+33 6 12 34 56 78"
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+
             <div>
-              <label for="name">Nom complet</label>
-              <input id="name" name="name" type="text" placeholder="Marie Dupont" required />
+              <label for="pickup">Adresse de départ</label>
+              <div class="input-group">
+                <i class="fa-solid fa-location-dot"></i>
+                <input
+                  id="pickup"
+                  name="pickup"
+                  type="text"
+                  placeholder="Localisation en cours..."
+                  required
+                />
+              </div>
             </div>
+
             <div>
-              <label for="phone">Téléphone</label>
-              <input
-                id="phone"
-                name="phone"
-                type="tel"
-                placeholder="+33 6 12 34 56 78"
-                required
-              />
+              <label for="dropoff">Adresse d'arrivée</label>
+              <div class="input-group">
+                <i class="fa-solid fa-flag-checkered"></i>
+                <input
+                  id="dropoff"
+                  name="dropoff"
+                  type="text"
+                  placeholder="Aéroport Charles de Gaulle"
+                  required
+                />
+              </div>
+            </div>
+
+            <div class="form-grid two">
+              <div>
+                <label for="date">Date</label>
+                <div class="input-group">
+                  <i class="fa-solid fa-calendar"></i>
+                  <input id="date" name="date" type="date" required />
+                </div>
+              </div>
+              <div>
+                <label for="time">Heure</label>
+                <div class="input-group">
+                  <i class="fa-solid fa-clock"></i>
+                  <input id="time" name="time" type="time" required />
+                </div>
+              </div>
+            </div>
+
+            <div class="actions">
+              <button class="btn-primary" type="button" id="estimate-btn">
+                <i class="fa-solid fa-calculator"></i>Estimer le prix
+              </button>
+              <button class="btn-secondary" type="button" id="confirm-btn">
+                <i class="fa-solid fa-circle-check"></i>Valider la réservation
+              </button>
+            </div>
+
+            <div id="loading" class="loading-indicator" aria-live="polite"></div>
+
+            <div class="results" aria-live="polite">
+              <h3>Votre estimation</h3>
+              <div class="metric">
+                <strong>Prix estimé</strong>
+                <span id="price">--</span>
+              </div>
+              <div class="metric">
+                <strong>Distance</strong>
+                <span id="distance">--</span>
+              </div>
+              <div class="metric">
+                <strong>Durée</strong>
+                <span id="duration">--</span>
+              </div>
+            </div>
+
+            <div id="success" class="status success"></div>
+            <div id="error" class="status error"></div>
+          </form>
+          <p class="footer">Paiement sécurisé · Chauffeurs certifiés · Assistance 24/7</p>
+        </div>
+
+        <div class="card">
+          <h2>Expérience VTC premium</h2>
+          <p class="hero">
+            Profitez d'un trajet confortable, d'un suivi en temps réel et d'une assistance dédiée.
+            Notre flotte haut de gamme s'adapte à vos besoins, que ce soit pour un déplacement
+            business ou un transfert vers l'aéroport.
+          </p>
+          <div class="results">
+            <div class="metric">
+              <strong>Suivi temps réel</strong>
+              <span>Notifications instantanées</span>
+            </div>
+            <div class="metric">
+              <strong>Accueil personnalisé</strong>
+              <span>Chauffeur avec pancarte</span>
+            </div>
+            <div class="metric">
+              <strong>Options premium</strong>
+              <span>Wi-Fi, bouteilles d'eau, chargeurs</span>
             </div>
           </div>
-
-          <div>
-            <label for="pickup">Adresse de départ</label>
-            <input
-              id="pickup"
-              name="pickup"
-              type="text"
-              placeholder="12 Rue de Rivoli, Paris"
-              required
-            />
-          </div>
-
-          <div>
-            <label for="dropoff">Adresse d'arrivée</label>
-            <input
-              id="dropoff"
-              name="dropoff"
-              type="text"
-              placeholder="Aéroport Charles de Gaulle"
-              required
-            />
-          </div>
-
-          <div class="grid two">
-            <div>
-              <label for="date">Date</label>
-              <input id="date" name="date" type="date" required />
-            </div>
-            <div>
-              <label for="time">Heure</label>
-              <input id="time" name="time" type="time" required />
-            </div>
-          </div>
-
-          <div class="actions">
-            <button class="btn-primary" type="button" id="estimate-btn">Estimer le prix</button>
-            <button class="btn-secondary" type="button" id="confirm-btn">
-              Valider la réservation
-            </button>
-          </div>
-
-          <div class="summary" aria-live="polite">
-            <div id="estimate-result"><strong>Estimation :</strong> --</div>
-            <div id="confirmation-message" class="status">
-              Réservation confirmée ! Un email vient d'être envoyé avec les détails.
-            </div>
-            <div id="error-message" class="status error">Une erreur est survenue.</div>
-          </div>
-        </form>
-        <p class="footer">Service disponible 24/7 · Chauffeurs certifiés · Paiement sécurisé</p>
+        </div>
       </section>
     </main>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script>
       const estimateBtn = document.getElementById("estimate-btn");
       const confirmBtn = document.getElementById("confirm-btn");
-      const estimateResult = document.getElementById("estimate-result");
-      const confirmationMessage = document.getElementById("confirmation-message");
-      const errorMessage = document.getElementById("error-message");
+      const loadingEl = document.getElementById("loading");
+      const priceEl = document.getElementById("price");
+      const distanceEl = document.getElementById("distance");
+      const durationEl = document.getElementById("duration");
+      const successEl = document.getElementById("success");
+      const errorEl = document.getElementById("error");
 
       const formFields = {
         name: document.getElementById("name"),
@@ -306,75 +478,206 @@
         time: document.getElementById("time"),
       };
 
-      const hideStatus = () => {
-        confirmationMessage.style.display = "none";
-        errorMessage.style.display = "none";
+      const NOMINATIM_BASE = "https://nominatim.openstreetmap.org";
+      let lastEstimate = null;
+
+      const setStatus = (message, type = "success") => {
+        successEl.style.display = "none";
+        errorEl.style.display = "none";
+        const target = type === "success" ? successEl : errorEl;
+        target.textContent = message;
+        target.style.display = "block";
+      };
+
+      const setLoading = (message) => {
+        if (message) {
+          loadingEl.innerHTML = `<span class="spinner"></span>${message}`;
+        } else {
+          loadingEl.innerHTML = "";
+        }
+      };
+
+      const geocodeAddress = async (address) => {
+        const url = `${NOMINATIM_BASE}/search?format=jsonv2&q=${encodeURIComponent(address)}`;
+        const response = await fetch(url, {
+          headers: { "Accept-Language": "fr" },
+        });
+        if (!response.ok) {
+          throw new Error("Erreur de géocodage");
+        }
+        const data = await response.json();
+        if (!data.length) {
+          throw new Error("Adresse introuvable");
+        }
+        return {
+          lat: Number.parseFloat(data[0].lat),
+          lon: Number.parseFloat(data[0].lon),
+          label: data[0].display_name,
+        };
+      };
+
+      const reverseGeocode = async (lat, lon) => {
+        const url = `${NOMINATIM_BASE}/reverse?format=jsonv2&lat=${lat}&lon=${lon}`;
+        const response = await fetch(url, {
+          headers: { "Accept-Language": "fr" },
+        });
+        if (!response.ok) {
+          throw new Error("Erreur de localisation");
+        }
+        const data = await response.json();
+        return data.display_name;
+      };
+
+      const initGeolocation = () => {
+        if (!navigator.geolocation) {
+          formFields.pickup.placeholder = "Entrez votre adresse de départ";
+          return;
+        }
+        navigator.geolocation.getCurrentPosition(
+          async (position) => {
+            try {
+              const address = await reverseGeocode(
+                position.coords.latitude,
+                position.coords.longitude
+              );
+              if (!formFields.pickup.value) {
+                formFields.pickup.value = address;
+              }
+            } catch (error) {
+              formFields.pickup.placeholder = "Entrez votre adresse de départ";
+            }
+          },
+          () => {
+            formFields.pickup.placeholder = "Entrez votre adresse de départ";
+          },
+          { enableHighAccuracy: true, timeout: 8000 }
+        );
+      };
+
+      const updateEstimateUI = (estimate) => {
+        priceEl.textContent = estimate.price ?? "--";
+        distanceEl.textContent = estimate.distance ?? "--";
+        durationEl.textContent = estimate.duration ?? "--";
       };
 
       estimateBtn.addEventListener("click", async () => {
-        hideStatus();
+        successEl.style.display = "none";
+        errorEl.style.display = "none";
         estimateBtn.disabled = true;
-        estimateBtn.textContent = "Estimation en cours...";
+        setLoading("Géocodage des adresses en cours...");
 
         try {
-          const payload = {
-            name: formFields.name.value,
-            phone: formFields.phone.value,
-            pickup: formFields.pickup.value,
-            dropoff: formFields.dropoff.value,
-            datetime: `${formFields.date.value} ${formFields.time.value}`,
-          };
+          const pickup = await geocodeAddress(formFields.pickup.value);
+          const dropoff = await geocodeAddress(formFields.dropoff.value);
 
+          setLoading("Calcul de l'estimation...");
           const response = await fetch("/api/estimate", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload),
+            body: JSON.stringify({
+              pickup,
+              dropoff,
+              datetime: `${formFields.date.value} ${formFields.time.value}`,
+            }),
           });
 
           if (!response.ok) {
-            throw new Error("Erreur lors de l'estimation");
+            throw new Error("Impossible de récupérer l'estimation");
           }
 
           const data = await response.json();
-          const price = data?.price ?? data?.estimate ?? data?.amount ?? "N/A";
-          estimateResult.innerHTML = `<strong>Estimation :</strong> ${price}`;
+          const estimate = {
+            price: data.price || data.estimate || data.amount || "N/A",
+            distance: data.distance || data.km || "--",
+            duration: data.duration || data.time || "--",
+          };
+
+          lastEstimate = { ...estimate, pickup, dropoff };
+          updateEstimateUI(estimate);
+          setStatus("Estimation mise à jour avec succès.");
         } catch (error) {
-          errorMessage.textContent =
-            "Impossible d'obtenir une estimation pour le moment. Réessayez.";
-          errorMessage.style.display = "block";
+          setStatus(
+            "Nous n'avons pas pu calculer l'estimation. Vérifiez vos adresses.",
+            "error"
+          );
         } finally {
           estimateBtn.disabled = false;
-          estimateBtn.textContent = "Estimer le prix";
+          setLoading("");
         }
       });
 
-      confirmBtn.addEventListener("click", () => {
-        hideStatus();
-        confirmationMessage.style.display = "block";
-        confirmationMessage.textContent =
-          "Réservation confirmée ! Un email vient d'être envoyé avec les détails.";
+      confirmBtn.addEventListener("click", async () => {
+        successEl.style.display = "none";
+        errorEl.style.display = "none";
+        confirmBtn.disabled = true;
+        setLoading("Envoi de la réservation...");
+
+        try {
+          if (!lastEstimate) {
+            throw new Error("Estimation manquante");
+          }
+
+          const reservationPayload = {
+            client: {
+              name: formFields.name.value,
+              phone: formFields.phone.value,
+            },
+            pickup: lastEstimate.pickup,
+            dropoff: lastEstimate.dropoff,
+            datetime: `${formFields.date.value} ${formFields.time.value}`,
+            estimate: {
+              price: lastEstimate.price,
+              distance: lastEstimate.distance,
+              duration: lastEstimate.duration,
+            },
+          };
+
+          const response = await fetch("/api/reservation", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(reservationPayload),
+          });
+
+          if (!response.ok) {
+            throw new Error("Erreur de réservation");
+          }
+
+          const data = await response.json();
+          const reference = data.reference || data.id || "VTC-" + Date.now();
+
+          const { jsPDF } = window.jspdf;
+          const pdf = new jsPDF();
+          pdf.setFontSize(18);
+          pdf.text("Ticket de réservation VTC", 14, 20);
+          pdf.setFontSize(12);
+          pdf.text(`Référence : ${reference}`, 14, 32);
+          pdf.text(`Nom : ${formFields.name.value}`, 14, 42);
+          pdf.text(`Téléphone : ${formFields.phone.value}`, 14, 50);
+          pdf.text(`Départ : ${formFields.pickup.value}`, 14, 60);
+          pdf.text(`Arrivée : ${formFields.dropoff.value}`, 14, 68);
+          pdf.text(`Date/Heure : ${formFields.date.value} ${formFields.time.value}`, 14, 76);
+          pdf.text(`Prix estimé : ${lastEstimate.price}`, 14, 86);
+          pdf.text(`Distance : ${lastEstimate.distance}`, 14, 94);
+          pdf.text(`Durée : ${lastEstimate.duration}`, 14, 102);
+          pdf.text("Merci pour votre confiance.", 14, 118);
+          pdf.save(`ticket-${reference}.pdf`);
+
+          setStatus(
+            "Réservation confirmée ! Votre ticket PDF a été téléchargé.",
+            "success"
+          );
+        } catch (error) {
+          setStatus(
+            "Impossible de valider la réservation pour le moment. Réessayez.",
+            "error"
+          );
+        } finally {
+          confirmBtn.disabled = false;
+          setLoading("");
+        }
       });
 
-      function initAutocomplete() {
-        if (!window.google || !window.google.maps || !window.google.maps.places) {
-          return;
-        }
-
-        const options = {
-          fields: ["formatted_address", "geometry", "name"],
-          types: ["geocode"],
-        };
-
-        new google.maps.places.Autocomplete(formFields.pickup, options);
-        new google.maps.places.Autocomplete(formFields.dropoff, options);
-      }
-
-      window.initAutocomplete = initAutocomplete;
+      initGeolocation();
     </script>
-    <script
-      src="https://maps.googleapis.com/maps/api/js?key=VOTRE_CLE_API&libraries=places&callback=initAutocomplete"
-      async
-      defer
-    ></script>
   </body>
 </html>
