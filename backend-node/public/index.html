@@ -1,126 +1,1248 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="fr">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Estimation VTC</title>
-    <style>
-      body {
-        font-family: "Segoe UI", sans-serif;
-        margin: 40px;
-        background: #f6f7fb;
-        color: #1f2933;
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Romuo VTC - Service de transport premium en Suisse Romande">
+  <meta name="theme-color" content="#1a1a2e">
+  <title>Romuo VTC - Reservation de Course</title>
+
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* ============================================
+       CSS VARIABLES & RESET
+       ============================================ */
+    :root {
+      --primary: #d4af37;
+      --primary-dark: #b8962e;
+      --primary-light: #f4e5b5;
+      --bg-dark: #1a1a2e;
+      --bg-darker: #0f0f1a;
+      --bg-card: rgba(255, 255, 255, 0.03);
+      --text-primary: #ffffff;
+      --text-secondary: #a0a0a0;
+      --text-muted: #666666;
+      --success: #22c55e;
+      --error: #ef4444;
+      --warning: #f59e0b;
+      --border: rgba(255, 255, 255, 0.1);
+      --shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      --radius: 16px;
+      --radius-sm: 10px;
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(135deg, var(--bg-dark) 0%, var(--bg-darker) 100%);
+      min-height: 100vh;
+      color: var(--text-primary);
+      line-height: 1.6;
+    }
+
+    /* ============================================
+       LAYOUT
+       ============================================ */
+    .app {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header */
+    .header {
+      padding: 20px;
+      text-align: center;
+      background: rgba(0, 0, 0, 0.2);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo {
+      font-size: 2rem;
+      font-weight: 700;
+      background: linear-gradient(90deg, var(--primary), var(--primary-light));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .tagline {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      margin-top: 5px;
+    }
+
+    /* Main Content */
+    .main {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 30px 20px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 600px;
+    }
+
+    /* Cards */
+    .card {
+      background: var(--bg-card);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 30px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow);
+    }
+
+    .card-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .card-title i {
+      color: var(--primary);
+    }
+
+    /* ============================================
+       FORM STYLES
+       ============================================ */
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+    }
+
+    @media (max-width: 480px) {
+      .form-row {
+        grid-template-columns: 1fr;
       }
+    }
+
+    label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+
+    .input-wrapper {
+      position: relative;
+    }
+
+    .input-wrapper i {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 14px 14px 14px 42px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-size: 1rem;
+      font-family: inherit;
+      transition: var(--transition);
+    }
+
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--primary);
+      background: rgba(255, 255, 255, 0.08);
+      box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+    }
+
+    input::placeholder {
+      color: var(--text-muted);
+    }
+
+    /* Address Input with Autocomplete */
+    .address-input-container {
+      position: relative;
+    }
+
+    .suggestions {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: var(--bg-darker);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      max-height: 200px;
+      overflow-y: auto;
+      z-index: 100;
+      display: none;
+      margin-top: 5px;
+    }
+
+    .suggestions.show {
+      display: block;
+      animation: slideDown 0.2s ease;
+    }
+
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .suggestion-item {
+      padding: 12px 15px;
+      cursor: pointer;
+      border-bottom: 1px solid var(--border);
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .suggestion-item:last-child {
+      border-bottom: none;
+    }
+
+    .suggestion-item:hover {
+      background: rgba(212, 175, 55, 0.1);
+    }
+
+    .suggestion-item i {
+      color: var(--primary);
+      font-size: 0.8rem;
+    }
+
+    .suggestion-text {
+      flex: 1;
+      font-size: 0.9rem;
+    }
+
+    /* Geolocation Button */
+    .geo-btn {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: transparent;
+      border: none;
+      color: var(--primary);
+      cursor: pointer;
+      padding: 8px;
+      border-radius: 50%;
+      transition: var(--transition);
+    }
+
+    .geo-btn:hover {
+      background: rgba(212, 175, 55, 0.1);
+    }
+
+    .geo-btn.loading i {
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      100% { transform: rotate(360deg); }
+    }
+
+    /* ============================================
+       BUTTONS
+       ============================================ */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      padding: 16px 24px;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: 1rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: var(--bg-dark);
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(212, 175, 55, 0.3);
+    }
+
+    .btn-success {
+      background: linear-gradient(135deg, var(--success), #16a34a);
+      color: white;
+    }
+
+    .btn-success:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(34, 197, 94, 0.3);
+    }
+
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+
+    .btn-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      margin-top: 10px;
+    }
+
+    @media (max-width: 480px) {
+      .btn-group {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* ============================================
+       RESULTS SECTION
+       ============================================ */
+    .results {
+      display: none;
+      animation: fadeIn 0.5s ease;
+    }
+
+    .results.show {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .result-row:last-child {
+      border-bottom: none;
+    }
+
+    .result-label {
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .result-label i {
+      color: var(--primary);
+      width: 20px;
+    }
+
+    .result-value {
+      font-weight: 600;
+    }
+
+    .result-total {
+      margin-top: 20px;
+      padding: 20px;
+      background: rgba(212, 175, 55, 0.1);
+      border-radius: var(--radius-sm);
+      text-align: center;
+    }
+
+    .result-total .label {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+
+    .result-total .amount {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin-top: 5px;
+    }
+
+    .night-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(245, 158, 11, 0.2);
+      color: var(--warning);
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      margin-top: 10px;
+    }
+
+    /* ============================================
+       CONFIRMATION
+       ============================================ */
+    .confirmation {
+      display: none;
+      text-align: center;
+      animation: scaleIn 0.5s ease;
+    }
+
+    .confirmation.show {
+      display: block;
+    }
+
+    @keyframes scaleIn {
+      from { opacity: 0; transform: scale(0.9); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .confirmation-icon {
+      width: 80px;
+      height: 80px;
+      background: linear-gradient(135deg, var(--success), #16a34a);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+      font-size: 2rem;
+      color: white;
+      animation: bounce 0.5s ease 0.2s;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+
+    .confirmation h3 {
+      font-size: 1.5rem;
+      margin-bottom: 10px;
+    }
+
+    .confirmation p {
+      color: var(--text-secondary);
+      margin-bottom: 20px;
+    }
+
+    .booking-ref {
+      font-family: monospace;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 10px 20px;
+      border-radius: var(--radius-sm);
+      display: inline-block;
+      margin-bottom: 20px;
+    }
+
+    /* ============================================
+       ALERTS
+       ============================================ */
+    .alert {
+      padding: 15px 20px;
+      border-radius: var(--radius-sm);
+      margin-bottom: 20px;
+      display: none;
+      align-items: center;
+      gap: 10px;
+      animation: shake 0.5s ease;
+    }
+
+    .alert.show {
+      display: flex;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-5px); }
+      75% { transform: translateX(5px); }
+    }
+
+    .alert-error {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: var(--error);
+    }
+
+    .alert-success {
+      background: rgba(34, 197, 94, 0.1);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      color: var(--success);
+    }
+
+    /* ============================================
+       LOADING STATES
+       ============================================ */
+    .loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(15, 15, 26, 0.8);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .loading-overlay.show {
+      display: flex;
+    }
+
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 3px solid var(--border);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    /* ============================================
+       FOOTER
+       ============================================ */
+    .footer {
+      padding: 20px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .footer a {
+      color: var(--primary);
+      text-decoration: none;
+    }
+
+    /* ============================================
+       RESPONSIVE
+       ============================================ */
+    @media (max-width: 640px) {
       .card {
-        max-width: 520px;
-        margin: 0 auto;
-        background: #ffffff;
-        padding: 24px;
-        border-radius: 12px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        padding: 20px;
       }
-      h1 {
-        margin-top: 0;
-      }
-      label {
-        display: block;
-        margin-bottom: 6px;
-        font-weight: 600;
-      }
-      input {
-        width: 100%;
-        padding: 10px 12px;
-        margin-bottom: 16px;
-        border-radius: 8px;
-        border: 1px solid #d6dce5;
-      }
-      button {
-        width: 100%;
-        padding: 12px;
-        border: none;
-        background: #2563eb;
-        color: white;
-        border-radius: 8px;
-        font-size: 16px;
-        cursor: pointer;
-      }
-      button:disabled {
-        background: #9bb0e5;
-        cursor: not-allowed;
-      }
-      .result {
-        margin-top: 20px;
-        padding: 16px;
-        background: #eef2ff;
-        border-radius: 8px;
-      }
-      .error {
-        color: #b91c1c;
-        margin-top: 12px;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="card">
-      <h1>Estimation de course VTC</h1>
-      <p>Entrez vos adresses pour obtenir une estimation du prix.</p>
-      <form id="estimate-form">
-        <label for="origin">Adresse de depart</label>
-        <input id="origin" name="origin" type="text" required />
 
-        <label for="destination">Adresse d'arrivee</label>
-        <input id="destination" name="destination" type="text" required />
+      .logo {
+        font-size: 1.5rem;
+      }
 
-        <button type="submit">Calculer le prix</button>
-      </form>
-      <div id="result" class="result" hidden></div>
-      <div id="error" class="error"></div>
+      .result-total .amount {
+        font-size: 2rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- Header -->
+    <header class="header">
+      <div class="logo">
+        <i class="fas fa-car-side"></i> Romuo VTC
+      </div>
+      <p class="tagline">Transport premium en Suisse Romande</p>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+      <div class="container">
+        <!-- Alert Messages -->
+        <div id="alert" class="alert"></div>
+
+        <!-- Booking Form -->
+        <div class="card" id="formCard">
+          <h2 class="card-title">
+            <i class="fas fa-route"></i>
+            Reservez votre course
+          </h2>
+
+          <form id="bookingForm">
+            <!-- Customer Info -->
+            <div class="form-row">
+              <div class="form-group">
+                <label for="customerName">Votre nom</label>
+                <div class="input-wrapper">
+                  <i class="fas fa-user"></i>
+                  <input type="text" id="customerName" name="customerName" placeholder="Jean Dupont" required>
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="customerPhone">Telephone</label>
+                <div class="input-wrapper">
+                  <i class="fas fa-phone"></i>
+                  <input type="tel" id="customerPhone" name="customerPhone" placeholder="+41 79 123 45 67" required>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="customerEmail">Email</label>
+              <div class="input-wrapper">
+                <i class="fas fa-envelope"></i>
+                <input type="email" id="customerEmail" name="customerEmail" placeholder="jean@example.com" required>
+              </div>
+            </div>
+
+            <!-- Date/Time -->
+            <div class="form-group">
+              <label for="pickupTime">Date et heure de prise en charge</label>
+              <div class="input-wrapper">
+                <i class="fas fa-calendar-alt"></i>
+                <input type="datetime-local" id="pickupTime" name="pickupTime" required>
+              </div>
+            </div>
+
+            <!-- Origin Address -->
+            <div class="form-group">
+              <label for="originAddress">Adresse de depart</label>
+              <div class="address-input-container">
+                <div class="input-wrapper">
+                  <i class="fas fa-map-marker-alt"></i>
+                  <input type="text" id="originAddress" name="originAddress"
+                         placeholder="Rue de la Gare 1, Lausanne"
+                         autocomplete="off" required>
+                  <button type="button" class="geo-btn" id="geoBtn" title="Utiliser ma position">
+                    <i class="fas fa-crosshairs"></i>
+                  </button>
+                </div>
+                <div class="suggestions" id="originSuggestions"></div>
+              </div>
+              <input type="hidden" id="originLat" name="originLat">
+              <input type="hidden" id="originLng" name="originLng">
+            </div>
+
+            <!-- Destination Address -->
+            <div class="form-group">
+              <label for="destAddress">Adresse d'arrivee</label>
+              <div class="address-input-container">
+                <div class="input-wrapper">
+                  <i class="fas fa-flag-checkered"></i>
+                  <input type="text" id="destAddress" name="destAddress"
+                         placeholder="Aeroport de Geneve"
+                         autocomplete="off" required>
+                </div>
+                <div class="suggestions" id="destSuggestions"></div>
+              </div>
+              <input type="hidden" id="destLat" name="destLat">
+              <input type="hidden" id="destLng" name="destLng">
+            </div>
+
+            <!-- Passengers & Vehicle -->
+            <div class="form-row">
+              <div class="form-group">
+                <label for="passengers">Passagers</label>
+                <div class="input-wrapper">
+                  <i class="fas fa-users"></i>
+                  <select id="passengers" name="passengers">
+                    <option value="1">1 passager</option>
+                    <option value="2">2 passagers</option>
+                    <option value="3">3 passagers</option>
+                    <option value="4">4 passagers</option>
+                    <option value="5">5 passagers</option>
+                    <option value="6">6 passagers</option>
+                    <option value="7">7 passagers</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="vehicleType">Type de vehicule</label>
+                <div class="input-wrapper">
+                  <i class="fas fa-car"></i>
+                  <select id="vehicleType" name="vehicleType">
+                    <option value="eco">Eco</option>
+                    <option value="berline" selected>Berline Luxe</option>
+                    <option value="van">Van Premium</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" class="btn btn-primary" id="estimateBtn">
+              <i class="fas fa-calculator"></i>
+              Estimer le prix
+            </button>
+          </form>
+        </div>
+
+        <!-- Results -->
+        <div class="card results" id="resultsCard">
+          <h2 class="card-title">
+            <i class="fas fa-receipt"></i>
+            Estimation de votre course
+          </h2>
+
+          <div class="result-row">
+            <span class="result-label"><i class="fas fa-road"></i> Distance</span>
+            <span class="result-value" id="resultDistance">-</span>
+          </div>
+          <div class="result-row">
+            <span class="result-label"><i class="fas fa-clock"></i> Duree estimee</span>
+            <span class="result-value" id="resultDuration">-</span>
+          </div>
+          <div class="result-row">
+            <span class="result-label"><i class="fas fa-hand-holding-usd"></i> Prise en charge</span>
+            <span class="result-value" id="resultBase">-</span>
+          </div>
+          <div class="result-row">
+            <span class="result-label"><i class="fas fa-tachometer-alt"></i> Distance</span>
+            <span class="result-value" id="resultDistPrice">-</span>
+          </div>
+          <div class="result-row">
+            <span class="result-label"><i class="fas fa-hourglass-half"></i> Temps</span>
+            <span class="result-value" id="resultTimePrice">-</span>
+          </div>
+          <div class="result-row" id="nightRow" style="display: none;">
+            <span class="result-label"><i class="fas fa-moon"></i> Supplement nuit</span>
+            <span class="result-value" id="resultNight">-</span>
+          </div>
+
+          <div class="result-total">
+            <div class="label">Prix total estime</div>
+            <div class="amount" id="resultTotal">-</div>
+            <div class="night-badge" id="nightBadge" style="display: none;">
+              <i class="fas fa-moon"></i> Tarif de nuit applique (22h-6h)
+            </div>
+          </div>
+
+          <div class="btn-group">
+            <button type="button" class="btn btn-primary" id="modifyBtn">
+              <i class="fas fa-edit"></i>
+              Modifier
+            </button>
+            <button type="button" class="btn btn-success" id="confirmBtn">
+              <i class="fas fa-check"></i>
+              Confirmer
+            </button>
+          </div>
+        </div>
+
+        <!-- Confirmation -->
+        <div class="card confirmation" id="confirmationCard">
+          <div class="confirmation-icon">
+            <i class="fas fa-check"></i>
+          </div>
+          <h3>Reservation Confirmee!</h3>
+          <p>Votre chauffeur vous contactera avant la prise en charge.</p>
+          <div class="booking-ref">
+            Ref: <span id="bookingRef">-</span>
+          </div>
+          <button type="button" class="btn btn-primary" id="downloadBtn">
+            <i class="fas fa-file-pdf"></i>
+            Telecharger le bon
+          </button>
+          <button type="button" class="btn btn-success" id="newBookingBtn" style="margin-top: 10px;">
+            <i class="fas fa-plus"></i>
+            Nouvelle reservation
+          </button>
+        </div>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <p>&copy; 2026 Romuo VTC - <a href="https://romuo.ch">romuo.ch</a></p>
+      <p>Transport VTC Premium en Suisse Romande</p>
+    </footer>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+      <div class="spinner"></div>
     </div>
+  </div>
 
-    <script>
-      const form = document.getElementById("estimate-form");
-      const result = document.getElementById("result");
-      const error = document.getElementById("error");
-      const button = form.querySelector("button");
+  <script>
+    // ============================================
+    // CONFIGURATION
+    // ============================================
+    const API_URL = '';  // Relative URL
+    const NOMINATIM_URL = 'https://nominatim.openstreetmap.org';
 
-      form.addEventListener("submit", async (event) => {
-        event.preventDefault();
-        error.textContent = "";
-        result.hidden = true;
-        button.disabled = true;
+    // State
+    let currentEstimate = null;
+    let currentBooking = null;
+    let debounceTimer = null;
 
-        const payload = {
-          origin: form.origin.value,
-          destination: form.destination.value
-        };
+    // DOM Elements
+    const elements = {
+      form: document.getElementById('bookingForm'),
+      formCard: document.getElementById('formCard'),
+      resultsCard: document.getElementById('resultsCard'),
+      confirmationCard: document.getElementById('confirmationCard'),
+      alert: document.getElementById('alert'),
+      loading: document.getElementById('loadingOverlay'),
+      estimateBtn: document.getElementById('estimateBtn'),
+      confirmBtn: document.getElementById('confirmBtn'),
+      modifyBtn: document.getElementById('modifyBtn'),
+      downloadBtn: document.getElementById('downloadBtn'),
+      newBookingBtn: document.getElementById('newBookingBtn'),
+      geoBtn: document.getElementById('geoBtn'),
+      originAddress: document.getElementById('originAddress'),
+      destAddress: document.getElementById('destAddress'),
+      originSuggestions: document.getElementById('originSuggestions'),
+      destSuggestions: document.getElementById('destSuggestions'),
+      pickupTime: document.getElementById('pickupTime'),
+    };
 
-        try {
-          const response = await fetch("/api/estimate", {
-            method: "POST",
+    // ============================================
+    // UTILITIES
+    // ============================================
+
+    function showLoading() {
+      elements.loading.classList.add('show');
+    }
+
+    function hideLoading() {
+      elements.loading.classList.remove('show');
+    }
+
+    function showAlert(message, type = 'error') {
+      elements.alert.className = `alert alert-${type} show`;
+      elements.alert.innerHTML = `<i class="fas fa-${type === 'error' ? 'exclamation-circle' : 'check-circle'}"></i> ${message}`;
+      setTimeout(() => elements.alert.classList.remove('show'), 5000);
+    }
+
+    function setMinDateTime() {
+      const now = new Date();
+      now.setMinutes(now.getMinutes() + 30);
+      const formatted = now.toISOString().slice(0, 16);
+      elements.pickupTime.min = formatted;
+      if (!elements.pickupTime.value) {
+        elements.pickupTime.value = formatted;
+      }
+    }
+
+    // ============================================
+    // NOMINATIM GEOCODING (OpenStreetMap)
+    // ============================================
+
+    async function searchAddress(query) {
+      if (query.length < 3) return [];
+
+      try {
+        const response = await fetch(
+          `${NOMINATIM_URL}/search?format=json&q=${encodeURIComponent(query)}&countrycodes=ch,fr,de,it&limit=5&addressdetails=1`,
+          {
             headers: {
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify(payload)
-          });
+              'Accept-Language': 'fr'
+            }
+          }
+        );
 
-          const data = await response.json();
+        if (!response.ok) throw new Error('Erreur de recherche');
 
-          if (!response.ok) {
-            throw new Error(data.error || "Une erreur est survenue.");
+        return await response.json();
+      } catch (error) {
+        console.error('Geocoding error:', error);
+        return [];
+      }
+    }
+
+    async function reverseGeocode(lat, lon) {
+      try {
+        const response = await fetch(
+          `${NOMINATIM_URL}/reverse?format=json&lat=${lat}&lon=${lon}&addressdetails=1`,
+          {
+            headers: {
+              'Accept-Language': 'fr'
+            }
+          }
+        );
+
+        if (!response.ok) throw new Error('Erreur de geocodage inverse');
+
+        return await response.json();
+      } catch (error) {
+        console.error('Reverse geocoding error:', error);
+        return null;
+      }
+    }
+
+    function displaySuggestions(results, container, inputId) {
+      container.innerHTML = '';
+
+      if (results.length === 0) {
+        container.classList.remove('show');
+        return;
+      }
+
+      results.forEach(result => {
+        const item = document.createElement('div');
+        item.className = 'suggestion-item';
+        item.innerHTML = `
+          <i class="fas fa-map-pin"></i>
+          <span class="suggestion-text">${result.display_name}</span>
+        `;
+
+        item.addEventListener('click', () => {
+          document.getElementById(inputId).value = result.display_name;
+
+          if (inputId === 'originAddress') {
+            document.getElementById('originLat').value = result.lat;
+            document.getElementById('originLng').value = result.lon;
+          } else {
+            document.getElementById('destLat').value = result.lat;
+            document.getElementById('destLng').value = result.lon;
           }
 
-          result.hidden = false;
-          result.innerHTML = `
-            <strong>Prix estime :</strong> ${data.priceEstimate} €<br />
-            <strong>Distance :</strong> ${data.distanceKm} km<br />
-            <strong>Duree :</strong> ${data.durationMinutes} minutes
-          `;
-        } catch (err) {
-          error.textContent = err.message;
-        } finally {
-          button.disabled = false;
+          container.classList.remove('show');
+        });
+
+        container.appendChild(item);
+      });
+
+      container.classList.add('show');
+    }
+
+    function setupAddressAutocomplete(inputElement, suggestionsContainer, inputId) {
+      inputElement.addEventListener('input', () => {
+        clearTimeout(debounceTimer);
+
+        debounceTimer = setTimeout(async () => {
+          const query = inputElement.value.trim();
+          const results = await searchAddress(query);
+          displaySuggestions(results, suggestionsContainer, inputId);
+        }, 300);
+      });
+
+      inputElement.addEventListener('blur', () => {
+        setTimeout(() => suggestionsContainer.classList.remove('show'), 200);
+      });
+
+      inputElement.addEventListener('focus', async () => {
+        if (inputElement.value.length >= 3) {
+          const results = await searchAddress(inputElement.value);
+          displaySuggestions(results, suggestionsContainer, inputId);
         }
       });
-    </script>
-  </body>
+    }
+
+    // ============================================
+    // GEOLOCATION
+    // ============================================
+
+    async function getCurrentLocation() {
+      return new Promise((resolve, reject) => {
+        if (!navigator.geolocation) {
+          reject(new Error('Geolocalisation non supportee'));
+          return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+          position => resolve(position.coords),
+          error => reject(error),
+          { enableHighAccuracy: true, timeout: 10000 }
+        );
+      });
+    }
+
+    async function handleGeolocation() {
+      const btn = elements.geoBtn;
+      btn.classList.add('loading');
+
+      try {
+        const coords = await getCurrentLocation();
+        const result = await reverseGeocode(coords.latitude, coords.longitude);
+
+        if (result) {
+          elements.originAddress.value = result.display_name;
+          document.getElementById('originLat').value = coords.latitude;
+          document.getElementById('originLng').value = coords.longitude;
+          showAlert('Position detectee!', 'success');
+        }
+      } catch (error) {
+        showAlert('Impossible de detecter votre position. Verifiez les permissions.');
+      } finally {
+        btn.classList.remove('loading');
+      }
+    }
+
+    // ============================================
+    // API CALLS
+    // ============================================
+
+    async function getEstimate() {
+      const originLat = parseFloat(document.getElementById('originLat').value);
+      const originLng = parseFloat(document.getElementById('originLng').value);
+      const destLat = parseFloat(document.getElementById('destLat').value);
+      const destLng = parseFloat(document.getElementById('destLng').value);
+      const pickupTime = elements.pickupTime.value;
+
+      if (!originLat || !originLng) {
+        // Try to geocode origin address
+        const originResults = await searchAddress(elements.originAddress.value);
+        if (originResults.length > 0) {
+          document.getElementById('originLat').value = originResults[0].lat;
+          document.getElementById('originLng').value = originResults[0].lon;
+        } else {
+          throw new Error('Adresse de depart introuvable. Selectionnez une suggestion.');
+        }
+      }
+
+      if (!destLat || !destLng) {
+        // Try to geocode destination address
+        const destResults = await searchAddress(elements.destAddress.value);
+        if (destResults.length > 0) {
+          document.getElementById('destLat').value = destResults[0].lat;
+          document.getElementById('destLng').value = destResults[0].lon;
+        } else {
+          throw new Error('Adresse d\'arrivee introuvable. Selectionnez une suggestion.');
+        }
+      }
+
+      const response = await fetch(`${API_URL}/api/estimate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          origin: {
+            lat: parseFloat(document.getElementById('originLat').value),
+            lng: parseFloat(document.getElementById('originLng').value),
+            address: elements.originAddress.value
+          },
+          destination: {
+            lat: parseFloat(document.getElementById('destLat').value),
+            lng: parseFloat(document.getElementById('destLng').value),
+            address: elements.destAddress.value
+          },
+          pickupTime: pickupTime ? new Date(pickupTime).toISOString() : null
+        })
+      });
+
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.error || 'Erreur lors de l\'estimation');
+      }
+
+      return data.data;
+    }
+
+    async function createBooking(estimateId) {
+      const formData = {
+        estimateId,
+        customer: {
+          name: document.getElementById('customerName').value,
+          phone: document.getElementById('customerPhone').value,
+          email: document.getElementById('customerEmail').value
+        },
+        origin: {
+          lat: parseFloat(document.getElementById('originLat').value),
+          lng: parseFloat(document.getElementById('originLng').value),
+          address: elements.originAddress.value
+        },
+        destination: {
+          lat: parseFloat(document.getElementById('destLat').value),
+          lng: parseFloat(document.getElementById('destLng').value),
+          address: elements.destAddress.value
+        },
+        pickupTime: new Date(elements.pickupTime.value).toISOString(),
+        passengers: parseInt(document.getElementById('passengers').value),
+        vehicleType: document.getElementById('vehicleType').value
+      };
+
+      const response = await fetch(`${API_URL}/api/book`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.error || 'Erreur lors de la reservation');
+      }
+
+      return data.data;
+    }
+
+    async function downloadTicket(bookingId) {
+      const response = await fetch(`${API_URL}/api/ticket/${bookingId}`, {
+        method: 'POST'
+      });
+
+      if (!response.ok) {
+        throw new Error('Erreur lors du telechargement du PDF');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `bon-reservation-${bookingId.slice(0, 8)}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      a.remove();
+    }
+
+    // ============================================
+    // UI UPDATES
+    // ============================================
+
+    function showResults(estimate) {
+      currentEstimate = estimate;
+
+      document.getElementById('resultDistance').textContent = `${estimate.distanceKm} km`;
+      document.getElementById('resultDuration').textContent = `${estimate.durationMin} min`;
+      document.getElementById('resultBase').textContent = `${estimate.price.baseFare} ${estimate.price.currency}`;
+      document.getElementById('resultDistPrice').textContent = `${estimate.price.distanceFare} ${estimate.price.currency}`;
+      document.getElementById('resultTimePrice').textContent = `${estimate.price.timeFare} ${estimate.price.currency}`;
+      document.getElementById('resultTotal').textContent = `${estimate.price.total} ${estimate.price.currency}`;
+
+      const nightRow = document.getElementById('nightRow');
+      const nightBadge = document.getElementById('nightBadge');
+
+      if (estimate.price.isNightRate) {
+        nightRow.style.display = 'flex';
+        document.getElementById('resultNight').textContent = `+${estimate.price.nightSurcharge} ${estimate.price.currency}`;
+        nightBadge.style.display = 'inline-flex';
+      } else {
+        nightRow.style.display = 'none';
+        nightBadge.style.display = 'none';
+      }
+
+      elements.formCard.style.display = 'none';
+      elements.resultsCard.classList.add('show');
+    }
+
+    function showConfirmation(booking) {
+      currentBooking = booking;
+      document.getElementById('bookingRef').textContent = booking.bookingId.toUpperCase().slice(0, 8);
+
+      elements.resultsCard.classList.remove('show');
+      elements.confirmationCard.classList.add('show');
+    }
+
+    function resetToForm() {
+      elements.formCard.style.display = 'block';
+      elements.resultsCard.classList.remove('show');
+      elements.confirmationCard.classList.remove('show');
+      currentEstimate = null;
+      currentBooking = null;
+    }
+
+    function resetAll() {
+      elements.form.reset();
+      setMinDateTime();
+      document.getElementById('originLat').value = '';
+      document.getElementById('originLng').value = '';
+      document.getElementById('destLat').value = '';
+      document.getElementById('destLng').value = '';
+      resetToForm();
+    }
+
+    // ============================================
+    // EVENT HANDLERS
+    // ============================================
+
+    elements.form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      showLoading();
+
+      try {
+        const estimate = await getEstimate();
+        showResults(estimate);
+      } catch (error) {
+        showAlert(error.message);
+      } finally {
+        hideLoading();
+      }
+    });
+
+    elements.modifyBtn.addEventListener('click', resetToForm);
+
+    elements.confirmBtn.addEventListener('click', async () => {
+      if (!currentEstimate) return;
+
+      showLoading();
+
+      try {
+        const booking = await createBooking(currentEstimate.estimateId);
+        showConfirmation(booking);
+
+        // Auto-download PDF
+        await downloadTicket(booking.bookingId);
+      } catch (error) {
+        showAlert(error.message);
+      } finally {
+        hideLoading();
+      }
+    });
+
+    elements.downloadBtn.addEventListener('click', async () => {
+      if (!currentBooking) return;
+
+      showLoading();
+
+      try {
+        await downloadTicket(currentBooking.bookingId);
+      } catch (error) {
+        showAlert(error.message);
+      } finally {
+        hideLoading();
+      }
+    });
+
+    elements.newBookingBtn.addEventListener('click', resetAll);
+
+    elements.geoBtn.addEventListener('click', handleGeolocation);
+
+    // Close suggestions when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.address-input-container')) {
+        elements.originSuggestions.classList.remove('show');
+        elements.destSuggestions.classList.remove('show');
+      }
+    });
+
+    // ============================================
+    // INITIALIZATION
+    // ============================================
+
+    function init() {
+      setMinDateTime();
+      setupAddressAutocomplete(elements.originAddress, elements.originSuggestions, 'originAddress');
+      setupAddressAutocomplete(elements.destAddress, elements.destSuggestions, 'destAddress');
+
+      // Try to get user location on load
+      if (navigator.geolocation) {
+        handleGeolocation();
+      }
+    }
+
+    // Start
+    init();
+  </script>
+</body>
 </html>
