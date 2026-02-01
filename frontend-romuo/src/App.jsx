@@ -18,7 +18,8 @@ import VehicleSelector from './components/VehicleSelector';
 import DriverCard from './components/DriverCard';
 import PaymentSelector from './components/PaymentSelector';
 import TripHistory from './components/TripHistory';
-import { calculateAllPrices, MOCK_DRIVER } from './utils/vehicles';
+import { rideApi } from './utils/api';
+import { MOCK_DRIVER } from './utils/vehicles';
 
 // Views: landing, input, vehicle, payment, tracking, history
 const VIEWS = {
@@ -61,13 +62,23 @@ function App() {
   const [distanceKm, setDistanceKm] = useState(null);
   const [prices, setPrices] = useState({});
   const [paymentMethod, setPaymentMethod] = useState('cash');
+  const [pricingLoading, setPricingLoading] = useState(false);
+  const [pricingError, setPricingError] = useState(null);
+  const [bookingLoading, setBookingLoading] = useState(false);
+  const [bookingError, setBookingError] = useState(null);
+  const [bookingReference, setBookingReference] = useState(null);
+
+  // Guest contact info
+  const [guestName, setGuestName] = useState('');
+  const [guestEmail, setGuestEmail] = useState('');
+  const [guestPhone, setGuestPhone] = useState('');
 
   // Tracking State
   const [trackingState, setTrackingState] = useState('searching');
   const [driverPosition, setDriverPosition] = useState(null);
   const [estimatedArrival, setEstimatedArrival] = useState(null);
 
-  // Calculate distance and prices when locations change
+  // Calculate distance when locations change
   useEffect(() => {
     if (pickupLocation && destinationLocation) {
       const dist = calculateDistance(
@@ -77,12 +88,66 @@ function App() {
         destinationLocation[1]
       );
       setDistanceKm(dist);
-      setPrices(calculateAllPrices(dist));
     } else {
       setDistanceKm(null);
       setPrices({});
     }
   }, [pickupLocation, destinationLocation]);
+
+  // Fetch pricing from backend when route or vehicle changes
+  useEffect(() => {
+    if (!pickupLocation || !destinationLocation || !distanceKm) {
+      return;
+    }
+
+    let isActive = true;
+
+    const loadPricing = async () => {
+      setPricingLoading(true);
+      setPricingError(null);
+      try {
+        const response = await rideApi.calculate({
+          pickup: {
+            latitude: pickupLocation[0],
+            longitude: pickupLocation[1],
+            address: pickupText || 'Point de départ',
+          },
+          destination: {
+            latitude: destinationLocation[0],
+            longitude: destinationLocation[1],
+            address: destinationText || 'Destination',
+          },
+          vehicle_type: selectedVehicle,
+          distance_km: distanceKm,
+          num_passengers: 1,
+        });
+
+        if (!isActive) return;
+        const allPrices = response.data.all_prices || {};
+        const finalPrice = response.data.final_price;
+        setPrices({
+          ...allPrices,
+          [selectedVehicle]: finalPrice,
+        });
+      } catch (error) {
+        console.error('Failed to load pricing:', error);
+        if (isActive) {
+          setPrices({});
+          setPricingError('Impossible de récupérer les tarifs en direct.');
+        }
+      } finally {
+        if (isActive) {
+          setPricingLoading(false);
+        }
+      }
+    };
+
+    loadPricing();
+
+    return () => {
+      isActive = false;
+    };
+  }, [pickupLocation, destinationLocation, distanceKm, selectedVehicle, pickupText, destinationText]);
 
   // Simulate driver search and tracking
   useEffect(() => {
@@ -162,12 +227,67 @@ function App() {
   }, []);
 
   // Handle booking confirmation
-  const handleConfirmBooking = useCallback(() => {
-    setTrackingState('searching');
-    setDriverPosition(null);
-    setEstimatedArrival(null);
-    setCurrentView(VIEWS.TRACKING);
-  }, []);
+  const handleConfirmBooking = useCallback(async () => {
+    if (!pickupLocation || !destinationLocation || !distanceKm) {
+      setBookingError('Veuillez sélectionner votre trajet.');
+      return;
+    }
+
+    if (!guestName || (!guestEmail && !guestPhone)) {
+      setBookingError('Merci de renseigner votre nom et un email ou téléphone.');
+      return;
+    }
+
+    setBookingLoading(true);
+    setBookingError(null);
+
+    try {
+      const response = await rideApi.createGuest({
+        pickup: {
+          latitude: pickupLocation[0],
+          longitude: pickupLocation[1],
+          address: pickupText || 'Point de départ',
+        },
+        destination: {
+          latitude: destinationLocation[0],
+          longitude: destinationLocation[1],
+          address: destinationText || 'Destination',
+        },
+        vehicle_type: selectedVehicle,
+        distance_km: distanceKm,
+        price: prices[selectedVehicle] || 0,
+        payment_method: paymentMethod,
+        contact: {
+          name: guestName,
+          email: guestEmail || null,
+          phone: guestPhone || null,
+        },
+      });
+
+      setBookingReference(response.data.ride_id);
+      setTrackingState('searching');
+      setDriverPosition(null);
+      setEstimatedArrival(null);
+      setCurrentView(VIEWS.TRACKING);
+    } catch (error) {
+      console.error('Failed to create booking:', error);
+      setBookingError('Impossible de confirmer la réservation pour le moment.');
+    } finally {
+      setBookingLoading(false);
+    }
+  }, [
+    pickupLocation,
+    destinationLocation,
+    distanceKm,
+    pickupText,
+    destinationText,
+    selectedVehicle,
+    paymentMethod,
+    prices,
+    guestName,
+    guestEmail,
+    guestPhone,
+  ]);
 
   // Go back
   const handleBack = useCallback(() => {
@@ -387,6 +507,13 @@ function App() {
               </div>
             )}
 
+            {pricingLoading && (
+              <p className="text-xs text-gray-400 mt-3">Calcul des tarifs en cours...</p>
+            )}
+            {pricingError && (
+              <p className="text-xs text-danger-600 mt-3">{pricingError}</p>
+            )}
+
             {/* Confirm Button */}
             <button
               type="button"
@@ -495,7 +622,7 @@ function App() {
                 <span className="capitalize">{selectedVehicle}</span>
               </div>
               <p className="text-xl font-bold text-navy-900">
-                {prices[selectedVehicle]} CHF
+                {prices[selectedVehicle] ? `${prices[selectedVehicle]} CHF` : '-- CHF'}
               </p>
             </div>
           </div>
@@ -506,6 +633,48 @@ function App() {
             onSelect={setPaymentMethod}
             showInvoice={false}
           />
+
+          {/* Contact Info */}
+          <div className="card-premium p-4 space-y-4">
+            <h2 className="text-sm font-semibold text-navy-900">
+              Coordonnées pour confirmer la course
+            </h2>
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs text-gray-500">Nom complet</label>
+                <input
+                  type="text"
+                  value={guestName}
+                  onChange={(event) => setGuestName(event.target.value)}
+                  className="mt-1 w-full rounded-swiss border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold-300"
+                  placeholder="Ex: Camille Dupont"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-gray-500">Email</label>
+                <input
+                  type="email"
+                  value={guestEmail}
+                  onChange={(event) => setGuestEmail(event.target.value)}
+                  className="mt-1 w-full rounded-swiss border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold-300"
+                  placeholder="exemple@email.ch"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-gray-500">Téléphone</label>
+                <input
+                  type="tel"
+                  value={guestPhone}
+                  onChange={(event) => setGuestPhone(event.target.value)}
+                  className="mt-1 w-full rounded-swiss border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold-300"
+                  placeholder="+41 79 000 00 00"
+                />
+              </div>
+            </div>
+            {bookingError && (
+              <p className="text-xs text-danger-600">{bookingError}</p>
+            )}
+          </div>
         </div>
 
         {/* Confirm Button */}
@@ -513,10 +682,11 @@ function App() {
           <button
             type="button"
             onClick={handleConfirmBooking}
-            className="btn-gold w-full flex items-center justify-center gap-2"
+            disabled={bookingLoading}
+            className="btn-gold w-full flex items-center justify-center gap-2 disabled:opacity-60"
           >
             <CreditCard className="w-5 h-5" />
-            Confirmer • {prices[selectedVehicle]} CHF
+            {bookingLoading ? 'Confirmation...' : `Confirmer • ${prices[selectedVehicle] || '--'} CHF`}
           </button>
         </div>
       </div>
@@ -574,6 +744,11 @@ function App() {
             {/* Found State */}
             {(trackingState === 'found' || trackingState === 'arriving') && (
               <div className="animate-fade-in">
+                {bookingReference && (
+                  <div className="mb-4 rounded-swiss bg-navy-900/90 px-4 py-2 text-xs text-white">
+                    Référence course: {bookingReference}
+                  </div>
+                )}
                 {/* Status Badge */}
                 <div className="flex items-center justify-center gap-2 mb-4">
                   <div className="w-6 h-6 rounded-full bg-success-500 flex items-center justify-center">

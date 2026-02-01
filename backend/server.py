@@ -12,6 +12,9 @@ import uuid
 from datetime import datetime, timezone, timedelta
 import httpx
 import io
+import asyncio
+import smtplib
+from email.message import EmailMessage
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -314,6 +317,145 @@ def get_suitable_vehicles(num_passengers: int):
     return suitable
 
 # =============================================================================
+# NOTIFICATION HELPERS
+# =============================================================================
+
+async def store_notification(
+    channel: str,
+    recipient: str,
+    payload: dict,
+    status: str,
+    error: Optional[str] = None
+):
+    """Persist notification attempts for auditing."""
+    notification_doc = {
+        "notification_id": f"notif_{uuid.uuid4().hex[:10]}",
+        "channel": channel,
+        "recipient": recipient,
+        "payload": payload,
+        "status": status,
+        "error": error,
+        "created_at": datetime.now(timezone.utc),
+        "sent_at": datetime.now(timezone.utc) if status == "sent" else None
+    }
+    await db.notifications.insert_one(notification_doc)
+
+async def send_email_notification(to_email: str, subject: str, body: str) -> dict:
+    """Send an email notification via SMTP."""
+    if not (SMTP_HOST and SMTP_USERNAME and SMTP_PASSWORD and SMTP_FROM):
+        return {"status": "skipped", "reason": "smtp_not_configured"}
+
+    def _send_email():
+        message = EmailMessage()
+        message["From"] = SMTP_FROM
+        message["To"] = to_email
+        message["Subject"] = subject
+        message.set_content(body)
+
+        with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
+            if SMTP_USE_TLS:
+                server.starttls()
+            server.login(SMTP_USERNAME, SMTP_PASSWORD)
+            server.send_message(message)
+
+    try:
+        await asyncio.to_thread(_send_email)
+        return {"status": "sent"}
+    except Exception as exc:
+        return {"status": "failed", "error": str(exc)}
+
+async def send_sms_notification(to_phone: str, message: str) -> dict:
+    """Send an SMS notification via Twilio."""
+    if SMS_PROVIDER != "twilio":
+        return {"status": "skipped", "reason": "sms_provider_not_supported"}
+
+    if not (TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN and TWILIO_FROM_NUMBER):
+        return {"status": "skipped", "reason": "twilio_not_configured"}
+
+    url = f"https://api.twilio.com/2010-04-01/Accounts/{TWILIO_ACCOUNT_SID}/Messages.json"
+    payload = {
+        "To": to_phone,
+        "From": TWILIO_FROM_NUMBER,
+        "Body": message
+    }
+
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(url, data=payload, auth=(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN))
+            response.raise_for_status()
+        return {"status": "sent"}
+    except Exception as exc:
+        return {"status": "failed", "error": str(exc)}
+
+async def dispatch_notification(
+    channel: str,
+    recipient: str,
+    payload: dict,
+    send_func
+):
+    """Send and store notifications consistently."""
+    result = await send_func(recipient, **payload)
+    status = result.get("status", "failed")
+    error = result.get("error") or result.get("reason")
+    await store_notification(channel, recipient, payload, status, error)
+
+async def notify_new_ride(ride_doc: dict, contact: Optional[dict] = None):
+    """Notify customer and admin about a new ride."""
+    contact = contact or {}
+    customer_name = contact.get("name") or "Client"
+
+    pickup_address = ride_doc["pickup"]["address"]
+    destination_address = ride_doc["destination"]["address"]
+    message = (
+        f"Nouvelle réservation {ride_doc['ride_id']}.\n"
+        f"Départ: {pickup_address}\n"
+        f"Arrivée: {destination_address}\n"
+        f"Véhicule: {ride_doc['vehicle_type']}\n"
+        f"Prix: CHF {ride_doc['price']:.2f}\n"
+    )
+
+    email_subject = f"Confirmation de réservation {ride_doc['ride_id']}"
+    customer_email = contact.get("email")
+    customer_phone = contact.get("phone")
+
+    tasks = []
+
+    if customer_email:
+        tasks.append(dispatch_notification(
+            "email",
+            customer_email,
+            {"subject": email_subject, "body": f"Bonjour {customer_name},\n\n{message}\nMerci pour votre confiance.\nRomuo.ch"},
+            send_email_notification
+        ))
+
+    if customer_phone:
+        tasks.append(dispatch_notification(
+            "sms",
+            customer_phone,
+            {"message": f"{customer_name}, votre course est confirmée. {message}"},
+            send_sms_notification
+        ))
+
+    if ADMIN_NOTIFICATION_EMAIL:
+        tasks.append(dispatch_notification(
+            "email",
+            ADMIN_NOTIFICATION_EMAIL,
+            {"subject": f"Nouvelle course {ride_doc['ride_id']}", "body": message},
+            send_email_notification
+        ))
+
+    if ADMIN_NOTIFICATION_PHONE:
+        tasks.append(dispatch_notification(
+            "sms",
+            ADMIN_NOTIFICATION_PHONE,
+            {"message": f"Nouvelle course {ride_doc['ride_id']}: {pickup_address} → {destination_address}"},
+            send_sms_notification
+        ))
+
+    if tasks:
+        await asyncio.gather(*tasks)
+
+# =============================================================================
 # PYDANTIC MODELS
 # =============================================================================
 
@@ -457,6 +599,23 @@ class RideCreate(BaseModel):
     scheduled_time: Optional[str] = None
     notes: Optional[str] = None
 
+class GuestContact(BaseModel):
+    name: str
+    email: Optional[str] = None
+    phone: Optional[str] = None
+
+class GuestRideCreate(BaseModel):
+    pickup: Location
+    destination: Location
+    vehicle_type: str
+    distance_km: float
+    duration_minutes: Optional[float] = None
+    price: float
+    payment_method: str = "cash"  # cash, card, invoice
+    scheduled_time: Optional[str] = None
+    notes: Optional[str] = None
+    contact: GuestContact
+
 class Ride(BaseModel):
     ride_id: str
     user_id: str
@@ -535,6 +694,20 @@ async def get_optional_user(request: Request) -> Optional[User]:
 
 # Admin verification
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "romuo_admin_2024")
+ADMIN_NOTIFICATION_EMAIL = os.environ.get("ADMIN_NOTIFICATION_EMAIL")
+ADMIN_NOTIFICATION_PHONE = os.environ.get("ADMIN_NOTIFICATION_PHONE")
+
+SMTP_HOST = os.environ.get("SMTP_HOST")
+SMTP_PORT = int(os.environ.get("SMTP_PORT", "587"))
+SMTP_USERNAME = os.environ.get("SMTP_USERNAME")
+SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD")
+SMTP_FROM = os.environ.get("SMTP_FROM")
+SMTP_USE_TLS = os.environ.get("SMTP_USE_TLS", "true").lower() == "true"
+
+SMS_PROVIDER = os.environ.get("SMS_PROVIDER", "twilio")
+TWILIO_ACCOUNT_SID = os.environ.get("TWILIO_ACCOUNT_SID")
+TWILIO_AUTH_TOKEN = os.environ.get("TWILIO_AUTH_TOKEN")
+TWILIO_FROM_NUMBER = os.environ.get("TWILIO_FROM_NUMBER")
 
 def verify_admin_access(admin_password: str):
     """Simple admin verification"""
@@ -820,6 +993,12 @@ async def create_ride(
         except:
             pass
 
+    contact_details = {
+        "name": current_user.name,
+        "email": current_user.email,
+        "phone": current_user.phone
+    }
+
     ride_doc = {
         "ride_id": ride_id,
         "user_id": current_user.user_id,
@@ -834,15 +1013,59 @@ async def create_ride(
         "billing_type": billing_type,
         "notes": ride_data.notes,
         "scheduled_time": scheduled_time,
-        "created_at": datetime.now(timezone.utc)
+        "created_at": datetime.now(timezone.utc),
+        "contact": {k: v for k, v in contact_details.items() if v}
     }
 
     await db.rides.insert_one(ride_doc)
+    await notify_new_ride(ride_doc, contact_details)
 
     return {
         "ride_id": ride_id,
         "status": "pending",
         "billing_type": billing_type,
+        "message": "Ride booked successfully"
+    }
+
+@api_router.post("/rides/guest")
+async def create_guest_ride(ride_data: GuestRideCreate):
+    """Create a new ride booking for guest users"""
+    if not ride_data.contact.email and not ride_data.contact.phone:
+        raise HTTPException(status_code=400, detail="Email or phone is required for guest bookings")
+
+    ride_id = f"ride_{uuid.uuid4().hex[:12]}"
+
+    scheduled_time = None
+    if ride_data.scheduled_time:
+        try:
+            scheduled_time = datetime.fromisoformat(ride_data.scheduled_time.replace('Z', '+00:00'))
+        except:
+            pass
+
+    ride_doc = {
+        "ride_id": ride_id,
+        "user_id": f"guest_{uuid.uuid4().hex[:10]}",
+        "pickup": ride_data.pickup.dict(),
+        "destination": ride_data.destination.dict(),
+        "vehicle_type": ride_data.vehicle_type,
+        "distance_km": ride_data.distance_km,
+        "duration_minutes": ride_data.duration_minutes,
+        "price": ride_data.price,
+        "payment_method": ride_data.payment_method,
+        "status": "pending",
+        "billing_type": "immediate",
+        "notes": ride_data.notes,
+        "scheduled_time": scheduled_time,
+        "created_at": datetime.now(timezone.utc),
+        "contact": ride_data.contact.dict()
+    }
+
+    await db.rides.insert_one(ride_doc)
+    await notify_new_ride(ride_doc, ride_data.contact.dict())
+
+    return {
+        "ride_id": ride_id,
+        "status": "pending",
         "message": "Ride booked successfully"
     }
 
