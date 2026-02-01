@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="fr-CH">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="VTC Suisse - Service de transport avec chauffeur privé en Suisse">
+    <meta name="theme-color" content="#D52B1E">
+
+    <title>VTC Suisse - Transport Premium</title>
+
+    <!-- Fonts: Swiss Design -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- Swiss Design CSS -->
+    <link rel="stylesheet" href="css/swiss-style.css">
+</head>
+<body>
+    <!-- Skip Link for Accessibility -->
+    <a href="#main-content" class="skip-link" data-i18n="skip_to_content">Aller au contenu</a>
+
+    <!-- Header -->
+    <header class="header" role="banner">
+        <div class="container header-content">
+            <!-- Logo -->
+            <div class="logo">
+                <div class="logo-icon">
+                    <div class="swiss-cross"></div>
+                </div>
+                <div class="logo-text">
+                    <span class="logo-title">VTC Suisse</span>
+                    <span class="logo-subtitle" data-i18n="logo_subtitle">Transport Premium</span>
+                </div>
+            </div>
+
+            <!-- Navigation -->
+            <nav class="nav" role="navigation" aria-label="Navigation principale">
+                <ul class="nav-list">
+                    <li><a href="#booking" class="nav-link active" data-i18n="nav_booking">Réserver</a></li>
+                    <li><a href="#services" class="nav-link" data-i18n="nav_services">Services</a></li>
+                    <li><a href="#fleet" class="nav-link" data-i18n="nav_fleet">Flotte</a></li>
+                    <li><a href="#contact" class="nav-link" data-i18n="nav_contact">Contact</a></li>
+                </ul>
+            </nav>
+
+            <!-- Language & Actions -->
+            <div class="header-actions">
+                <!-- Language Selector -->
+                <div class="lang-selector" role="listbox" aria-label="Sélection de la langue">
+                    <button class="lang-btn active" data-lang="fr" aria-selected="true">FR</button>
+                    <button class="lang-btn" data-lang="de" aria-selected="false">DE</button>
+                    <button class="lang-btn" data-lang="it" aria-selected="false">IT</button>
+                    <button class="lang-btn" data-lang="en" aria-selected="false">EN</button>
+                </div>
+
+                <!-- Currency Toggle -->
+                <button class="currency-toggle" aria-label="Changer devise">
+                    <span class="currency-active">CHF</span>
+                    <i class="fas fa-exchange-alt"></i>
+                    <span class="currency-alt">EUR</span>
+                </button>
+
+                <!-- Mobile Menu -->
+                <button class="mobile-menu-btn" aria-label="Menu" aria-expanded="false">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Quality Badge -->
+        <div class="quality-badge">
+            <i class="fas fa-shield-alt"></i>
+            <span data-i18n="quality_badge">Prix officiel contrôlé</span>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main id="main-content">
+        <!-- Hero Section with Map -->
+        <section class="hero" aria-label="Réservation">
+            <div class="hero-content">
+                <!-- Booking Panel -->
+                <div class="booking-panel">
+                    <div class="panel-header">
+                        <h1 data-i18n="hero_title">Réservez votre chauffeur</h1>
+                        <p class="panel-subtitle" data-i18n="hero_subtitle">Service ponctuel et professionnel dans toute la Suisse</p>
+                    </div>
+
+                    <!-- Canton Selector -->
+                    <div class="canton-selector">
+                        <label data-i18n="select_canton">Votre canton</label>
+                        <div class="canton-grid" role="radiogroup" aria-label="Sélection du canton">
+                            <button class="canton-btn" data-canton="GE" aria-checked="false">
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/d/d7/Wappen_Genf_matt.svg" alt="Genève" class="canton-flag">
+                                <span>GE</span>
+                            </button>
+                            <button class="canton-btn" data-canton="VD" aria-checked="false">
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/1/1d/Wappen_Waadt_matt.svg" alt="Vaud" class="canton-flag">
+                                <span>VD</span>
+                            </button>
+                            <button class="canton-btn" data-canton="VS" aria-checked="false">
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/4/47/Wappen_Wallis_matt.svg" alt="Valais" class="canton-flag">
+                                <span>VS</span>
+                            </button>
+                            <button class="canton-btn" data-canton="ZH" aria-checked="false">
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/f/f7/Wappen_Z%C3%BCrich_matt.svg" alt="Zürich" class="canton-flag">
+                                <span>ZH</span>
+                            </button>
+                            <button class="canton-btn" data-canton="BE" aria-checked="false">
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/4/47/Wappen_Bern_matt.svg" alt="Bern" class="canton-flag">
+                                <span>BE</span>
+                            </button>
+                            <button class="canton-btn" data-canton="BS" aria-checked="false">
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/6/6e/Wappen_Basel-Stadt_matt.svg" alt="Basel" class="canton-flag">
+                                <span>BS</span>
+                            </button>
+                            <button class="canton-btn canton-more" data-canton="more">
+                                <i class="fas fa-ellipsis-h"></i>
+                                <span data-i18n="more_cantons">Plus</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Booking Form -->
+                    <form id="booking-form" class="booking-form" novalidate>
+                        <!-- Trip Type -->
+                        <div class="trip-type-selector">
+                            <button type="button" class="trip-type-btn active" data-type="oneway">
+                                <i class="fas fa-arrow-right"></i>
+                                <span data-i18n="trip_oneway">Aller simple</span>
+                            </button>
+                            <button type="button" class="trip-type-btn" data-type="roundtrip">
+                                <i class="fas fa-exchange-alt"></i>
+                                <span data-i18n="trip_roundtrip">Aller-retour</span>
+                            </button>
+                            <button type="button" class="trip-type-btn" data-type="halfday">
+                                <i class="fas fa-clock"></i>
+                                <span data-i18n="trip_halfday">Demi-journée</span>
+                            </button>
+                        </div>
+
+                        <!-- Addresses -->
+                        <div class="form-group">
+                            <label for="pickup" data-i18n="label_pickup">Adresse de départ</label>
+                            <div class="input-with-icon">
+                                <i class="fas fa-map-marker-alt"></i>
+                                <input type="text" id="pickup" name="pickup"
+                                    data-i18n-placeholder="placeholder_pickup"
+                                    placeholder="Ex: Gare de Genève-Cornavin"
+                                    autocomplete="off" required>
+                                <button type="button" class="btn-locate" aria-label="Ma position">
+                                    <i class="fas fa-crosshairs"></i>
+                                </button>
+                            </div>
+                            <div class="autocomplete-results" id="pickup-results"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="dropoff" data-i18n="label_dropoff">Adresse d'arrivée</label>
+                            <div class="input-with-icon">
+                                <i class="fas fa-flag-checkered"></i>
+                                <input type="text" id="dropoff" name="dropoff"
+                                    data-i18n-placeholder="placeholder_dropoff"
+                                    placeholder="Ex: Aéroport de Genève"
+                                    autocomplete="off" required>
+                            </div>
+                            <div class="autocomplete-results" id="dropoff-results"></div>
+                        </div>
+
+                        <!-- Quick Destinations -->
+                        <div class="quick-destinations">
+                            <span class="quick-label" data-i18n="quick_destinations">Destinations fréquentes:</span>
+                            <div class="quick-btns">
+                                <button type="button" class="quick-btn" data-type="airport">
+                                    <i class="fas fa-plane"></i> <span data-i18n="poi_airport">Aéroport</span>
+                                </button>
+                                <button type="button" class="quick-btn" data-type="station">
+                                    <i class="fas fa-train"></i> <span data-i18n="poi_station">Gare</span>
+                                </button>
+                                <button type="button" class="quick-btn" data-type="hospital">
+                                    <i class="fas fa-hospital"></i> <span data-i18n="poi_hospital">Hôpital</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Date & Time -->
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="date" data-i18n="label_date">Date</label>
+                                <div class="input-with-icon">
+                                    <i class="fas fa-calendar"></i>
+                                    <input type="date" id="date" name="date" required>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="time" data-i18n="label_time">Heure</label>
+                                <div class="input-with-icon">
+                                    <i class="fas fa-clock"></i>
+                                    <input type="time" id="time" name="time" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Passengers -->
+                        <div class="form-group">
+                            <label data-i18n="label_passengers">Passagers</label>
+                            <div class="passenger-selector">
+                                <button type="button" class="pax-btn minus" aria-label="Moins">
+                                    <i class="fas fa-minus"></i>
+                                </button>
+                                <span class="pax-count">1</span>
+                                <button type="button" class="pax-btn plus" aria-label="Plus">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                                <span class="pax-label" data-i18n="passengers_label">passager(s)</span>
+                            </div>
+                        </div>
+
+                        <!-- Vehicle Selection -->
+                        <div class="vehicle-selector">
+                            <label data-i18n="label_vehicle">Type de véhicule</label>
+                            <div class="vehicle-options">
+                                <div class="vehicle-option" data-vehicle="eco">
+                                    <div class="vehicle-icon">
+                                        <i class="fas fa-car"></i>
+                                    </div>
+                                    <div class="vehicle-info">
+                                        <span class="vehicle-name">Eco</span>
+                                        <span class="vehicle-desc" data-i18n="vehicle_eco_desc">Confortable, économique</span>
+                                    </div>
+                                    <div class="vehicle-price">
+                                        <span class="price-from" data-i18n="price_from">dès</span>
+                                        <span class="price-value" data-base="6">CHF 6.-</span>
+                                    </div>
+                                </div>
+                                <div class="vehicle-option selected" data-vehicle="berline">
+                                    <div class="vehicle-badge" data-i18n="badge_popular">Populaire</div>
+                                    <div class="vehicle-icon">
+                                        <i class="fas fa-car-side"></i>
+                                    </div>
+                                    <div class="vehicle-info">
+                                        <span class="vehicle-name">Berline</span>
+                                        <span class="vehicle-desc" data-i18n="vehicle_berline_desc">Mercedes Classe E, BMW Série 5</span>
+                                    </div>
+                                    <div class="vehicle-price">
+                                        <span class="price-from" data-i18n="price_from">dès</span>
+                                        <span class="price-value" data-base="10">CHF 10.-</span>
+                                    </div>
+                                </div>
+                                <div class="vehicle-option" data-vehicle="van">
+                                    <div class="vehicle-icon">
+                                        <i class="fas fa-shuttle-van"></i>
+                                    </div>
+                                    <div class="vehicle-info">
+                                        <span class="vehicle-name">Van</span>
+                                        <span class="vehicle-desc" data-i18n="vehicle_van_desc">Jusqu'à 7 passagers</span>
+                                    </div>
+                                    <div class="vehicle-price">
+                                        <span class="price-from" data-i18n="price_from">dès</span>
+                                        <span class="price-value" data-base="15">CHF 15.-</span>
+                                    </div>
+                                </div>
+                                <div class="vehicle-option" data-vehicle="luxe">
+                                    <div class="vehicle-icon">
+                                        <i class="fas fa-gem"></i>
+                                    </div>
+                                    <div class="vehicle-info">
+                                        <span class="vehicle-name">Luxe</span>
+                                        <span class="vehicle-desc" data-i18n="vehicle_luxe_desc">Mercedes Classe S, BMW Série 7</span>
+                                    </div>
+                                    <div class="vehicle-price">
+                                        <span class="price-from" data-i18n="price_from">dès</span>
+                                        <span class="price-value" data-base="25">CHF 25.-</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Submit -->
+                        <button type="submit" class="btn-submit">
+                            <span class="btn-text" data-i18n="btn_estimate">Obtenir un devis</span>
+                            <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </form>
+
+                    <!-- Official Price Badge -->
+                    <div class="official-price-badge">
+                        <div class="badge-icon">
+                            <i class="fas fa-certificate"></i>
+                        </div>
+                        <div class="badge-text">
+                            <strong data-i18n="official_price_title">Prix officiel contrôlé</strong>
+                            <span data-i18n="official_price_desc">Conforme à l'OTV - TVA 7.7% incluse</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Map Container -->
+                <div class="map-container">
+                    <div id="map" class="map"></div>
+
+                    <!-- Map Controls -->
+                    <div class="map-controls">
+                        <button class="map-ctrl" id="btn-layers" aria-label="Couches cartographiques">
+                            <i class="fas fa-layer-group"></i>
+                        </button>
+                        <button class="map-ctrl" id="btn-terrain" aria-label="Vue terrain">
+                            <i class="fas fa-mountain"></i>
+                        </button>
+                        <button class="map-ctrl" id="btn-fullscreen" aria-label="Plein écran">
+                            <i class="fas fa-expand"></i>
+                        </button>
+                    </div>
+
+                    <!-- Layer Selector -->
+                    <div class="layer-selector hidden" id="layer-selector">
+                        <div class="layer-option active" data-layer="swisstopo">
+                            <i class="fas fa-map"></i>
+                            <span>Swisstopo</span>
+                        </div>
+                        <div class="layer-option" data-layer="satellite">
+                            <i class="fas fa-satellite"></i>
+                            <span>Satellite</span>
+                        </div>
+                        <div class="layer-option" data-layer="osm">
+                            <i class="fas fa-globe"></i>
+                            <span>OpenStreetMap</span>
+                        </div>
+                    </div>
+
+                    <!-- Route Info -->
+                    <div class="route-info hidden" id="route-info">
+                        <div class="route-stat">
+                            <i class="fas fa-road"></i>
+                            <span class="route-distance">--</span>
+                            <span class="route-label">km</span>
+                        </div>
+                        <div class="route-stat">
+                            <i class="fas fa-clock"></i>
+                            <span class="route-duration">--</span>
+                            <span class="route-label">min</span>
+                        </div>
+                        <div class="route-stat">
+                            <i class="fas fa-mountain"></i>
+                            <span class="route-elevation">--</span>
+                            <span class="route-label">m</span>
+                        </div>
+                    </div>
+
+                    <!-- Altitude Profile -->
+                    <div class="altitude-profile hidden" id="altitude-profile">
+                        <canvas id="altitude-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Estimate Modal -->
+        <div class="modal" id="estimate-modal" aria-hidden="true">
+            <div class="modal-backdrop"></div>
+            <div class="modal-content" role="dialog" aria-labelledby="modal-title">
+                <button class="modal-close" aria-label="Fermer">
+                    <i class="fas fa-times"></i>
+                </button>
+
+                <div class="modal-header">
+                    <h2 id="modal-title" data-i18n="estimate_title">Votre estimation</h2>
+                </div>
+
+                <div class="modal-body">
+                    <!-- Route Summary -->
+                    <div class="estimate-route">
+                        <div class="route-point pickup">
+                            <i class="fas fa-circle"></i>
+                            <span id="est-pickup">--</span>
+                        </div>
+                        <div class="route-line"></div>
+                        <div class="route-point dropoff">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span id="est-dropoff">--</span>
+                        </div>
+                    </div>
+
+                    <!-- Trip Details -->
+                    <div class="estimate-details">
+                        <div class="detail-row">
+                            <span data-i18n="est_date">Date et heure</span>
+                            <span id="est-datetime">--</span>
+                        </div>
+                        <div class="detail-row">
+                            <span data-i18n="est_distance">Distance</span>
+                            <span id="est-distance">--</span>
+                        </div>
+                        <div class="detail-row">
+                            <span data-i18n="est_duration">Durée estimée</span>
+                            <span id="est-duration">--</span>
+                        </div>
+                        <div class="detail-row">
+                            <span data-i18n="est_vehicle">Véhicule</span>
+                            <span id="est-vehicle">--</span>
+                        </div>
+                    </div>
+
+                    <!-- Price Breakdown -->
+                    <div class="price-breakdown">
+                        <h3 data-i18n="price_breakdown">Détail du prix</h3>
+                        <div class="price-row">
+                            <span data-i18n="price_base">Prise en charge</span>
+                            <span id="price-base">CHF --</span>
+                        </div>
+                        <div class="price-row">
+                            <span data-i18n="price_distance">Distance (<span id="price-km">0</span> km)</span>
+                            <span id="price-distance">CHF --</span>
+                        </div>
+                        <div class="price-row">
+                            <span data-i18n="price_time">Temps (<span id="price-min">0</span> min)</span>
+                            <span id="price-time">CHF --</span>
+                        </div>
+                        <div class="price-row supplement hidden" id="row-night">
+                            <span data-i18n="price_night">Supplément nuit (22h-6h)</span>
+                            <span id="price-night">CHF --</span>
+                        </div>
+                        <div class="price-row supplement hidden" id="row-weekend">
+                            <span data-i18n="price_weekend">Supplément week-end</span>
+                            <span id="price-weekend">CHF --</span>
+                        </div>
+                        <div class="price-divider"></div>
+                        <div class="price-row subtotal">
+                            <span data-i18n="price_subtotal">Sous-total HT</span>
+                            <span id="price-subtotal">CHF --</span>
+                        </div>
+                        <div class="price-row vat">
+                            <span data-i18n="price_vat">TVA 7.7%</span>
+                            <span id="price-vat">CHF --</span>
+                        </div>
+                        <div class="price-row total">
+                            <span data-i18n="price_total">Total TTC</span>
+                            <span id="price-total">CHF --</span>
+                        </div>
+                        <div class="price-row eur hidden" id="row-eur">
+                            <span data-i18n="price_eur">Équivalent EUR</span>
+                            <span id="price-eur">€ --</span>
+                        </div>
+                    </div>
+
+                    <!-- Customer Form -->
+                    <form id="customer-form" class="customer-form">
+                        <h3 data-i18n="your_info">Vos informations</h3>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="cust-name" data-i18n="label_name">Nom complet</label>
+                                <input type="text" id="cust-name" name="name" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="cust-phone" data-i18n="label_phone">Téléphone</label>
+                                <input type="tel" id="cust-phone" name="phone"
+                                    placeholder="+41 79 123 45 67" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="cust-email" data-i18n="label_email">Email</label>
+                            <input type="email" id="cust-email" name="email" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="cust-notes" data-i18n="label_notes">Notes (optionnel)</label>
+                            <textarea id="cust-notes" name="notes" rows="2"
+                                data-i18n-placeholder="placeholder_notes"
+                                placeholder="Numéro de vol, instructions spéciales..."></textarea>
+                        </div>
+
+                        <!-- Payment Method -->
+                        <div class="payment-methods">
+                            <h3 data-i18n="payment_method">Mode de paiement</h3>
+                            <div class="payment-options">
+                                <label class="payment-option">
+                                    <input type="radio" name="payment" value="twint" checked>
+                                    <div class="payment-card">
+                                        <img src="https://www.twint.ch/content/uploads/2021/05/twint-logo.svg" alt="TWINT" class="payment-logo">
+                                        <span>TWINT</span>
+                                    </div>
+                                </label>
+                                <label class="payment-option">
+                                    <input type="radio" name="payment" value="card">
+                                    <div class="payment-card">
+                                        <i class="fas fa-credit-card"></i>
+                                        <span data-i18n="payment_card">Carte</span>
+                                    </div>
+                                </label>
+                                <label class="payment-option">
+                                    <input type="radio" name="payment" value="invoice">
+                                    <div class="payment-card">
+                                        <i class="fas fa-file-invoice"></i>
+                                        <span data-i18n="payment_invoice">Facture</span>
+                                    </div>
+                                </label>
+                                <label class="payment-option">
+                                    <input type="radio" name="payment" value="cash">
+                                    <div class="payment-card">
+                                        <i class="fas fa-money-bill-wave"></i>
+                                        <span data-i18n="payment_cash">Espèces</span>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Terms -->
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="terms" required>
+                            <span class="checkmark"></span>
+                            <span data-i18n="accept_terms">J'accepte les <a href="#" target="_blank">conditions générales</a> et la <a href="#" target="_blank">politique de confidentialité</a></span>
+                        </label>
+
+                        <button type="submit" class="btn-confirm">
+                            <span data-i18n="btn_confirm">Confirmer la réservation</span>
+                            <i class="fas fa-check"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Confirmation Modal -->
+        <div class="modal" id="confirmation-modal" aria-hidden="true">
+            <div class="modal-backdrop"></div>
+            <div class="modal-content modal-sm" role="dialog">
+                <div class="confirmation-content">
+                    <div class="confirmation-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <h2 data-i18n="confirmation_title">Réservation confirmée!</h2>
+                    <p class="reservation-id">
+                        <span data-i18n="reservation_number">N° de réservation:</span>
+                        <strong id="conf-reservation-id">--</strong>
+                    </p>
+
+                    <!-- TWINT QR Code -->
+                    <div class="twint-payment hidden" id="twint-payment">
+                        <h3 data-i18n="pay_with_twint">Payer avec TWINT</h3>
+                        <div class="qr-code" id="twint-qr"></div>
+                        <p class="twint-instructions" data-i18n="twint_instructions">
+                            Scannez ce QR code avec votre application TWINT
+                        </p>
+                    </div>
+
+                    <!-- Receipt Info -->
+                    <div class="receipt-info">
+                        <p data-i18n="receipt_sent">Un récépissé a été envoyé à votre email.</p>
+                        <div class="company-info">
+                            <p><strong>VTC Suisse Sàrl</strong></p>
+                            <p>Rue du Lac 1, 1201 Genève</p>
+                            <p>IDE: CHE-123.456.789</p>
+                            <p>N° TVA: CHE-123.456.789 TVA</p>
+                        </div>
+                    </div>
+
+                    <button class="btn-download" id="btn-download-receipt">
+                        <i class="fas fa-download"></i>
+                        <span data-i18n="btn_download_receipt">Télécharger le récépissé</span>
+                    </button>
+
+                    <button class="btn-close-modal" data-i18n="btn_close">Fermer</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Canton Selection Modal -->
+        <div class="modal" id="canton-modal" aria-hidden="true">
+            <div class="modal-backdrop"></div>
+            <div class="modal-content" role="dialog" aria-labelledby="canton-modal-title">
+                <button class="modal-close" aria-label="Fermer">
+                    <i class="fas fa-times"></i>
+                </button>
+                <div class="modal-header">
+                    <h2 id="canton-modal-title" data-i18n="select_your_canton">Sélectionnez votre canton</h2>
+                </div>
+                <div class="modal-body">
+                    <div class="canton-full-grid" id="canton-full-grid">
+                        <!-- Filled by JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer" role="contentinfo">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-col">
+                    <div class="footer-logo">
+                        <div class="swiss-cross small"></div>
+                        <span>VTC Suisse</span>
+                    </div>
+                    <p data-i18n="footer_desc">Service de transport avec chauffeur privé dans toute la Suisse.</p>
+                    <div class="footer-social">
+                        <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                        <a href="#" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+                    </div>
+                </div>
+                <div class="footer-col">
+                    <h4 data-i18n="footer_services">Services</h4>
+                    <ul>
+                        <li><a href="#" data-i18n="service_airport">Transferts aéroport</a></li>
+                        <li><a href="#" data-i18n="service_business">Business</a></li>
+                        <li><a href="#" data-i18n="service_events">Événements</a></li>
+                        <li><a href="#" data-i18n="service_longdist">Longue distance</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h4 data-i18n="footer_regions">Régions</h4>
+                    <ul>
+                        <li><a href="#">Genève</a></li>
+                        <li><a href="#">Lausanne</a></li>
+                        <li><a href="#">Zürich</a></li>
+                        <li><a href="#">Bâle</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h4 data-i18n="footer_contact">Contact</h4>
+                    <ul class="contact-list">
+                        <li><i class="fas fa-phone"></i> +41 22 123 45 67</li>
+                        <li><i class="fas fa-envelope"></i> contact@vtc-suisse.ch</li>
+                        <li><i class="fas fa-map-marker-alt"></i> Genève, Suisse</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 VTC Suisse Sàrl. <span data-i18n="all_rights">Tous droits réservés.</span></p>
+                <div class="footer-links">
+                    <a href="#" data-i18n="link_terms">CGV</a>
+                    <a href="#" data-i18n="link_privacy">Confidentialité</a>
+                    <a href="#" data-i18n="link_legal">Mentions légales</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <script src="js/i18n.js"></script>
+    <script src="js/swiss-map.js"></script>
+    <script src="js/swiss-app.js"></script>
+</body>
+</html>
