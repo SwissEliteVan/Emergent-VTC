@@ -31,6 +31,7 @@ export const zoneApi = {
 export const rideApi = {
   calculate: (data) => api.post('/rides/calculate', data),
   create: (data) => api.post('/rides', data),
+  createGuest: (data) => api.post('/rides/guest', data),
   getById: (rideId) => api.get(`/rides/${rideId}`),
   getUserHistory: () => api.get('/rides/user/history'),
   cancel: (rideId) => api.post(`/rides/${rideId}/cancel`),
