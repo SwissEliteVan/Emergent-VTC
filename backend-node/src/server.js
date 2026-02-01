@@ -20,6 +20,13 @@ import { body, param, query, validationResult } from 'express-validator';
 import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import {
+  sendBookingConfirmation,
+  sendBookingCancelled,
+  sendDriverAssigned,
+  processBookingReminders,
+  testEmailConnection,
+} from './notifications.js';
 
 // ============================================
 // CONFIGURATION
@@ -826,6 +833,11 @@ app.post('/api/book', strictLimiter, [
 
     logger.info('Booking created', { reservationId, customer: customer.name, total: price.totalTTC });
 
+    // Send confirmation notification (async, don't wait)
+    sendBookingConfirmation(booking).catch(err => {
+      logger.warn('Failed to send booking confirmation', { error: err.message });
+    });
+
     // Ajouter EUR
     const exchangeRate = await getExchangeRate();
     price.totalEUR = round(price.totalTTC * exchangeRate);
@@ -937,8 +949,388 @@ app.post('/api/twint/generate', [
 });
 
 // ============================================
+// ADMIN API ROUTES
+// ============================================
+
+/**
+ * GET /api/admin/statistics - Dashboard statistics
+ */
+app.get('/api/admin/statistics', (req, res) => {
+  const now = new Date();
+  const today = now.toISOString().split('T')[0];
+  const weekAgo = new Date(now - 7 * 24 * 60 * 60 * 1000);
+
+  // Calculate stats from reservations
+  let todayReservations = 0;
+  let todayRevenue = 0;
+  let weekRevenue = 0;
+  let totalRevenue = 0;
+  let pendingCount = 0;
+  let completedCount = 0;
+  const statusCounts = { pending: 0, confirmed: 0, assigned: 0, started: 0, completed: 0, cancelled: 0 };
+  const vehicleCounts = { eco: 0, berline: 0, van: 0, luxe: 0 };
+
+  for (const booking of reservations.values()) {
+    const bookingDate = new Date(booking.createdAt);
+    const price = booking.price?.totalTTC || 0;
+
+    totalRevenue += price;
+    statusCounts[booking.status] = (statusCounts[booking.status] || 0) + 1;
+    vehicleCounts[booking.vehicleType] = (vehicleCounts[booking.vehicleType] || 0) + 1;
+
+    if (booking.createdAt.startsWith(today)) {
+      todayReservations++;
+      todayRevenue += price;
+    }
+
+    if (bookingDate >= weekAgo) {
+      weekRevenue += price;
+    }
+
+    if (booking.status === 'pending') pendingCount++;
+    if (booking.status === 'completed') completedCount++;
+  }
+
+  successResponse(res, {
+    today: {
+      reservations: todayReservations,
+      revenue: round(todayRevenue),
+      distance: Math.floor(todayReservations * 15), // Approximation
+    },
+    week: {
+      reservations: reservations.size,
+      revenue: round(weekRevenue),
+    },
+    total: {
+      reservations: reservations.size,
+      revenue: round(totalRevenue),
+    },
+    pending: pendingCount,
+    completed: completedCount,
+    drivers: { available: 5, busy: 2, offline: 1 }, // Mock for now
+    statusDistribution: [
+      statusCounts.completed,
+      statusCounts.started + statusCounts.assigned,
+      statusCounts.pending + statusCounts.confirmed,
+      statusCounts.cancelled,
+    ],
+    vehicleDistribution: vehicleCounts,
+    weeklyRevenue: [
+      round(weekRevenue * 0.12),
+      round(weekRevenue * 0.15),
+      round(weekRevenue * 0.13),
+      round(weekRevenue * 0.16),
+      round(weekRevenue * 0.14),
+      round(weekRevenue * 0.18),
+      round(weekRevenue * 0.12),
+    ],
+  });
+});
+
+/**
+ * GET /api/admin/reservations - List all reservations
+ */
+app.get('/api/admin/reservations', (req, res) => {
+  const { status, vehicle, page = 1, limit = 20, date_from, date_to } = req.query;
+
+  let results = Array.from(reservations.values());
+
+  // Filter by status
+  if (status && status !== 'all') {
+    const statuses = status.split(',');
+    results = results.filter(r => statuses.includes(r.status));
+  }
+
+  // Filter by vehicle type
+  if (vehicle) {
+    results = results.filter(r => r.vehicleType === vehicle);
+  }
+
+  // Filter by date range
+  if (date_from) {
+    results = results.filter(r => r.createdAt >= date_from);
+  }
+  if (date_to) {
+    results = results.filter(r => r.createdAt <= date_to + 'T23:59:59');
+  }
+
+  // Sort by creation date (newest first)
+  results.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+  // Format for admin view
+  const formattedResults = results.map(r => ({
+    id: r.id,
+    customer_name: r.customer?.name,
+    customer_email: r.customer?.email,
+    customer_phone: r.customer?.phone,
+    pickup_address: r.origin?.address,
+    dropoff_address: r.destination?.address,
+    pickup_datetime: r.pickupTime,
+    vehicle_type: r.vehicleType,
+    passengers: r.passengers,
+    luggage: r.luggage || 0,
+    distance_km: r.route?.distanceKm,
+    duration_min: r.route?.durationMin,
+    total_price: r.price?.totalTTC,
+    payment_method: r.paymentMethod,
+    status: r.status,
+    notes: r.notes,
+    created_at: r.createdAt,
+  }));
+
+  // Pagination
+  const startIdx = (parseInt(page) - 1) * parseInt(limit);
+  const paginatedResults = formattedResults.slice(startIdx, startIdx + parseInt(limit));
+
+  successResponse(res, {
+    reservations: paginatedResults,
+    total: results.length,
+    page: parseInt(page),
+    limit: parseInt(limit),
+    totalPages: Math.ceil(results.length / parseInt(limit)),
+  });
+});
+
+/**
+ * PUT /api/admin/reservations/:id/status - Update reservation status
+ */
+app.put('/api/admin/reservations/:id/status', [
+  param('id').notEmpty(),
+  body('status').isIn(['pending', 'confirmed', 'assigned', 'started', 'completed', 'cancelled']),
+], (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return errorResponse(res, 400, 'Données invalides', 'VALIDATION_ERROR', errors.array());
+  }
+
+  const booking = reservations.get(req.params.id);
+  if (!booking) {
+    return errorResponse(res, 404, 'Réservation introuvable', 'NOT_FOUND');
+  }
+
+  const previousStatus = booking.status;
+  booking.status = req.body.status;
+  booking.updatedAt = new Date().toISOString();
+
+  if (req.body.status === 'completed') {
+    booking.completedAt = new Date().toISOString();
+  } else if (req.body.status === 'cancelled') {
+    booking.cancelledAt = new Date().toISOString();
+    booking.cancellationReason = req.body.reason || null;
+
+    // Send cancellation notification
+    sendBookingCancelled(booking, req.body.reason).catch(err => {
+      logger.warn('Failed to send cancellation notification', { error: err.message });
+    });
+  } else if (req.body.status === 'assigned' && previousStatus !== 'assigned') {
+    // If driver info is provided, send driver assigned notification
+    if (req.body.driver) {
+      booking.driver = req.body.driver;
+      sendDriverAssigned(booking, req.body.driver).catch(err => {
+        logger.warn('Failed to send driver assigned notification', { error: err.message });
+      });
+    }
+  }
+
+  reservations.set(req.params.id, booking);
+
+  logger.info('Reservation status updated', { id: req.params.id, status: req.body.status });
+
+  successResponse(res, { id: req.params.id, status: booking.status });
+});
+
+/**
+ * GET /api/admin/drivers - List all drivers (mock data for now)
+ */
+app.get('/api/admin/drivers', (req, res) => {
+  // In production, this would come from the database
+  const drivers = [
+    { id: 'drv_001', name: 'Marc Favre', phone: '+41 79 123 45 67', email: 'marc.favre@vtc-suisse.ch', license_number: 'GE123456', vehicle_model: 'Mercedes Classe E', vehicle_plate: 'GE 123456', status: 'available', rating: 4.8, trips_count: 245, total_distance: 8500, total_revenue: 42000 },
+    { id: 'drv_002', name: 'Luca Rossi', phone: '+41 79 234 56 78', email: 'luca.rossi@vtc-suisse.ch', license_number: 'VD234567', vehicle_model: 'BMW Série 5', vehicle_plate: 'VD 234567', status: 'busy', rating: 4.9, trips_count: 312, total_distance: 11200, total_revenue: 55800 },
+    { id: 'drv_003', name: 'Hans Keller', phone: '+41 79 345 67 89', email: 'hans.keller@vtc-suisse.ch', license_number: 'ZH345678', vehicle_model: 'Tesla Model S', vehicle_plate: 'ZH 345678', status: 'available', rating: 4.7, trips_count: 189, total_distance: 6800, total_revenue: 33500 },
+    { id: 'drv_004', name: 'Ahmed Ben Ali', phone: '+41 79 456 78 90', email: 'ahmed.benali@vtc-suisse.ch', license_number: 'GE456789', vehicle_model: 'Mercedes Classe V', vehicle_plate: 'GE 456789', status: 'available', rating: 4.6, trips_count: 156, total_distance: 5400, total_revenue: 28000 },
+    { id: 'drv_005', name: 'Paolo Bianchi', phone: '+41 79 567 89 01', email: 'paolo.bianchi@vtc-suisse.ch', license_number: 'TI567890', vehicle_model: 'Audi A6', vehicle_plate: 'TI 567890', status: 'offline', rating: 4.5, trips_count: 98, total_distance: 3200, total_revenue: 15600 },
+  ];
+
+  successResponse(res, drivers);
+});
+
+/**
+ * POST /api/admin/drivers - Create a new driver
+ */
+app.post('/api/admin/drivers', [
+  body('name').trim().notEmpty(),
+  body('phone').trim().notEmpty(),
+  body('email').isEmail(),
+  body('license_number').trim().notEmpty(),
+], (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return errorResponse(res, 400, 'Données invalides', 'VALIDATION_ERROR', errors.array());
+  }
+
+  const driver = {
+    id: `drv_${Date.now()}`,
+    ...req.body,
+    status: 'offline',
+    rating: 5.0,
+    trips_count: 0,
+    total_distance: 0,
+    total_revenue: 0,
+    created_at: new Date().toISOString(),
+  };
+
+  // In production, save to database
+  logger.info('Driver created', { id: driver.id, name: driver.name });
+
+  successResponse(res, driver, 201);
+});
+
+/**
+ * PUT /api/admin/drivers/:id - Update a driver
+ */
+app.put('/api/admin/drivers/:id', (req, res) => {
+  // In production, update in database
+  const driver = {
+    id: req.params.id,
+    ...req.body,
+    updated_at: new Date().toISOString(),
+  };
+
+  logger.info('Driver updated', { id: driver.id });
+
+  successResponse(res, driver);
+});
+
+/**
+ * GET /api/admin/customers - List all customers (from reservations)
+ */
+app.get('/api/admin/customers', (req, res) => {
+  const customerMap = new Map();
+
+  for (const booking of reservations.values()) {
+    if (!booking.customer?.email) continue;
+
+    const email = booking.customer.email;
+    if (customerMap.has(email)) {
+      const existing = customerMap.get(email);
+      existing.reservations_count++;
+      existing.total_spent += booking.price?.totalTTC || 0;
+      if (booking.createdAt > existing.last_reservation) {
+        existing.last_reservation = booking.createdAt;
+      }
+    } else {
+      customerMap.set(email, {
+        id: `cust_${Date.now()}_${customerMap.size}`,
+        name: booking.customer.name,
+        email: booking.customer.email,
+        phone: booking.customer.phone,
+        preferred_canton: booking.origin?.address?.match(/\b([A-Z]{2})\b/)?.[1] || null,
+        reservations_count: 1,
+        total_spent: booking.price?.totalTTC || 0,
+        last_reservation: booking.createdAt,
+      });
+    }
+  }
+
+  const customers = Array.from(customerMap.values());
+  customers.sort((a, b) => b.total_spent - a.total_spent);
+
+  successResponse(res, customers);
+});
+
+/**
+ * GET /api/admin/notifications/test - Test notification configuration
+ */
+app.get('/api/admin/notifications/test', async (req, res) => {
+  const emailTest = await testEmailConnection();
+
+  successResponse(res, {
+    email: {
+      configured: !!process.env.EMAIL_USER,
+      status: emailTest.success ? 'connected' : 'not available',
+      error: emailTest.error || null,
+    },
+    sms: {
+      configured: process.env.SMS_ENABLED === 'true',
+      status: process.env.SMS_ENABLED === 'true' ? 'configured' : 'disabled',
+    },
+  });
+});
+
+/**
+ * POST /api/admin/notifications/send-test - Send a test notification
+ */
+app.post('/api/admin/notifications/send-test', [
+  body('email').isEmail(),
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return errorResponse(res, 400, 'Email invalide', 'VALIDATION_ERROR', errors.array());
+  }
+
+  // Create a mock booking for testing
+  const testBooking = {
+    id: 'TEST-' + Date.now(),
+    customer: { name: 'Test Client', email: req.body.email, phone: '+41 79 000 00 00' },
+    origin: { address: 'Gare de Genève, Genève' },
+    destination: { address: 'Aéroport de Genève, Cointrin' },
+    pickupTime: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+    vehicleType: 'berline',
+    tripType: 'oneway',
+    passengers: 2,
+    paymentMethod: 'card',
+    price: { totalTTC: 85.00, vatAmount: 6.08 },
+  };
+
+  try {
+    const result = await sendBookingConfirmation(testBooking);
+    successResponse(res, {
+      message: 'Test notification envoyée',
+      result,
+    });
+  } catch (error) {
+    errorResponse(res, 500, 'Erreur lors de l\'envoi', 'NOTIFICATION_ERROR', error.message);
+  }
+});
+
+/**
+ * GET /api/admin/payments - List all payments
+ */
+app.get('/api/admin/payments', (req, res) => {
+  const payments = [];
+
+  for (const booking of reservations.values()) {
+    if (booking.price?.totalTTC) {
+      payments.push({
+        id: `pay_${booking.id}`,
+        reservation_id: booking.id,
+        customer_name: booking.customer?.name,
+        amount: booking.price.totalTTC,
+        method: booking.paymentMethod || 'cash',
+        status: booking.status === 'completed' ? 'completed' : 'pending',
+        created_at: booking.createdAt,
+      });
+    }
+  }
+
+  payments.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+  successResponse(res, payments);
+});
+
+// ============================================
 // ROUTES FRONTEND (SPA)
 // ============================================
+
+// Servir l'admin dashboard
+app.get('/admin', (req, res) => {
+  res.sendFile(path.join(frontendDir, 'admin', 'index.html'));
+});
+
+app.get('/admin/*', (req, res) => {
+  res.sendFile(path.join(frontendDir, 'admin', 'index.html'));
+});
 
 // Servir le frontend pour toutes les routes non-API
 app.get('*', (req, res) => {
@@ -960,6 +1352,13 @@ app.use((err, req, res, next) => {
 
 app.listen(config.PORT, () => {
   logger.info('Server started', { port: config.PORT, env: config.NODE_ENV });
+
+  // Start reminder scheduler (every hour)
+  setInterval(() => {
+    processBookingReminders(reservations).catch(err => {
+      logger.error('Reminder processing failed', { error: err.message });
+    });
+  }, 60 * 60 * 1000); // Every hour
 
   console.log(`
 ╔════════════════════════════════════════════════════════════╗
