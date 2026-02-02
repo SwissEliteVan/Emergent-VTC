@@ -7,11 +7,16 @@
 // Configuration
 // ========================================
 const CONFIG = {
-  api: {
-    nominatim: "https://nominatim.openstreetmap.org",
+  // Base API URL (relative for same-origin, or full URL for CORS)
+  apiBase: window.location.origin,
+
+  // Fallback APIs (used if backend unavailable)
+  fallback: {
     photon: "https://photon.komoot.io/api",
     exchangeRate: "https://api.frankfurter.app/latest",
   },
+
+  // Local pricing (synced from backend)
   pricing: {
     eco: { base: 6, perKm: 2.2, perMin: 0.4 },
     berline: { base: 10, perKm: 2.8, perMin: 0.5 },
@@ -24,6 +29,27 @@ const CONFIG = {
   currency: {
     primary: "CHF",
     secondary: "EUR",
+  },
+};
+
+// API Helper
+const api = {
+  async get(endpoint) {
+    const response = await fetch(`${CONFIG.apiBase}${endpoint}`);
+    const data = await response.json();
+    if (!data.success) throw new Error(data.error || 'API Error');
+    return data.data;
+  },
+
+  async post(endpoint, body) {
+    const response = await fetch(`${CONFIG.apiBase}${endpoint}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const data = await response.json();
+    if (!data.success) throw new Error(data.error || 'API Error');
+    return data.data;
   },
 };
 
@@ -72,8 +98,8 @@ document.addEventListener("DOMContentLoaded", () => {
     timeInput.value = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
   }
 
-  // Fetch exchange rate
-  fetchExchangeRate();
+  // Load config from backend (includes exchange rate)
+  loadConfig();
 
   // Bind events
   bindFormEvents();
@@ -93,11 +119,28 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // ========================================
-// Exchange Rate
+// Load Config from Backend
 // ========================================
-async function fetchExchangeRate() {
+async function loadConfig() {
   try {
-    const response = await fetch(`${CONFIG.api.exchangeRate}?from=CHF&to=EUR`);
+    const config = await api.get('/api/config');
+
+    // Update local config with backend values
+    CONFIG.pricing = config.pricing;
+    CONFIG.vatRate = config.vatRate;
+    state.exchangeRate = config.currencies.exchangeRate;
+
+    console.log('Config loaded from backend:', config);
+  } catch (error) {
+    console.warn('Could not load config from backend, using defaults:', error);
+    // Fallback: fetch exchange rate directly
+    await fetchExchangeRateFallback();
+  }
+}
+
+async function fetchExchangeRateFallback() {
+  try {
+    const response = await fetch(`${CONFIG.fallback.exchangeRate}?from=CHF&to=EUR`);
     const data = await response.json();
     state.exchangeRate = data.rates.EUR;
   } catch (error) {
@@ -180,24 +223,67 @@ async function calculateRouteAndPrice() {
   const pickupCoords = [state.pickup.lat, state.pickup.lon];
   const dropoffCoords = [state.dropoff.lat, state.dropoff.lon];
 
-  // Draw route on map
-  if (swissMap) {
-    state.route = await swissMap.drawRoute(pickupCoords, dropoffCoords);
-  } else {
-    // Fallback calculation
-    const distance = calculateHaversineDistance(pickupCoords, dropoffCoords);
+  try {
+    // Use backend API for estimation
+    const pickupTime = `${document.getElementById("date").value}T${document.getElementById("time").value}`;
+
+    const estimate = await api.post('/api/estimate', {
+      origin: { lat: state.pickup.lat, lon: state.pickup.lon },
+      destination: { lat: state.dropoff.lat, lon: state.dropoff.lon },
+      pickupTime,
+      vehicleType: state.vehicle,
+      tripType: state.tripType,
+      passengers: state.passengers,
+    });
+
+    // Store estimate data
+    state.estimateId = estimate.estimateId;
     state.route = {
-      distance: distance.toFixed(1),
-      duration: Math.round((distance / 50) * 60),
+      distance: estimate.route.distanceKm,
+      duration: estimate.route.durationMin,
       elevation: { gain: 0, loss: 0, max: 0 },
+      source: estimate.route.source,
     };
+    state.price = {
+      ...estimate.price.breakdown,
+      subtotal: estimate.price.subtotalHT,
+      vat: estimate.price.vatAmount,
+      total: estimate.price.totalTTC,
+      totalEur: estimate.price.totalEUR,
+      distance: estimate.route.distanceKm,
+      duration: estimate.route.durationMin,
+      hasNightSurcharge: estimate.price.hasNightSurcharge,
+      hasWeekendSurcharge: estimate.price.hasWeekendSurcharge,
+      hasHolidaySurcharge: estimate.price.hasHolidaySurcharge,
+      hasAirportSurcharge: estimate.price.hasAirportSurcharge,
+    };
+
+    // Draw route on map
+    if (swissMap) {
+      await swissMap.drawRoute(pickupCoords, dropoffCoords);
+    }
+
+    // Update route info display
+    updateRouteInfo();
+
+  } catch (error) {
+    console.error('API estimate failed, using local calculation:', error);
+
+    // Fallback to local calculation
+    if (swissMap) {
+      state.route = await swissMap.drawRoute(pickupCoords, dropoffCoords);
+    } else {
+      const distance = calculateHaversineDistance(pickupCoords, dropoffCoords);
+      state.route = {
+        distance: distance.toFixed(1),
+        duration: Math.round((distance / 50) * 60),
+        elevation: { gain: 0, loss: 0, max: 0 },
+      };
+    }
+
+    updateRouteInfo();
+    calculatePriceLocal();
   }
-
-  // Update route info display
-  updateRouteInfo();
-
-  // Calculate price
-  calculatePrice();
 }
 
 function calculateHaversineDistance(coord1, coord2) {
@@ -228,7 +314,7 @@ function updateRouteInfo() {
     state.route.elevation?.max || "--";
 }
 
-function calculatePrice() {
+function calculatePriceLocal() {
   const tariff = CONFIG.pricing[state.vehicle];
   const distance = parseFloat(state.route.distance);
   const duration = parseInt(state.route.duration);
@@ -385,28 +471,52 @@ function formatCHF(amount) {
 // Booking Creation
 // ========================================
 async function createBooking(customer) {
-  // Generate reservation ID
-  const reservationId = generateReservationId();
+  try {
+    // Send to backend API
+    const pickupTime = `${document.getElementById("date").value}T${document.getElementById("time").value}`;
 
-  // Close estimate modal
-  closeModal("estimate-modal");
+    const result = await api.post('/api/book', {
+      estimateId: state.estimateId,
+      customer: {
+        name: customer.name,
+        phone: customer.phone,
+        email: customer.email,
+      },
+      origin: {
+        lat: state.pickup.lat,
+        lon: state.pickup.lon,
+        address: state.pickup.display,
+      },
+      destination: {
+        lat: state.dropoff.lat,
+        lon: state.dropoff.lon,
+        address: state.dropoff.display,
+      },
+      pickupTime,
+      vehicleType: state.vehicle,
+      tripType: state.tripType,
+      passengers: state.passengers,
+      paymentMethod: customer.payment,
+      notes: customer.notes,
+    });
 
-  // Show confirmation modal
-  showConfirmationModal(reservationId, customer.payment);
+    console.log("Booking created via API:", result);
 
-  // In production, send to backend
-  console.log("Booking created:", {
-    reservationId,
-    customer,
-    pickup: state.pickup,
-    dropoff: state.dropoff,
-    date: document.getElementById("date").value,
-    time: document.getElementById("time").value,
-    passengers: state.passengers,
-    vehicle: state.vehicle,
-    tripType: state.tripType,
-    price: state.price,
-  });
+    // Close estimate modal
+    closeModal("estimate-modal");
+
+    // Show confirmation modal with real reservation ID
+    showConfirmationModal(result.reservationId, customer.payment, result);
+
+  } catch (error) {
+    console.error('Booking API failed:', error);
+    showToast("Erreur lors de la réservation. Veuillez réessayer.", "error");
+
+    // Fallback: generate local ID
+    const reservationId = generateReservationId();
+    closeModal("estimate-modal");
+    showConfirmationModal(reservationId, customer.payment);
+  }
 }
 
 function generateReservationId() {
@@ -417,7 +527,7 @@ function generateReservationId() {
   return `VTC-${year}${month}-${random}`;
 }
 
-function showConfirmationModal(reservationId, paymentMethod) {
+function showConfirmationModal(reservationId, paymentMethod, bookingResult = null) {
   const modal = document.getElementById("confirmation-modal");
   if (!modal) return;
 
@@ -432,11 +542,24 @@ function showConfirmationModal(reservationId, paymentMethod) {
     twintSection.classList.add("hidden");
   }
 
+  // Update company info if available
+  if (bookingResult && bookingResult.company) {
+    const companyInfo = document.querySelector(".company-info");
+    if (companyInfo) {
+      companyInfo.innerHTML = `
+        <p><strong>${bookingResult.company.name}</strong></p>
+        <p>${bookingResult.company.address}</p>
+        <p>IDE: ${bookingResult.company.ide}</p>
+        <p>N° TVA: ${bookingResult.company.vatNumber}</p>
+      `;
+    }
+  }
+
   // Show modal
   modal.setAttribute("aria-hidden", "false");
   document.body.style.overflow = "hidden";
 
-  // Download receipt button
+  // Download receipt button - use API endpoint
   document.getElementById("btn-download-receipt").onclick = () => {
     downloadReceipt(reservationId);
   };
@@ -473,10 +596,17 @@ async function generateTwintQR(reservationId, amount) {
 }
 
 function downloadReceipt(reservationId) {
-  // In production, call backend to generate PDF
   showToast("Téléchargement du récépissé...", "info");
 
-  // Simulate download
+  // Download PDF from API
+  const link = document.createElement('a');
+  link.href = `${CONFIG.apiBase}/api/ticket/${reservationId}`;
+  link.download = `vtc-suisse-${reservationId}.pdf`;
+  link.target = '_blank';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+
   setTimeout(() => {
     showToast("Récépissé téléchargé", "success");
   }, 1000);
@@ -747,21 +877,34 @@ function setupAutocomplete(input, resultsId, type) {
 
 async function searchAddress(query) {
   try {
-    // Use Photon (Komoot) for better Swiss results
-    const response = await fetch(
-      `${CONFIG.api.photon}?q=${encodeURIComponent(query)}&limit=5&lang=fr&bbox=5.9,45.8,10.5,47.9`
-    );
-    const data = await response.json();
-
-    return data.features.map((feature) => ({
-      display: formatAddress(feature.properties),
-      lat: feature.geometry.coordinates[1],
-      lon: feature.geometry.coordinates[0],
-      type: feature.properties.type,
+    // Try backend API first
+    const results = await api.post('/api/geocode', { address: query, limit: 5 });
+    return results.map((r) => ({
+      display: r.display,
+      lat: r.lat,
+      lon: r.lon,
+      type: r.type,
     }));
   } catch (error) {
-    console.error("Geocoding error:", error);
-    return [];
+    console.warn("Backend geocode failed, using fallback:", error);
+
+    // Fallback to direct Photon API
+    try {
+      const response = await fetch(
+        `${CONFIG.fallback.photon}?q=${encodeURIComponent(query)}&limit=5&lang=fr&bbox=5.9,45.8,10.5,47.9`
+      );
+      const data = await response.json();
+
+      return data.features.map((feature) => ({
+        display: formatAddress(feature.properties),
+        lat: feature.geometry.coordinates[1],
+        lon: feature.geometry.coordinates[0],
+        type: feature.properties.type,
+      }));
+    } catch (fallbackError) {
+      console.error("Geocoding error:", fallbackError);
+      return [];
+    }
   }
 }
 

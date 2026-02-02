@@ -1,37 +1,42 @@
 {
-  "name": "romuo-vtc-server",
-  "version": "2.0.0",
-  "description": "Serveur VTC Romuo - API Backend Node.js/Express avec OpenRouteService",
+  "name": "vtc-suisse-server",
+  "version": "3.0.0",
+  "description": "Serveur VTC Suisse - API Backend Node.js/Express avec SQLite",
   "main": "src/server.js",
   "type": "module",
   "scripts": {
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
-    "lint": "eslint src/"
+    "lint": "eslint src/",
+    "db:reset": "rm -f data/vtc-suisse.db && node -e \"require('./src/database.js').initDatabase()\""
   },
   "keywords": [
     "vtc",
     "taxi",
     "transport",
     "suisse",
+    "switzerland",
     "express",
     "nodejs",
-    "openrouteservice"
+    "sqlite"
   ],
-  "author": "Romuo VTC",
+  "author": "VTC Suisse",
   "license": "MIT",
   "dependencies": {
     "axios": "^1.6.7",
+    "better-sqlite3": "^11.0.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.1",
     "express": "^4.19.2",
     "express-rate-limit": "^7.1.5",
     "express-validator": "^7.0.1",
     "helmet": "^7.1.0",
+    "nodemailer": "^6.9.9",
     "pdfkit": "^0.15.0",
     "pino": "^8.18.0",
     "pino-pretty": "^10.3.1",
+    "qrcode": "^1.5.3",
     "uuid": "^9.0.1"
   },
   "devDependencies": {
