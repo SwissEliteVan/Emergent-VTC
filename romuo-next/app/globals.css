@@ -1,0 +1,57 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  --romuo-red: #d52b1e;
+  --romuo-black: #0a0a0a;
+  --romuo-gray: #f5f5f5;
+  --romuo-teal: #007a7a;
+  --romuo-border: #e5e5e5;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Suisse Int\'l', 'SF Pro Display', Inter, system-ui, sans-serif;
+  background: #ffffff;
+  color: var(--romuo-black);
+  margin: 0;
+}
+
+p {
+  font-family: Inter, system-ui, sans-serif;
+}
+
+.section {
+  @apply px-6 md:px-12 py-16 md:py-20;
+}
+
+.card {
+  @apply bg-white border border-[var(--romuo-border)] shadow-soft rounded-card;
+}
+
+.button-primary {
+  @apply bg-romuo-red text-white font-semibold rounded-card px-6 py-3 transition duration-300 hover:shadow-soft hover:-translate-y-0.5;
+}
+
+.button-outline {
+  @apply border border-romuo-red text-romuo-red font-semibold rounded-card px-6 py-3 transition duration-300 hover:bg-romuo-red hover:text-white;
+}
+
+.badge {
+  @apply inline-flex items-center gap-2 px-3 py-1 rounded-full bg-romuo-gray text-sm font-medium;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+  }
+  body {
+    background: #0a0a0a;
+    color: #ffffff;
+  }
+}
