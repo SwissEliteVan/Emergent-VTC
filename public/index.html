@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Réservation de Trajet</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 100%;
+            padding: 15px;
+        }
+        
+        .map-container {
+            height: 50vh;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        #map {
+            height: 100%;
+            width: 100%;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+        
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        
+        .suggestions {
+            position: absolute;
+            background: white;
+            border: 1px solid #ddd;
+            width: calc(100% - 2px);
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+        }
+        
+        .suggestion-item {
+            padding: 8px 10px;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .suggestion-item:hover {
+            background-color: #f0f0f0;
+        }
+        
+        button {
+            width: 100%;
+            padding: 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-top: 10px;
+        }
+        
+        button:hover {
+            background-color: #0056b3;
+        }
+        
+        .price-display {
+            text-align: center;
+            font-size: 20px;
+            font-weight: 700;
+            margin: 15px 0;
+            color: #28a745;
+        }
+        
+        @media (min-width: 768px) {
+            .container {
+                max-width: 600px;
+                margin: 0 auto;
+            }
+            
+            .map-container {
+                height: 60vh;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="map-container">
+            <div id="map"></div>
+        </div>
+        
+        <div class="form-group">
+            <label for="depart">Départ</label>
+            <input type="text" id="depart" placeholder="Entrez votre adresse de départ">
+            <div id="depart-suggestions" class="suggestions"></div>
+        </div>
+        
+        <div class="form-group">
+            <label for="arrivee">Arrivée</label>
+            <input type="text" id="arrivee" placeholder="Entrez votre adresse d'arrivée">
+            <div id="arrivee-suggestions" class="suggestions"></div>
+        </div>
+        
+        <div id="price-display" class="price-display"></div>
+        
+        <button id="reserver">Réserver ce trajet</button>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="swiss-map.js"></script>
+</body>
+</html>
