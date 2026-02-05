@@ -1,0 +1,372 @@
+/**
+ * VTC Calculator Free - Styles
+ * Design moderne et responsive pour le calculateur de prix
+ */
+
+/* ========================================
+   Container Principal
+   ======================================== */
+.vtc-calculator-wrapper {
+    max-width: 600px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+.vtc-calculator-container {
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    padding: 2rem;
+    border: 1px solid #e5e7eb;
+}
+
+.vtc-calculator-title {
+    text-align: center;
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin: 0 0 2rem 0;
+}
+
+/* ========================================
+   Formulaire
+   ======================================== */
+.vtc-calculator-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.vtc-form-group {
+    position: relative;
+}
+
+.vtc-form-group label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.5rem;
+}
+
+.vtc-icon-departure::before {
+    content: "📍";
+    font-size: 1.1rem;
+}
+
+.vtc-icon-arrival::before {
+    content: "🎯";
+    font-size: 1.1rem;
+}
+
+.vtc-input {
+    width: 100%;
+    padding: 0.875rem 1rem;
+    font-size: 1rem;
+    border: 2px solid #d1d5db;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+    background: #ffffff;
+    box-sizing: border-box;
+}
+
+.vtc-input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.vtc-input::placeholder {
+    color: #9ca3af;
+}
+
+/* ========================================
+   Autocomplétion - Suggestions
+   ======================================== */
+.vtc-suggestions {
+    position: absolute;
+    top: calc(100% + 0.25rem);
+    left: 0;
+    right: 0;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    max-height: 250px;
+    overflow-y: auto;
+    z-index: 1000;
+    display: none;
+}
+
+.vtc-suggestion-item {
+    padding: 0.875rem 1rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    border-bottom: 1px solid #f3f4f6;
+    font-size: 0.9rem;
+    color: #4b5563;
+}
+
+.vtc-suggestion-item:last-child {
+    border-bottom: none;
+}
+
+.vtc-suggestion-item:hover {
+    background-color: #f3f4f6;
+    color: #1f2937;
+}
+
+/* ========================================
+   Boutons
+   ======================================== */
+.vtc-btn {
+    padding: 1rem 2rem;
+    font-size: 1.05rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+}
+
+.vtc-btn-primary {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.vtc-btn-primary:hover:not(:disabled) {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+    transform: translateY(-2px);
+}
+
+.vtc-btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.vtc-btn-whatsapp {
+    background: linear-gradient(135deg, #25d366 0%, #20ba5a 100%);
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3);
+    margin-top: 1rem;
+}
+
+.vtc-btn-whatsapp:hover {
+    background: linear-gradient(135deg, #20ba5a 0%, #1da851 100%);
+    box-shadow: 0 6px 16px rgba(37, 211, 102, 0.4);
+    transform: translateY(-2px);
+}
+
+.vtc-whatsapp-icon {
+    font-size: 1.25rem;
+}
+
+/* ========================================
+   Résultats
+   ======================================== */
+.vtc-result {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    border-radius: 12px;
+    border: 2px solid #3b82f6;
+}
+
+.vtc-result-header h3 {
+    margin: 0 0 1rem 0;
+    font-size: 1.25rem;
+    color: #1e40af;
+    text-align: center;
+}
+
+.vtc-result-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.vtc-result-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+}
+
+.vtc-result-label {
+    font-weight: 600;
+    color: #374151;
+    font-size: 0.95rem;
+}
+
+.vtc-result-value {
+    font-weight: 500;
+    color: #1f2937;
+    font-size: 0.95rem;
+}
+
+.vtc-result-breakdown {
+    flex-direction: column;
+    align-items: flex-start;
+    border-top: 1px solid #bfdbfe;
+    padding-top: 0.75rem;
+}
+
+.vtc-price-breakdown {
+    width: 100%;
+    padding-left: 1rem;
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
+    color: #6b7280;
+}
+
+.vtc-price-breakdown div {
+    padding: 0.25rem 0;
+}
+
+/* Prix Total */
+.vtc-result-price {
+    text-align: center;
+    padding: 1.25rem;
+    background: #ffffff;
+    border-radius: 10px;
+    margin: 1rem 0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.vtc-price-label {
+    display: block;
+    font-size: 0.95rem;
+    color: #6b7280;
+    margin-bottom: 0.5rem;
+}
+
+.vtc-price-value {
+    display: block;
+    font-size: 2.25rem;
+    font-weight: 700;
+    color: #1e40af;
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.vtc-disclaimer {
+    font-size: 0.8rem;
+    color: #6b7280;
+    text-align: center;
+    margin-top: 1rem;
+    margin-bottom: 0;
+    font-style: italic;
+}
+
+/* ========================================
+   Messages d'erreur
+   ======================================== */
+.vtc-error {
+    margin-top: 1.5rem;
+    padding: 1rem 1.25rem;
+    background: #fef2f2;
+    border-left: 4px solid #ef4444;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.vtc-error-icon {
+    font-size: 1.25rem;
+}
+
+.vtc-error-message {
+    color: #991b1b;
+    font-size: 0.95rem;
+}
+
+/* ========================================
+   Loader Animation
+   ======================================== */
+@keyframes vtc-spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.vtc-btn-loader {
+    animation: vtc-spin 1s linear infinite;
+}
+
+/* ========================================
+   Responsive Design
+   ======================================== */
+@media (max-width: 768px) {
+    .vtc-calculator-container {
+        padding: 1.5rem;
+    }
+    
+    .vtc-calculator-title {
+        font-size: 1.5rem;
+    }
+    
+    .vtc-btn {
+        padding: 0.875rem 1.5rem;
+        font-size: 1rem;
+    }
+    
+    .vtc-price-value {
+        font-size: 1.875rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .vtc-calculator-wrapper {
+        padding: 0 0.5rem;
+    }
+    
+    .vtc-calculator-container {
+        padding: 1.25rem;
+    }
+    
+    .vtc-calculator-title {
+        font-size: 1.35rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .vtc-result {
+        padding: 1.25rem;
+    }
+}
+
+/* ========================================
+   Scrollbar personnalisée pour suggestions
+   ======================================== */
+.vtc-suggestions::-webkit-scrollbar {
+    width: 8px;
+}
+
+.vtc-suggestions::-webkit-scrollbar-track {
+    background: #f3f4f6;
+    border-radius: 10px;
+}
+
+.vtc-suggestions::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 10px;
+}
+
+.vtc-suggestions::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
+}

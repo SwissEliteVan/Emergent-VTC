@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Tableau de bord Admin</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
+        h1 { color: #D4AF37; }
+        .ticket-list { margin-top: 20px; background: white; padding: 15px; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .ticket-item { padding: 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; }
+        .ticket-item:last-child { border-bottom: none; }
+        .ticket-link { color: #007bff; text-decoration: none; }
+        .delete-btn { background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>Tableau de bord Admin</h1>
+    <div id="ticketList" class="ticket-list">
+        <p>Chargement des tickets...</p>
+    </div>
+
+    <script>
+        async function loadTickets() {
+            try {
+                const response = await fetch('/tickets', {
+                    headers: {
+                        'Authorization': 'Basic ' + localStorage.getItem('adminAuth')
+                    }
+                });
+                
+                if (!response.ok) throw new Error('Erreur de chargement');
+                const tickets = await response.json();
+                
+                const container = document.getElementById('ticketList');
+                container.innerHTML = '';
+                
+                tickets.forEach(ticket => {
+                    const div = document.createElement('div');
+                    div.className = 'ticket-item';
+                    div.innerHTML = `
+                        <a class="ticket-link" href="/tickets/${ticket}" download>${ticket}</a>
+                        <button class="delete-btn" onclick="deleteTicket('${ticket}')">Supprimer</button>
+                    `;
+                    container.appendChild(div);
+                });
+            } catch (error) {
+                alert(error.message);
+            }
+        }
+
+        function deleteTicket(filename) {
+            if (confirm(`Supprimer ${filename}?`)) {
+                fetch(`/tickets/${filename}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': 'Basic ' + btoa(localStorage.getItem('adminAuth'))
+                    }
+                }).then(() => loadTickets());
+            }
+        }
+
+        // Check auth on load
+        if (!localStorage.getItem('adminAuth')) {
+            const auth = prompt('Entrez vos identifiants admin (format: user:password)');
+            if (auth) {
+                localStorage.setItem('adminAuth', auth);
+                loadTickets();
+            }
+        } else {
+            loadTickets();
+        }
+    </script>
+</body>
+</html>

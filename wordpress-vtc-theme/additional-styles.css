@@ -1,0 +1,456 @@
+/**
+ * VTC Premium Swiss - Additional Styles for Sections
+ * 
+ * Styles complémentaires pour les sections services, flotte, avantages
+ * À ajouter après le style.css principal
+ */
+
+/* ============================================
+   CONTENEUR GÉNÉRAL
+   ============================================ */
+.vtc-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--spacing-md);
+}
+
+/* ============================================
+   TITRES DE SECTIONS
+   ============================================ */
+.vtc-section-title {
+  font-family: var(--font-accent);
+  font-size: 3rem;
+  color: var(--color-gold);
+  text-align: center;
+  margin-bottom: var(--spacing-md);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.vtc-section-subtitle {
+  text-align: center;
+  font-size: 1.2rem;
+  color: var(--color-light-grey);
+  margin-bottom: var(--spacing-lg);
+  font-weight: 300;
+}
+
+/* ============================================
+   SECTION SERVICES
+   ============================================ */
+.vtc-services-section {
+  background: var(--color-anthracite);
+  padding: var(--spacing-xl) 0;
+  position: relative;
+}
+
+.vtc-services-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--color-gold), transparent);
+}
+
+.vtc-services-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-lg);
+}
+
+.vtc-service-card {
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  border-radius: 12px;
+  padding: var(--spacing-md);
+  text-align: center;
+  transition: var(--transition);
+  opacity: 0;
+  transform: translateY(30px);
+}
+
+.vtc-service-card.vtc-animated {
+  opacity: 1;
+  transform: translateY(0);
+  animation: fadeInUp 0.6s ease-out forwards;
+}
+
+.vtc-service-card:hover {
+  transform: translateY(-10px);
+  border-color: var(--color-gold);
+  box-shadow: var(--shadow-gold);
+  background: rgba(212, 175, 55, 0.05);
+}
+
+.vtc-service-icon {
+  font-size: 3rem;
+  margin-bottom: var(--spacing-sm);
+  display: block;
+}
+
+.vtc-service-card h3 {
+  font-family: var(--font-accent);
+  color: var(--color-gold);
+  font-size: 1.5rem;
+  margin: var(--spacing-sm) 0;
+}
+
+.vtc-service-card p {
+  color: var(--color-light-grey);
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* ============================================
+   SECTION FLOTTE
+   ============================================ */
+.vtc-fleet-section {
+  background: var(--color-black);
+  padding: var(--spacing-xl) 0;
+}
+
+.vtc-fleet-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-lg);
+}
+
+.vtc-fleet-card {
+  background: linear-gradient(135deg, rgba(26, 26, 26, 0.9) 0%, rgba(0, 0, 0, 0.9) 100%);
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  border-radius: 15px;
+  padding: var(--spacing-lg);
+  position: relative;
+  transition: var(--transition);
+  opacity: 0;
+  transform: scale(0.95);
+}
+
+.vtc-fleet-card.vtc-animated {
+  opacity: 1;
+  transform: scale(1);
+  animation: scaleIn 0.6s ease-out forwards;
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.vtc-fleet-card:hover {
+  transform: scale(1.05);
+  border-color: var(--color-gold);
+  box-shadow: 0 10px 40px rgba(212, 175, 55, 0.3);
+}
+
+.vtc-fleet-card.vtc-featured {
+  border: 2px solid var(--color-gold);
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.1) 0%, rgba(26, 26, 26, 0.9) 100%);
+}
+
+.vtc-badge {
+  position: absolute;
+  top: -15px;
+  right: 20px;
+  background: linear-gradient(135deg, var(--color-gold) 0%, var(--color-gold-dark) 100%);
+  color: var(--color-black);
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  box-shadow: 0 4px 10px rgba(212, 175, 55, 0.4);
+}
+
+.vtc-fleet-card h3 {
+  font-family: var(--font-accent);
+  color: var(--color-gold);
+  font-size: 1.8rem;
+  margin-bottom: var(--spacing-md);
+  text-align: center;
+}
+
+.vtc-fleet-card ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.vtc-fleet-card li {
+  color: var(--color-white);
+  padding: 0.75rem 0;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.1);
+  position: relative;
+  padding-left: 1.5rem;
+}
+
+.vtc-fleet-card li:last-child {
+  border-bottom: none;
+}
+
+.vtc-fleet-card li::before {
+  content: '✓';
+  position: absolute;
+  left: 0;
+  color: var(--color-gold);
+  font-weight: bold;
+}
+
+/* ============================================
+   SECTION AVANTAGES
+   ============================================ */
+.vtc-why-section {
+  background: var(--color-anthracite);
+  padding: var(--spacing-xl) 0;
+  position: relative;
+}
+
+.vtc-advantages-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: var(--spacing-lg);
+  margin-top: var(--spacing-lg);
+}
+
+.vtc-advantage-item {
+  text-align: center;
+  padding: var(--spacing-md);
+  opacity: 0;
+  transform: translateX(-30px);
+}
+
+.vtc-advantage-item.vtc-animated {
+  opacity: 1;
+  transform: translateX(0);
+  animation: slideInLeft 0.8s ease-out forwards;
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.vtc-advantage-number {
+  font-family: var(--font-accent);
+  font-size: 4rem;
+  color: var(--color-gold);
+  opacity: 0.3;
+  font-weight: 700;
+  line-height: 1;
+  margin-bottom: var(--spacing-sm);
+}
+
+.vtc-advantage-item h3 {
+  font-family: var(--font-primary);
+  color: var(--color-gold);
+  font-size: 1.3rem;
+  margin: var(--spacing-sm) 0;
+  font-weight: 600;
+}
+
+.vtc-advantage-item p {
+  color: var(--color-light-grey);
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* ============================================
+   MESSAGES DE FORMULAIRE
+   ============================================ */
+.vtc-message {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: 8px;
+  margin-bottom: var(--spacing-md);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.vtc-message-success {
+  background: rgba(76, 175, 80, 0.2);
+  border: 1px solid rgba(76, 175, 80, 0.5);
+  color: #4CAF50;
+}
+
+.vtc-message-error {
+  background: rgba(244, 67, 54, 0.2);
+  border: 1px solid rgba(244, 67, 54, 0.5);
+  color: #F44336;
+}
+
+.vtc-message-icon {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.vtc-message-text {
+  flex: 1;
+}
+
+/* ============================================
+   ERREURS DE CHAMPS
+   ============================================ */
+.vtc-input-error {
+  border-color: #F44336 !important;
+  box-shadow: 0 0 0 3px rgba(244, 67, 54, 0.2) !important;
+}
+
+.vtc-field-error {
+  display: block;
+  color: #F44336;
+  font-size: 0.85rem;
+  margin-top: var(--spacing-xs);
+  font-weight: 500;
+}
+
+/* ============================================
+   RESPONSIVE - SECTIONS
+   ============================================ */
+@media (max-width: 768px) {
+  .vtc-section-title {
+    font-size: 2rem;
+  }
+  
+  .vtc-services-grid,
+  .vtc-fleet-grid,
+  .vtc-advantages-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+  }
+  
+  .vtc-advantage-number {
+    font-size: 3rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .vtc-section-title {
+    font-size: 1.5rem;
+  }
+  
+  .vtc-fleet-card h3 {
+    font-size: 1.4rem;
+  }
+  
+  .vtc-badge {
+    font-size: 0.7rem;
+    padding: 0.4rem 0.8rem;
+  }
+}
+
+/* ============================================
+   LOADING STATE
+   ============================================ */
+.vtc-btn[disabled] {
+  opacity: 0.6;
+  cursor: not-allowed;
+  position: relative;
+}
+
+.vtc-btn[disabled]::after {
+  content: '';
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--color-black);
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: translateY(-50%) rotate(360deg);
+  }
+}
+
+/* ============================================
+   MENU MOBILE
+   ============================================ */
+.menu-toggle {
+  display: none;
+  background: none;
+  border: 2px solid var(--color-gold);
+  color: var(--color-gold);
+  font-size: 1.5rem;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: var(--transition);
+}
+
+.menu-toggle:hover {
+  background: var(--color-gold);
+  color: var(--color-black);
+}
+
+@media (max-width: 768px) {
+  .menu-toggle {
+    display: block;
+  }
+  
+  .main-navigation ul {
+    display: none;
+    flex-direction: column;
+    width: 100%;
+    margin-top: var(--spacing-sm);
+  }
+  
+  .main-navigation ul li {
+    width: 100%;
+  }
+  
+  .main-navigation a {
+    display: block;
+    padding: var(--spacing-sm);
+  }
+}
+
+/* ============================================
+   PRINT STYLES
+   ============================================ */
+@media print {
+  .vtc-hero-section,
+  .site-header,
+  .site-footer,
+  .vtc-booking-form {
+    display: none;
+  }
+  
+  body {
+    background: white;
+    color: black;
+  }
+}

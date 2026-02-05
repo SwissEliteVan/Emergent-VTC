@@ -13,12 +13,16 @@
  */
 
 import express from 'express';
+import axios from 'axios';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
+import { PDFDocument as PDFLibDocument, StandardFonts, rgb } from 'pdf-lib';
+import fs from 'fs';
+import path from 'path';
+import PDFKit from 'pdfkit';
 import { body, param, query, validationResult } from 'express-validator';
 import { v4 as uuidv4 } from 'uuid';
-import path from 'path';
 import { fileURLToPath } from 'url';
 import {
   sendBookingConfirmation,
@@ -34,6 +38,11 @@ import {
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+// Create tickets directory if not exists
+const ticketsDir = path.join(__dirname, 'public', 'tickets');
+if (!fs.existsSync(ticketsDir)) {
+  fs.mkdirSync(ticketsDir, { recursive: true });
+}
 
 const config = {
   // Serveur
@@ -169,6 +178,50 @@ const logger = {
 const reservations = new Map();
 const estimates = new Map();
 
+// Stockage des réservations dans un fichier JSON
+const reservationsFile = path.join(__dirname, '..', 'data', 'reservations.json');
+
+async function saveReservation(reservation) {
+  try {
+    let reservations = [];
+    
+    // Lire les réservations existantes
+    if (fs.existsSync(reservationsFile)) {
+      const data = await fs.readFile(reservationsFile, 'utf8');
+      reservations = JSON.parse(data);
+    }
+    
+    // Ajouter la nouvelle réservation
+    reservations.push(reservation);
+    
+    // Sauvegarder
+    await fs.writeFile(reservationsFile, JSON.stringify(reservations, null, 2), 'utf8');
+    logger.info(`Réservation sauvegardée: ${reservation.id}`);
+  } catch (err) {
+    logger.error('Erreur sauvegarde réservation', { error: err.message });
+  }
+}
+
+async function findClientByPhone(phone) {
+  try {
+    if (!fs.existsSync(reservationsFile)) return null;
+    
+    const data = await fs.readFile(reservationsFile, 'utf8');
+    const reservations = JSON.parse(data);
+    
+    // Trouver le client le plus récent avec ce numéro
+    const clientReservations = reservations.filter(r => r.clientPhone === phone);
+    if (clientReservations.length === 0) return null;
+    
+    // Trier par date décroissante
+    clientReservations.sort((a, b) => new Date(b.date) - new Date(a.date));
+    return clientReservations[0];
+  } catch (err) {
+    logger.error('Erreur recherche client', { error: err.message });
+    return null;
+  }
+}
+
 // Cache taux de change
 let exchangeRateCache = {
   rate: 0.95,
@@ -182,8 +235,168 @@ let exchangeRateCache = {
 const app = express();
 
 // --- Sécurité avec Helmet ---
+// Authentication middleware
+const basicAuth = require('express-basic-auth');
+const authMiddleware = basicAuth({
+  users: { [process.env.ADMIN_USER]: process.env.ADMIN_PASSWORD },
+  challenge: true,
+  realm: 'Admin Area'
+});
+
+// Test endpoint to verify authentication
+app.get('/test-auth', authMiddleware, (req, res) => {
+  res.json({ success: true, message: 'Authentication successful' });
+});
+
+// PDF download endpoint
+app.get('/tickets/:filename', authMiddleware, (req, res) => {
+  const filename = req.params.filename;
+  
+  // Validate filename
+  if (!/^[a-zA-Z0-9\-_\.]+\.pdf$/.test(filename)) {
+    return res.status(400).json({ error: 'Invalid filename' });
+  }
+  
+  const filePath = path.join(__dirname, '..', 'data', 'tickets', filename);
+  res.download(filePath);
+});
+
+// PDF management endpoints
+app.get('/tickets', authMiddleware, (req, res) => {
+  const ticketsDir = path.join(__dirname, '..', 'data', 'tickets');
+  
+  // Ensure directory exists
+  if (!fs.existsSync(ticketsDir)) {
+    fs.mkdirSync(ticketsDir, { recursive: true });
+  }
+  
+  fs.readdir(ticketsDir, (err, files) => {
+    if (err) {
+      return res.status(500).json({ error: 'Unable to read tickets directory' });
+    }
+    
+    const pdfFiles = files.filter(file => file.endsWith('.pdf'));
+    res.json(pdfFiles);
+  });
+});
+
+app.delete('/tickets/:filename', authMiddleware, (req, res) => {
+  const filename = req.params.filename;
+  
+  // Simple validation to prevent path traversal
+  if (!/^[a-zA-Z0-9\-_\.]+\.pdf$/.test(filename)) {
+    return res.status(400).json({ error: 'Invalid filename' });
+  }
+  
+  const filePath = path.join(__dirname, '..', 'data', 'tickets', filename);
+  
+  fs.unlink(filePath, (err) => {
+    if (err) {
+      if (err.code === 'ENOENT') {
+        return res.status(404).json({ error: 'File not found' });
+      }
+      return res.status(500).json({ error: 'Unable to delete file' });
+    }
+    res.json({ success: true });
+  });
+});
+
+// PDF ticket management endpoints
+app.get('/tickets', authMiddleware, (req, res) => {
+  const ticketsDir = path.join(__dirname, '../../public/tickets');
+  fs.readdir(ticketsDir, (err, files) => {
+    if (err) {
+      console.error('Error reading tickets directory:', err);
+      return res.status(500).json({ error: 'Internal server error' });
+    }
+    const pdfFiles = files.filter(file => file.endsWith('.pdf'));
+    res.json({ tickets: pdfFiles });
+  });
+});
+
+app.delete('/tickets/:filename', authMiddleware, (req, res) => {
+  const filename = req.params.filename;
+  if (filename.includes('..') || filename.includes('/')) {
+    return res.status(400).json({ error: 'Invalid filename' });
+  }
+  const filePath = path.join(__dirname, '../../public/tickets', filename);
+  fs.unlink(filePath, (err) => {
+    if (err) {
+      if (err.code === 'ENOENT') {
+        return res.status(404).json({ error: 'File not found' });
+      }
+      console.error('Error deleting file:', err);
+      return res.status(500).json({ error: 'Internal server error' });
+    }
+    res.json({ success: true });
+  });
+});
+
+// PDF ticket management endpoints
+app.get('/tickets', authMiddleware, (req, res) => {
+  const ticketsDir = path.join(__dirname, '..', 'public', 'tickets');
+  fs.readdir(ticketsDir, (err, files) => {
+    if (err) {
+      console.error('Error reading tickets directory:', err);
+      return res.status(500).json({ error: 'Internal server error' });
+    }
+    const pdfFiles = files.filter(file => file.endsWith('.pdf'));
+    res.json({ tickets: pdfFiles });
+  });
+});
+
+app.delete('/tickets/:filename', authMiddleware, (req, res) => {
+  const filename = req.params.filename;
+  if (filename.includes('..') || filename.includes('/')) {
+    return res.status(400).json({ error: 'Invalid filename' });
+  }
+  const filePath = path.join(__dirname, '..', 'public', 'tickets', filename);
+  fs.unlink(filePath, (err) => {
+    if (err) {
+      if (err.code === 'ENOENT') {
+        return res.status(404).json({ error: 'File not found' });
+      }
+      console.error('Error deleting file:', err);
+      return res.status(500).json({ error: 'Internal server error' });
+    }
+    res.json({ success: true });
+  });
+});
+
+// PDF ticket management endpoints
+app.get('/tickets', authMiddleware, (req, res) => {
+  const ticketsDir = path.join(__dirname, '..', 'public', 'tickets');
+  fs.readdir(ticketsDir, (err, files) => {
+    if (err) {
+      console.error('Error reading tickets directory:', err);
+      return res.status(500).json({ error: 'Internal server error' });
+    }
+    const pdfFiles = files.filter(file => file.endsWith('.pdf'));
+    res.json({ tickets: pdfFiles });
+  });
+});
+
+app.delete('/tickets/:filename', authMiddleware, (req, res) => {
+  const filename = req.params.filename;
+  if (filename.includes('..') || filename.includes('/')) {
+    return res.status(400).json({ error: 'Invalid filename' });
+  }
+  const filePath = path.join(__dirname, '..', 'public', 'tickets', filename);
+  fs.unlink(filePath, (err) => {
+    if (err) {
+      if (err.code === 'ENOENT') {
+        return res.status(404).json({ error: 'File not found' });
+      }
+      console.error('Error deleting file:', err);
+      return res.status(500).json({ error: 'Internal server error' });
+    }
+    res.json({ success: true });
+  });
+});
+
 app.use(helmet({
   contentSecurityPolicy: {
+
     directives: {
       defaultSrc: ["'self'"],
       scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://unpkg.com", "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com"],
@@ -661,8 +874,116 @@ app.post('/api/route', [
 });
 
 /**
+ * POST /api/estimate - Calculer une estimation de prix simplifiée (OSRM)
+ */
+app.post('/api/estimate', [
+  body('startLat').isFloat({ min: 45.8, max: 47.9 }),
+  body('startLon').isFloat({ min: 5.9, max: 10.5 }),
+  body('endLat').isFloat({ min: 45.8, max: 47.9 }),
+  body('endLon').isFloat({ min: 5.9, max: 10.5 }),
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return errorResponse(res, 400, 'Coordonnées invalides', 'VALIDATION_ERROR', errors.array());
+  }
+
+  const { startLat, startLon, endLat, endLon } = req.body;
+
+  try {
+    // Appeler OSRM
+    const response = await axios.get(
+      `http://router.project-osrm.org/route/v1/driving/${startLon},${startLat};${endLon},${endLat}?overview=false`
+    );
+    
+    if (!response.data.routes || response.data.routes.length === 0) {
+      throw new Error('Aucun itinéraire trouvé');
+    }
+
+    const route = response.data.routes[0];
+    const distance_km = route.distance / 1000; // mètres -> km
+    const duration_min = route.duration / 60;   // secondes -> minutes
+
+    // Calculer le prix avec la nouvelle formule
+    let price_chf = 6.00 + (distance_km * 3.80) + (duration_min * 0.80);
+    
+    // Appliquer le prix minimum
+    price_chf = Math.max(price_chf, 25.00);
+
+    successResponse(res, {
+      distance_km: parseFloat(distance_km.toFixed(2)),
+      duration_min: parseFloat(duration_min.toFixed(2)),
+      price_chf: parseFloat(price_chf.toFixed(2))
+    });
+
+  } catch (error) {
+    logger.error('Estimation OSRM error', { error: error.message });
+    errorResponse(res, 502, 'Service OSRM indisponible', 'OSRM_ERROR');
+  }
+});
+
+
+/**
  * POST /api/estimate - Calculer une estimation de prix
  */
+// OSRM-based estimation endpoint
+app.post('/api/estimate-osrm', [
+  body('startLat').isFloat({ min: 45.8, max: 47.9 }),
+  body('startLon').isFloat({ min: 5.9, max: 10.5 }),
+  body('endLat').isFloat({ min: 45.8, max: 47.9 }),
+  body('endLon').isFloat({ min: 5.9, max: 10.5 }),
+], async (req, res) => {
+  // Validate input
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  const { startLat, startLon, endLat, endLon } = req.body;
+
+  try {
+    // Call OSRM API
+    const osrmUrl = `http://router.project-osrm.org/route/v1/driving/${startLon},${startLat};${endLon},${endLat}?overview=full`;
+    const response = await fetch(osrmUrl);
+    
+    if (!response.ok) {
+      throw new Error(`OSRM API error: ${response.status}`);
+    }
+    
+    const data = await response.json();
+
+    if (data.code !== 'Ok' || !data.routes || data.routes.length === 0) {
+      return res.status(400).json({ error: 'No route found' });
+    }
+
+    const route = data.routes[0];
+    const distance = route.distance; // in meters
+    const duration = route.duration; // in seconds
+
+    // Convert to km and minutes
+    const distanceKm = distance / 1000;
+    const durationMinutes = duration / 60;
+
+    // Calculate price: 7 CHF base + 2.5 CHF/km + 0.6 CHF/minute
+    const prixEstime = 7.00 + (distanceKm * 2.50) + (durationMinutes * 0.60);
+
+    // Format the price to two decimal places
+    const formattedPrice = prixEstime.toFixed(2);
+
+    res.json({
+      success: true,
+      estimate: {
+        distance: distanceKm,
+        duration: durationMinutes,
+        price: prixEstime,
+        formattedPrice: `${formattedPrice} CHF`
+      }
+    });
+  } catch (error) {
+    console.error('OSRM error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 app.post('/api/estimate', [
   body('origin').isObject(),
   body('origin.lat').isFloat({ min: 45.8, max: 47.9 }),
@@ -744,6 +1065,147 @@ app.post('/api/estimate', [
 /**
  * POST /api/book - Créer une réservation
  */
+// Generate reservation ticket PDF
+function generateReservationTicketPDF(bookingDetails) {
+  return new Promise((resolve, reject) => {
+    try {
+      const doc = new PDFDocument();
+      const filename = `ticket_${Date.now()}.pdf`;
+      const filePath = path.join(ticketsDir, filename);
+      const stream = fs.createWriteStream(filePath);
+      
+      doc.pipe(stream);
+      
+      // Header with company info
+      doc.fontSize(20).text('BON DE RÉSERVATION VTC', { align: 'center' });
+      doc.moveDown();
+      
+      // Company info
+      doc.fontSize(12)
+        .text('ROMUO SA', { align: 'center' })
+        .text('Rue du Rhône 5, 1204 Genève', { align: 'center' })
+        .text('TVA: CHE-456.789.012', { align: 'center' })
+        .text('Tél: +41 22 345 67 89', { align: 'center' });
+      
+      doc.moveDown(2);
+      
+      // Booking details
+      doc.fontSize(14).text('Détails de la réservation', { underline: true });
+      doc.moveDown();
+      
+      doc.fontSize(12)
+        .text(`Nom client: ${bookingDetails.clientName}`)
+        .text(`Téléphone: ${bookingDetails.phone}`)
+        .text(`Date/Heure: ${new Date(bookingDetails.dateTime).toLocaleString('fr-CH')}`)
+        .text(`Départ: ${bookingDetails.startAddress}`)
+        .text(`Arrivée: ${bookingDetails.endAddress}`)
+        .text(`Prix: ${bookingDetails.price} CHF`);
+      
+      doc.moveDown(2);
+      
+      // Legal notice
+      doc.fontSize(10)
+        .text('Ce document tient lieu de justificatif de réservation préalable', { align: 'center' })
+        .text('conformément à la réglementation VTC suisse.', { align: 'center' });
+      
+      doc.end();
+      
+      stream.on('finish', () => resolve(`/tickets/${filename}`));
+      stream.on('error', reject);
+    } catch (error) {
+      reject(error);
+    }
+  });
+  
+  // PDF Ticket Management Endpoints
+  // -------------------------------
+  
+  // List all PDF tickets
+  app.get('/tickets', authMiddleware, (req, res) => {
+    const ticketsDir = path.join(__dirname, '../../public/tickets');
+    
+    fs.readdir(ticketsDir, (err, files) => {
+      if (err) {
+        logger.error('Error reading tickets directory', { error: err });
+        return errorResponse(res, 500, 'Internal server error');
+      }
+      
+      const pdfFiles = files.filter(file => path.extname(file).toLowerCase() === '.pdf');
+      successResponse(res, { tickets: pdfFiles });
+    });
+  });
+  
+  // PDF Ticket Management Endpoints
+  // -------------------------------
+  
+  // List all PDF tickets
+  app.get('/tickets', authMiddleware, (req, res) => {
+    const ticketsDir = path.join(__dirname, '../../public/tickets');
+    
+    fs.readdir(ticketsDir, (err, files) => {
+      if (err) {
+        logger.error('Error reading tickets directory', { error: err });
+        return errorResponse(res, 500, 'Internal server error');
+      }
+      
+      const pdfFiles = files.filter(file => path.extname(file).toLowerCase() === '.pdf');
+      successResponse(res, { tickets: pdfFiles });
+    });
+  });
+  
+  // Delete a PDF ticket
+  app.delete('/tickets/:filename', authMiddleware, (req, res) => {
+    const filename = req.params.filename;
+    const filePath = path.join(__dirname, `../../public/tickets/${filename}`);
+    
+    // Security check: Prevent directory traversal
+    if (filename.includes('..') || !filename.endsWith('.pdf')) {
+      return errorResponse(res, 400, 'Invalid filename');
+    }
+    
+    fs.unlink(filePath, (err) => {
+      if (err) {
+        logger.error('Error deleting ticket', { filename, error: err });
+        return errorResponse(res, 500, 'Failed to delete ticket');
+      }
+      
+      logger.info('Ticket deleted', { filename });
+      successResponse(res, { message: `Deleted ${filename}` });
+    });
+  });
+  
+  // Protect admin route
+  app.get('/admin.html', authMiddleware, (req, res) => {
+    res.sendFile(path.join(__dirname, '../../public/admin.html'));
+  });
+  
+  // Delete a PDF ticket
+  app.delete('/tickets/:filename', authMiddleware, (req, res) => {
+    const filename = req.params.filename;
+    const filePath = path.join(__dirname, `../../public/tickets/${filename}`);
+    
+    // Security check: Prevent directory traversal
+    if (filename.includes('..') || !filename.endsWith('.pdf')) {
+      return errorResponse(res, 400, 'Invalid filename');
+    }
+    
+    fs.unlink(filePath, (err) => {
+      if (err) {
+        logger.error('Error deleting ticket', { filename, error: err });
+        return errorResponse(res, 500, 'Failed to delete ticket');
+      }
+      
+      logger.info('Ticket deleted', { filename });
+      successResponse(res, { message: `Deleted ${filename}` });
+    });
+  });
+  
+  // Protect admin route
+  app.get('/admin.html', authMiddleware, (req, res) => {
+    res.sendFile(path.join(__dirname, '../../public/admin.html'));
+  });
+}
+
 app.post('/api/book', strictLimiter, [
   body('customer').isObject(),
   body('customer.name').trim().notEmpty(),
@@ -829,11 +1291,31 @@ app.post('/api/book', strictLimiter, [
       confirmedAt: new Date().toISOString(),
     };
 
+    // Generate PDF ticket
+    try {
+      const ticketPath = await generateReservationTicketPDF({
+        clientName: customer.name,
+        phone: customer.phone,
+        email: customer.email,
+        dateTime: pickupTime,
+        startAddress: origin.address,
+        endAddress: destination.address,
+        price: price.totalTTC
+      });
+      
+      // Store ticket path in booking
+      booking.ticketPath = ticketPath;
+      
+      logger.info('PDF ticket generated', { reservationId, ticketPath });
+    } catch (pdfError) {
+      logger.error('PDF ticket generation failed', { error: pdfError, booking });
+    }
+
     reservations.set(reservationId, booking);
 
     logger.info('Booking created', { reservationId, customer: customer.name, total: price.totalTTC });
 
-    // Send confirmation notification (async, don't wait)
+    // Send confirmation notification with ticket attachment
     sendBookingConfirmation(booking).catch(err => {
       logger.warn('Failed to send booking confirmation', { error: err.message });
     });

@@ -1,0 +1,27 @@
+SCREENSHOT.PNG - Information
+
+Pour que WordPress affiche une prévisualisation de votre thème dans "Apparence > Thèmes",
+vous devez ajouter un fichier screenshot.png dans ce dossier.
+
+SPÉCIFICATIONS :
+- Nom du fichier : screenshot.png (exactement)
+- Dimensions : 1200x900px (recommandé)
+- Format : PNG
+- Poids : < 1MB
+
+CONTENU SUGGÉRÉ :
+Créez une capture d'écran de votre page d'accueil montrant :
+- Le formulaire glassmorphism doré
+- L'image de fond de voiture de luxe
+- Le design noir et or
+
+OUTILS POUR CRÉER :
+1. Faites une capture d'écran de votre site une fois installé
+2. Redimensionnez à 1200x900px avec :
+   - Photoshop
+   - GIMP (gratuit)
+   - Online : https://www.resizepixel.com/
+
+3. Ou créez un visuel avec Canva/Figma montrant le design
+
+Une fois créé, placez le fichier ici : wordpress-vtc-theme/screenshot.png
