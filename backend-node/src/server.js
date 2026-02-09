@@ -51,6 +51,11 @@ const config = {
 
   // OpenRouteService API
   ORS_API_KEY: process.env.ORS_API_KEY || '',
+  // Add other environment variables
+  ECO_BASE: process.env.ECO_BASE || 6,
+  ECO_PER_KM: process.env.ECO_PER_KM || 2.20,
+  ECO_PER_MIN: process.env.ECO_PER_MIN || 0.40,
+  // ... (similar for other vehicle types)
   ORS_BASE_URL: 'https://api.openrouteservice.org/v2',
 
   // Nominatim (géocodage)
@@ -64,18 +69,18 @@ const config = {
 
   // Tarification par véhicule (CHF)
   PRICING: {
-    eco: { base: 6, perKm: 2.20, perMin: 0.40, maxPassengers: 4 },
-    berline: { base: 10, perKm: 2.80, perMin: 0.50, maxPassengers: 4 },
-    van: { base: 15, perKm: 3.50, perMin: 0.60, maxPassengers: 7 },
-    luxe: { base: 25, perKm: 4.50, perMin: 0.80, maxPassengers: 4 },
+    eco: { base: process.env.ECO_BASE || 6, perKm: process.env.ECO_PER_KM || 2.20, perMin: process.env.ECO_PER_MIN || 0.40, maxPassengers: 4 },
+    berline: { base: process.env.BERLINE_BASE || 10, perKm: process.env.BERLINE_PER_KM || 2.80, perMin: process.env.BERLINE_PER_MIN || 0.50, maxPassengers: 4 },
+    van: { base: process.env.VAN_BASE || 15, perKm: process.env.VAN_PER_KM || 3.50, perMin: process.env.VAN_PER_MIN || 0.60, maxPassengers: 7 },
+    luxe: { base: process.env.LUXE_BASE || 25, perKm: process.env.LUXE_PER_KM || 4.50, perMin: process.env.LUXE_PER_MIN || 0.80, maxPassengers: 4 },
   },
 
   // Suppléments
   SURCHARGES: {
-    night: 0.20,      // +20% entre 22h et 6h
-    weekend: 0.10,    // +10% samedi et dimanche
-    airport: 5.00,    // Supplément aéroport fixe
-    holiday: 0.25,    // +25% jours fériés
+    night: process.env.NIGHT_SURCHARGE || 0.20,
+    weekend: process.env.WEEKEND_SURCHARGE || 0.10,
+    airport: process.env.AIRPORT_SURCHARGE || 5.00,
+    holiday: process.env.HOLIDAY_SURCHARGE || 0.25,
   },
 
   // Forfaits
@@ -197,8 +202,19 @@ async function saveReservation(reservation) {
     // Sauvegarder
     await fs.writeFile(reservationsFile, JSON.stringify(reservations, null, 2), 'utf8');
     logger.info(`Réservation sauvegardée: ${reservation.id}`);
+    return true;
   } catch (err) {
     logger.error('Erreur sauvegarde réservation', { error: err.message });
+    
+    // Retry logic
+    try {
+      await fs.writeFile(reservationsFile, JSON.stringify([reservation], null, 2), 'utf8');
+      logger.warn('Created new reservations file after failure');
+      return true;
+    } catch (retryErr) {
+      logger.error('Critical failure saving reservation', { error: retryErr.message });
+      return false;
+    }
   }
 }
 
@@ -218,6 +234,8 @@ async function findClientByPhone(phone) {
     return clientReservations[0];
   } catch (err) {
     logger.error('Erreur recherche client', { error: err.message });
+    
+    // Fallback to empty array
     return null;
   }
 }
